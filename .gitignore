@@ -16,8 +16,6 @@ software/dropbear/
 software/framebuffer-vncserver/
 software/libvncserver/
 software/libartnet/
-software/omc/
-software/omc/lv_port_linux/
 fpga/AES50/
 
 

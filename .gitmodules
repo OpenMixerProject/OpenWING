@@ -1,0 +1,3 @@
+[submodule "omc"]
+	path = softare/omc
+	url = git@github.com:OpenMixerProject/OpenMixerControl.git
