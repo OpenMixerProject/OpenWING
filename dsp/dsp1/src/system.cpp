@@ -24,7 +24,7 @@ void systemPllInit() {
 										|								|
 										|_______________________________|
 
-	21489 supports up to 450MHz
+	The WING uses an ADSP21489KSWZ-4B which supports up to 400MHz
 
 	CLK_CFG1 = Pin  5 =
 	CLK_CFG0 = Pin 22 =
@@ -46,8 +46,8 @@ void systemPllInit() {
 	// Step 2: set PLL-configuration to the desired values
 	// ================================================================
 	systemPllSetBypass(true);
-	*pPMCTL = (INDIV | PLLM1 | SDCKR2 | PLLBP | DIVEN); // DIVEN is self-clearing, so next line should be not necessary!
-	*pPMCTL = (INDIV | PLLM1 | SDCKR2 | PLLBP); // disable DIVEN (DIVEN is WriteOnly, so set the whole setting without DIVEN)
+	*pPMCTL = (INDIV | PLLM1 | SDCKR3 | PLLBP | DIVEN); // DIVEN is self-clearing, so next line should be not necessary!
+	*pPMCTL = (INDIV | PLLM1 | SDCKR3 | PLLBP); // disable DIVEN (DIVEN is WriteOnly, so set the whole setting without DIVEN)
 	systemPllSetBypass(false);
 }
 
