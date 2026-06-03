@@ -1,0 +1,16 @@
+# Panel-init command script.
+#
+# Format:
+#   pnlc <ASCII-command> [hex-byte ...]
+#   csc  <ASCII-command> [hex-byte ...]
+#   sleep <milliseconds>
+#
+# Example:
+#   pnlc T 01 02 03 04
+#
+# The initramfs boots the PNLC application first, then replays this file
+# over /dev/ttymxc3 before the USB console is started.
+
+# PNLC firmware command B controls the LCD backlight path.
+# 60 60 60 60 is the verified stock-compatible "screen on" value.
+pnlc B 60 60 60 60

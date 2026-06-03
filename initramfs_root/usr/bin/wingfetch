@@ -1,0 +1,55 @@
+#!/bin/sh
+# Tiny wingfetch system summary for the WING initramfs.
+
+esc=''
+reset=''
+bold=''
+cyan=''
+if [ -t 1 ]; then
+    esc=$(printf '\033')
+    reset="${esc}[0m"
+    bold="${esc}[1m"
+    cyan="${esc}[36m"
+fi
+
+hostname=$(cat /proc/sys/kernel/hostname 2>/dev/null || echo wing)
+kernel=$(uname -sr 2>/dev/null || echo Linux)
+arch=$(uname -m 2>/dev/null || echo unknown)
+model=$(tr '\0' '\n' 2>/dev/null </proc/device-tree/model | head -n 1)
+[ -n "$model" ] || model="Behringer WING"
+cpu=$(awk -F: '/model name/ { sub(/^ /, "", $2); print $2; exit } /Hardware/ { sub(/^ /, "", $2); print $2; exit }' /proc/cpuinfo 2>/dev/null)
+[ -n "$cpu" ] || cpu="ARM"
+cpus=$(cat /sys/devices/system/cpu/online 2>/dev/null || echo 0)
+
+mem=$(awk '
+    /MemTotal/ { total=$2 }
+    /MemAvailable/ { avail=$2 }
+    END {
+        if (total) {
+            used=total-avail
+            printf "%d MiB / %d MiB", used/1024, total/1024
+        } else {
+            print "unknown"
+        }
+    }
+' /proc/meminfo 2>/dev/null)
+
+uptime=$(awk '
+    { s=int($1); d=int(s/86400); s%=86400; h=int(s/3600); s%=3600; m=int(s/60);
+      if (d) printf "%dd %dh %dm", d, h, m;
+      else if (h) printf "%dh %dm", h, m;
+      else printf "%dm", m; }
+' /proc/uptime 2>/dev/null)
+
+ipaddr=$(ip -4 addr show 2>/dev/null | awk '/inet / && $2 !~ /^127\./ { print $2; exit }')
+[ -n "$ipaddr" ] || ipaddr="none"
+
+printf '%s%s        __        %s%s@wing%s\n' "$cyan" "$bold" "$bold" "$hostname" "$reset"
+printf '%s  __  _ / /__ ____ %sOS:%s       %s\n' "$cyan" "$bold" "$reset" "$model"
+printf '%s / /_\`// / -_) __/%sKernel:%s   %s\n' "$cyan" "$bold" "$reset" "$kernel"
+printf '%s \_,_//_/\__/_/   %sArch:%s     %s\n' "$cyan" "$bold" "$reset" "$arch"
+printf '%s                   %sCPU:%s      %s\n' "$cyan" "$bold" "$reset" "$cpu"
+printf '%sWING Linux initramfs %sCores:%s    %s\n' "$cyan" "$bold" "$reset" "$cpus"
+printf '                   %sMemory:%s   %s\n' "$bold" "$reset" "$mem"
+printf '                   %sUptime:%s   %s\n' "$bold" "$reset" "$uptime"
+printf '                   %sIPv4:%s     %s\n' "$bold" "$reset" "$ipaddr"

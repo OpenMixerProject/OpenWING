@@ -1,0 +1,326 @@
+diff --git a/arch/arm/dts/imx6qdl-nitrogen6x.dtsi b/arch/arm/dts/imx6qdl-nitrogen6x.dtsi
+index 904d5d05..96afd0d9 100644
+--- a/arch/arm/dts/imx6qdl-nitrogen6x.dtsi
++++ b/arch/arm/dts/imx6qdl-nitrogen6x.dtsi
+@@ -265,10 +265,7 @@
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_enet>;
+ 	phy-mode = "rgmii";
+-	phy-handle = <&ethphy>;
+-	phy-reset-gpios = <&gpio1 27 GPIO_ACTIVE_LOW>;
+-	interrupts-extended = <&gpio1 6 IRQ_TYPE_LEVEL_HIGH>,
+-			      <&intc 0 119 IRQ_TYPE_LEVEL_HIGH>;
++	phy-handle = <&ethswitch>;
+ 	fsl,err006687-workaround-present;
+ 	status = "okay";
+ 
+@@ -276,20 +273,9 @@
+ 		#address-cells = <1>;
+ 		#size-cells = <0>;
+ 
+-		ethphy: ethernet-phy {
+-			compatible = "ethernet-phy-ieee802.3-c22";
+-			txen-skew-ps = <0>;
+-			txc-skew-ps = <3000>;
+-			rxdv-skew-ps = <0>;
+-			rxc-skew-ps = <3000>;
+-			rxd0-skew-ps = <0>;
+-			rxd1-skew-ps = <0>;
+-			rxd2-skew-ps = <0>;
+-			rxd3-skew-ps = <0>;
+-			txd0-skew-ps = <0>;
+-			txd1-skew-ps = <0>;
+-			txd2-skew-ps = <0>;
+-			txd3-skew-ps = <0>;
++		ethswitch: ethernet-switch@0 {
++			compatible = "marvell,mv88e6320", "ethernet-phy-ieee802.3-c22";
++			reg = <0>;
+ 		};
+ 	};
+ };
+@@ -554,7 +554,11 @@
+ 				MX6QDL_PAD_SD3_DAT1__SD3_DATA1		0x17059
+ 				MX6QDL_PAD_SD3_DAT2__SD3_DATA2		0x17059
+ 				MX6QDL_PAD_SD3_DAT3__SD3_DATA3		0x17059
+-				MX6QDL_PAD_SD3_DAT5__GPIO7_IO00 0x1b0b0	/* CD */
++				MX6QDL_PAD_SD3_DAT4__SD3_DATA4		0x17059
++				MX6QDL_PAD_SD3_DAT5__SD3_DATA5		0x17059
++				MX6QDL_PAD_SD3_DAT6__SD3_DATA6		0x17059
++				MX6QDL_PAD_SD3_DAT7__SD3_DATA7		0x17059
++				MX6QDL_PAD_SD3_RST__SD3_RESET		0x17059
+ 			>;
+ 		};
+ 
+@@ -566,7 +570,11 @@
+ 				MX6QDL_PAD_SD4_DAT1__SD4_DATA1		0x17059
+ 				MX6QDL_PAD_SD4_DAT2__SD4_DATA2		0x17059
+ 				MX6QDL_PAD_SD4_DAT3__SD4_DATA3		0x17059
+-				MX6QDL_PAD_NANDF_D6__GPIO2_IO06 0x1b0b0	/* CD */
++				MX6QDL_PAD_SD4_DAT4__SD4_DATA4		0x17059
++				MX6QDL_PAD_SD4_DAT5__SD4_DATA5		0x17059
++				MX6QDL_PAD_SD4_DAT6__SD4_DATA6		0x17059
++				MX6QDL_PAD_SD4_DAT7__SD4_DATA7		0x17059
++				MX6QDL_PAD_NANDF_ALE__SD4_RESET		0x17059
+ 			>;
+ 		};
+ 
+@@ -678,7 +686,8 @@
+ &usdhc3 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_usdhc3>;
+-	cd-gpios = <&gpio7 0 GPIO_ACTIVE_LOW>;
++	bus-width = <8>;
++	non-removable;
+ 	vmmc-supply = <&reg_3p3v>;
+ 	status = "okay";
+ };
+@@ -686,7 +695,8 @@
+ &usdhc4 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_usdhc4>;
+-	cd-gpios = <&gpio2 6 GPIO_ACTIVE_LOW>;
++	bus-width = <8>;
++	non-removable;
+ 	vmmc-supply = <&reg_3p3v>;
+ 	status = "okay";
+ };
+diff --git a/board/boundary/nitrogen6x/nitrogen6x.c b/board/boundary/nitrogen6x/nitrogen6x.c
+index 382c01dd..6eb583f1 100644
+--- a/board/boundary/nitrogen6x/nitrogen6x.c
++++ b/board/boundary/nitrogen6x/nitrogen6x.c
+@@ -805,83 +805,37 @@ static void set_gpios(unsigned *p, int cnt, int val)
+ int board_early_init_f(void)
+ {
+ 	setup_iomux_uart();
+-
+-	set_gpios(gpios_out_high, ARRAY_SIZE(gpios_out_high), 1);
+-	set_gpios(gpios_out_low, ARRAY_SIZE(gpios_out_low), 0);
+-	gpio_direction_input(WL12XX_WL_IRQ_GP);
+-
+-	SETUP_IOMUX_PADS(wl12xx_pads);
+-	SETUP_IOMUX_PADS(init_pads);
+-	setup_buttons();
+-
+-#if defined(CONFIG_VIDEO_IPUV3)
+-	setup_display();
+-#endif
+ 	return 0;
+ }
+ 
+ /*
+- * Do not overwrite the console
+- * Use always serial for U-Boot console
++ * Allow console to be set from environment (usbacm)
+  */
+ int overwrite_console(void)
+ {
+-	return 1;
++	return 0;
+ }
+ 
+ int board_init(void)
+ {
+ 	struct iomuxc *const iomuxc_regs = (struct iomuxc *)IOMUXC_BASE_ADDR;
+-	struct i2c_pads_info *p = i2c_pads;
+-	int i;
+-	int stride = 1;
+ 
+-#if defined(CONFIG_MX6QDL)
+-	stride = 2;
+-	if (!is_mx6dq() && !is_mx6dqp())
+-		p += 1;
+-#endif
++	/* Set OTG ID to GPIO for gadget/device mode */
+ 	clrsetbits_le32(&iomuxc_regs->gpr[1],
+ 			IOMUXC_GPR1_OTG_ID_MASK,
+ 			IOMUXC_GPR1_OTG_ID_GPIO1);
+ 
+-	SETUP_IOMUX_PADS(misc_pads);
+-
+-	/* address of boot parameters */
+-	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
+-
+-#ifdef CONFIG_MXC_SPI
+-	setup_spi();
+-#endif
++	/* Setup USDHC2 pads (may be connected to eMMC) */
+ 	SETUP_IOMUX_PADS(usdhc2_pads);
+-	for (i = 0; i < I2C_BUS_CNT; i++) {
+-		setup_i2c(i, CONFIG_SYS_I2C_SPEED, 0x7f, p);
+-		p += stride;
+-	}
+ 
+-#ifdef CONFIG_SATA
+-	setup_sata();
+-#endif
++	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
+ 
+ 	return 0;
+ }
+ 
+ int checkboard(void)
+ {
+-	int ret = gpio_get_value(WL12XX_WL_IRQ_GP);
+-
+-	if (ret < 0) {
+-		/* The gpios have not been probed yet. Read it myself */
+-		struct gpio_regs *regs = (struct gpio_regs *)GPIO6_BASE_ADDR;
+-		int gpio = WL12XX_WL_IRQ_GP & 0x1f;
+-
+-		ret = (readl(&regs->gpio_psr) >> gpio) & 0x01;
+-	}
+-	if (ret)
+-		puts("Board: Nitrogen6X\n");
+-	else
+-		puts("Board: SABRE Lite\n");
+-
++	puts("Board: i.MX6D (unknown)\n");
+ 	return 0;
+ }
+ 
+@@ -979,23 +933,6 @@ static const struct boot_mode board_boot_modes[] = {
+ 
+ int misc_init_r(void)
+ {
+-	gpio_request(RGB_BACKLIGHT_GP, "lvds backlight");
+-	gpio_request(LVDS_BACKLIGHT_GP, "lvds backlight");
+-	gpio_request(GP_USB_OTG_PWR, "usbotg power");
+-	gpio_request(IMX_GPIO_NR(7, 12), "usbh1 hub reset");
+-	gpio_request(IMX_GPIO_NR(2, 2), "back");
+-	gpio_request(IMX_GPIO_NR(2, 4), "home");
+-	gpio_request(IMX_GPIO_NR(2, 1), "menu");
+-	gpio_request(IMX_GPIO_NR(2, 3), "search");
+-	gpio_request(IMX_GPIO_NR(7, 13), "volup");
+-	gpio_request(IMX_GPIO_NR(4, 5), "voldown");
+-#ifdef CONFIG_USE_PREBOOT
+-	preboot_keys();
+-#endif
+-
+-#ifdef CONFIG_CMD_BMODE
+-	add_board_boot_modes(board_boot_modes);
+-#endif
+ 	env_set_hex("reset_cause", get_imx_reset_cause());
+ 	return 0;
+ }
+diff --git a/include/configs/mx6sabre_common.h b/include/configs/mx6sabre_common.h
+index 9c61350a..b9a4354f 100644
+--- a/include/configs/mx6sabre_common.h
++++ b/include/configs/mx6sabre_common.h
+@@ -36,6 +36,9 @@
+ #endif
+ 
+ #define CFG_EXTRA_ENV_SETTINGS \
++	"stdin=usbacm,serial\0" \
++	"stdout=usbacm,serial\0" \
++	"stderr=usbacm,serial\0" \
+ 	"script=boot.scr\0" \
+ 	"image=zImage\0" \
+ 	"fdtfile=undefined\0" \
+diff --git a/include/configs/nitrogen6x.h b/include/configs/nitrogen6x.h
+index c9c599d0..e8a23f7f 100644
+--- a/include/configs/nitrogen6x.h
++++ b/include/configs/nitrogen6x.h
+@@ -18,7 +18,6 @@
+ #define CFG_SYS_FSL_USDHC_NUM       2
+ 
+ #define IMX_FEC_BASE			ENET_BASE_ADDR
+-#define CFG_FEC_MXC_PHYADDR		6
+ 
+ /* USB Configs */
+ #define CFG_MXC_USB_PORTSC	(PORT_PTS_UTMI | PORT_PTS_PTW)
+@@ -65,6 +65,9 @@
+ #include <linux/stringify.h>
+ 
+ #define CFG_EXTRA_ENV_SETTINGS \
++	"stdin=usbacm,serial\0" \
++	"stdout=usbacm,serial\0" \
++	"stderr=usbacm,serial\0" \
+ 	"console=ttymxc1\0" \
+ 	"fdt_high=0xffffffff\0" \
+ 	"initrd_high=0xffffffff\0" \
+diff --git a/drivers/net/phy/mv88e61xx.c b/drivers/net/phy/mv88e61xx.c
+index 85778106..aac50a57 100644
+--- a/drivers/net/phy/mv88e61xx.c
++++ b/drivers/net/phy/mv88e61xx.c
+@@ -178,8 +178,11 @@
+ #define PORT_SWITCH_ID_6220		0x2200
+ #define PORT_SWITCH_ID_6240		0x2400
+ #define PORT_SWITCH_ID_6250		0x2500
++#define PORT_SWITCH_ID_6320		0x1150
+ #define PORT_SWITCH_ID_6352		0x3520
+ 
++#define MV88E61XX_PHY_DRIVER_UID	0x01410eb1
++
+ struct mv88e61xx_phy_priv {
+ 	struct mii_dev *mdio_bus;
+ 	int smi_addr;
+@@ -999,16 +1002,27 @@ static int mv88e61xx_probe(struct phy_device *phydev)
+ 	case PORT_SWITCH_ID_6020:
+ 	case PORT_SWITCH_ID_6070:
+ 	case PORT_SWITCH_ID_6071:
++	case PORT_SWITCH_ID_6320:
+ 	case PORT_SWITCH_ID_6220:
+ 	case PORT_SWITCH_ID_6250:
+ 		priv->port_count = 7;
+-		priv->port_stat_link_mask = BIT(12);
+-		priv->port_stat_dup_mask = BIT(9);
+-		priv->port_stat_speed_width = 1;
+-		priv->phy_ctrl1_en_det_shift = 14;
+-		priv->phy_ctrl1_en_det_width = 1;
+-		priv->phy_ctrl1_en_det_ctrl =
+-			PHY_REG_CTRL1_ENERGY_DET_SENSE_PULSE;
++		if (priv->id == PORT_SWITCH_ID_6320) {
++			priv->port_stat_link_mask = BIT(11);
++			priv->port_stat_dup_mask = BIT(10);
++			priv->port_stat_speed_width = 2;
++			priv->phy_ctrl1_en_det_shift = 8;
++			priv->phy_ctrl1_en_det_width = 2;
++			priv->phy_ctrl1_en_det_ctrl =
++				PHY_REG_CTRL1_ENERGY_DET_SENSE_XMIT;
++		} else {
++			priv->port_stat_link_mask = BIT(12);
++			priv->port_stat_dup_mask = BIT(9);
++			priv->port_stat_speed_width = 1;
++			priv->phy_ctrl1_en_det_shift = 14;
++			priv->phy_ctrl1_en_det_width = 1;
++			priv->phy_ctrl1_en_det_ctrl =
++				PHY_REG_CTRL1_ENERGY_DET_SENSE_PULSE;
++		}
+ 		break;
+ 	default:
+ 		free(priv);
+@@ -1053,10 +1067,12 @@ static int mv88e61xx_phy_config(struct phy_device *phydev)
+ 				continue;
+ 			}
+ 
+-			res = phy_reset(phydev);
+-			if (res < 0) {
+-				printf("Error resetting PHY %i\n", i);
+-				continue;
++			if (priv->id != PORT_SWITCH_ID_6320) {
++				res = phy_reset(phydev);
++				if (res < 0) {
++					printf("Error resetting PHY %i\n", i);
++					continue;
++				}
+ 			}
+ 			res = genphy_config_aneg(phydev);
+ 			if (res < 0) {
+@@ -1190,6 +1204,17 @@ int get_phy_id(struct mii_dev *bus, int smi_addr, int devad, u32 *phy_id)
+ 	if (val < 0)
+ 		return val;
+ 
++	/*
++	 * In single-chip addressing mode, an MV88E6320 switch answers directly
++	 * at the port/global register addresses, but the internal-PHY ID path
++	 * used below may not produce a usable PHY ID for the switch node itself.
++	 * Return the existing mv88e61xx driver UID so the switch probe can run.
++	 */
++	if (smi_addr == 0 && temp_priv.id == PORT_SWITCH_ID_6320) {
++		*phy_id = MV88E61XX_PHY_DRIVER_UID;
++		return 0;
++	}
++
+ 	val = mv88e61xx_phy_read_indirect(&temp_mii, 0, devad, MII_PHYSID1);
+ 	if (val < 0)
+ 		return -EIO;

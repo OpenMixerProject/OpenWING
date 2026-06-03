@@ -1,0 +1,91 @@
+#!/bin/sh
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+export PS1='wing# '
+
+mount -t devtmpfs devtmpfs /dev 2>/dev/null || true
+mount -t proc proc /proc 2>/dev/null || true
+mount -t sysfs sysfs /sys 2>/dev/null || true
+mount -t tmpfs tmpfs /tmp 2>/dev/null || true
+mkdir -p /dev/pts /etc/dropbear /root/.ssh
+mount -t devpts devpts /dev/pts 2>/dev/null || true
+chmod 700 /root /root/.ssh 2>/dev/null || true
+
+# Try to redirect stdin/stdout/stderr to /dev/console or fallback to /dev/ttymxc1
+if [ -c /dev/console ]; then
+    exec 0</dev/console 1>/dev/console 2>/dev/console
+elif [ -c /dev/ttymxc1 ]; then
+    exec 0</dev/ttymxc1 1>/dev/ttymxc1 2>/dev/ttymxc1
+fi
+
+echo "Wing USB console Linux booted"
+echo "Bringing up PNLC before starting the USB console..."
+/usr/bin/wing_panel_init
+
+# Start a getty on the framebuffer console (tty1) if it exists.
+if [ -c /dev/tty1 ]; then
+    (
+        while true; do
+            setsid getty -L -n -l /bin/sh 0 tty1 linux
+            sleep 1
+        done
+    ) &
+fi
+
+# Start a getty on the hardware serial port (ttymxc1) if it exists.
+if [ -c /dev/ttymxc1 ]; then
+    (
+        while true; do
+            setsid getty -L -n -l /bin/sh 115200 ttymxc1 vt100
+            sleep 1
+        done
+    ) &
+fi
+
+# Start a getty on the USB gadget serial port as soon as ttyGS0 appears.
+# This runs in the background so the framebuffer console is usable even when
+# the USB cable is not connected yet.
+(
+    echo "Waiting for /dev/ttyGS0 (USB-B CDC ACM gadget console)..."
+    while [ ! -c /dev/ttyGS0 ]; do
+        sleep 1
+    done
+
+    # -L: local line (don't do modem init)
+    # -n: do not prompt for login name
+    # -l /bin/sh: invoke shell instead of login
+    while true; do
+        setsid getty -L -n -l /bin/sh 115200 ttyGS0 vt100
+        sleep 1
+    done
+) &
+
+for i in 1 2 3 4 5; do
+    [ -d /sys/class/net/lan1 ] || [ -d /sys/class/net/lan2 ] || [ -d /sys/class/net/eth0 ] && break
+    sleep 1
+done
+
+if [ -d /sys/class/net/lan1 ] || [ -d /sys/class/net/lan2 ]; then
+    for iface in lan1 lan2; do
+        if [ -d "/sys/class/net/$iface" ]; then
+            echo "Enabling DHCP on $iface..."
+            ifconfig "$iface" up
+            udhcpc -b -i "$iface"
+        fi
+    done
+elif [ -d /sys/class/net/eth0 ]; then
+    echo "Enabling DHCP on eth0..."
+    ifconfig eth0 up
+    udhcpc -b -i eth0
+fi
+
+if [ -x /usr/sbin/dropbear ]; then
+    echo "Starting Dropbear SSH on port 22..."
+    echo "WARNING: root SSH permits blank-password login in this experimental initramfs."
+    chmod 600 /etc/dropbear/dropbear_ed25519_host_key 2>/dev/null || true
+    /usr/sbin/dropbear -r /etc/dropbear/dropbear_ed25519_host_key -B -E -p 22 || true
+fi
+
+# Wait for background services (gettys, udhcpc, panel init) so PID 1 doesn't exit
+# Using `wait` blocks here until those background jobs exit; this keeps init alive
+# and prevents the kernel panic "Attempted to kill init" when the script returns.
+wait

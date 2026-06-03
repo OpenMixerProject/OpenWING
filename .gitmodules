@@ -1,3 +1,7 @@
 [submodule "omc"]
-	path = softare/omc
+	path = software/omc
 	url = git@github.com:OpenMixerProject/OpenMixerControl.git
+
+[submodule "wing-private"]
+  path = lib/private
+  url = git@github.com:OpenMixerProject/OpenWING-private.git
