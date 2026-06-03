@@ -300,7 +300,7 @@ fi
 
 echo "[build] Copy terminfo database"
 mkdir -p "${ROOTFS_DIR}/lib/terminfo"
-for term in x/xterm x/xterm-color x/xterm-256color l/linux a/ansi v/vt100 v/vt102 v/vt220 d/dumb; do
+for term in x/xterm x/xterm-color x/xterm-256color x/xterm-ghostty g/ghostty l/linux a/ansi v/vt100 v/vt102 v/vt220 d/dumb; do
     if [ -f "/lib/terminfo/${term}" ]; then
         mkdir -p "${ROOTFS_DIR}/lib/terminfo/$(dirname ${term})"
         cp "/lib/terminfo/${term}" "${ROOTFS_DIR}/lib/terminfo/${term}"
@@ -309,6 +309,16 @@ for term in x/xterm x/xterm-color x/xterm-256color l/linux a/ansi v/vt100 v/vt10
         cp "/usr/share/terminfo/${term}" "${ROOTFS_DIR}/lib/terminfo/${term}"
     fi
 done
+
+# If the build host has no Ghostty terminfo entry, fall back to xterm-256color
+# so SSH clients using TERM=xterm-ghostty or TERM=ghostty still work.
+if [ -f "${ROOTFS_DIR}/lib/terminfo/x/xterm-256color" ]; then
+    mkdir -p "${ROOTFS_DIR}/lib/terminfo/x" "${ROOTFS_DIR}/lib/terminfo/g"
+    [ -f "${ROOTFS_DIR}/lib/terminfo/x/xterm-ghostty" ] || \
+        ln -sf xterm-256color "${ROOTFS_DIR}/lib/terminfo/x/xterm-ghostty"
+    [ -f "${ROOTFS_DIR}/lib/terminfo/g/ghostty" ] || \
+        ln -sf ../x/xterm-256color "${ROOTFS_DIR}/lib/terminfo/g/ghostty"
+fi
 
 echo "[build] diagnostic UART tools"
 mkdir -p "${ROOTFS_DIR}/usr/bin"

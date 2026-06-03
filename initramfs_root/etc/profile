@@ -1,0 +1,9 @@
+# Normalize TERM for SSH and serial sessions when terminfo entries are missing.
+case "${TERM}" in
+    xterm-ghostty)
+        [ -f /lib/terminfo/x/xterm-ghostty ] || export TERM=xterm-256color
+        ;;
+    ghostty)
+        [ -f /lib/terminfo/g/ghostty ] || export TERM=xterm-256color
+        ;;
+esac
