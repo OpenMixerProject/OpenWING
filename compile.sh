@@ -59,6 +59,9 @@ RUN dpkg --add-architecture armhf \
   && rm -rf /var/lib/apt/lists/*
 DOCKERFILE
 
+echo "[build] omc (wing target)"
+"${ROOT_DIR}/software/omc/compile-wing-docker.sh"
+
 DOCKER_CONFIG="${DOCKER_CONFIG_DIR}" DOCKER_HOST="${DOCKER_HOST_URI}" \
 docker run --rm \
   -i \
@@ -173,7 +176,7 @@ mkdir -p "${ROOTFS_DIR}"
 
 echo "[build] BusyBox static rootfs"
 cd "${BUILD_DIR}/busybox-${BUSYBOX_VER}"
-cp "${ROOT_DIR}/files/config_busybox" .config
+cp "${ROOT_DIR}/configs/config_busybox" .config
 make ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" -j"$(nproc)"
 make ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" CONFIG_PREFIX="${ROOTFS_DIR}" install
 
@@ -280,23 +283,14 @@ else
 fi
 install -D -m 0755 htop "${ROOTFS_DIR}/usr/bin/htop"
 
-echo "[build] omc (wing target)"
-cd "${ROOT_DIR}/software/omc"
-make -f Makefile_wing clean >/dev/null 2>&1 || true
-make -f Makefile_wing \
-    CC="${CROSS_COMPILE}gcc" \
-    CXX="${CROSS_COMPILE}g++" \
-    AR="${CROSS_COMPILE}ar" \
-    LD="${CROSS_COMPILE}ld" \
-    BUILD_DIR="${BUILD_DIR}/omc_build" \
-    -j"$(nproc)"
-OMC_BIN="${BUILD_DIR}/omc_build/wing/wing-omc"
-if [ -f "${OMC_BIN}" ]; then
-    "${CROSS_COMPILE}strip" "${OMC_BIN}" || true
-    install -D -m 0755 "${OMC_BIN}" "${ROOTFS_DIR}/usr/bin/wing-omc"
-else
-    echo "[warning] omc build did not produce ${OMC_BIN}, skipping"
+echo "[install] omc (wing target)"
+OMC_BIN="${ROOT_DIR}/software/omc/build/wing/wing-omc"
+if [ ! -f "${OMC_BIN}" ]; then
+    echo "[error] omc build did not produce ${OMC_BIN}" >&2
+    exit 1
 fi
+"${CROSS_COMPILE}strip" "${OMC_BIN}" || true
+install -D -m 0755 "${OMC_BIN}" "${ROOTFS_DIR}/usr/bin/wing-omc"
 
 echo "[build] Copy terminfo database"
 mkdir -p "${ROOTFS_DIR}/lib/terminfo"
@@ -402,13 +396,13 @@ gzip -9 -f "${BUILD_DIR}/initramfs.cpio"
 
 echo "[build] Linux kernel + unified console/display DTS"
 cd "${BUILD_DIR}/linux-${LINUX_VER}"
-cp "${ROOT_DIR}/files/imx6dl-wing-usb-console.dts" arch/arm/boot/dts/nxp/imx/imx6dl-wing-usb-console.dts
+cp "${ROOT_DIR}/configs/imx6dl-wing-usb-console.dts" arch/arm/boot/dts/nxp/imx/imx6dl-wing-usb-console.dts
 
 if ! grep -q "imx6dl-wing-usb-console.dtb" arch/arm/boot/dts/nxp/imx/Makefile; then
     echo 'dtb-$(CONFIG_SOC_IMX6Q) += imx6dl-wing-usb-console.dtb' >> arch/arm/boot/dts/nxp/imx/Makefile
 fi
 
-cp "${ROOT_DIR}/files/config_linux" .config
+cp "${ROOT_DIR}/configs/config_linux" .config
 scripts/config --set-str INITRAMFS_SOURCE "${BUILD_DIR}/initramfs.cpio.gz"
 scripts/config --enable INPUT
 scripts/config --enable INPUT_EVDEV

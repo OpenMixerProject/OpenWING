@@ -77,4 +77,10 @@ void wing_describe_frame(char *out, size_t out_len, const char *source, uint8_t 
 int wing_parse_uint(const char *s, unsigned int max, unsigned int *out);
 int wing_parse_hex_byte(const char *s, uint8_t *out);
 
+int wing_surface_scribble_text(struct wing_surface *surface, unsigned int slot, int explicit_addr,
+                              int inverted, uint16_t style, const char *text1, const char *text2);
+int wing_surface_scribble_bitmap(struct wing_surface *surface, unsigned int slot,
+                                int inverted, uint16_t style, const uint8_t *bitmap, size_t bitmap_len);
+
 #endif
+

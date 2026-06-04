@@ -1,0 +1,330 @@
+/dts-v1/;
+
+#include "imx6dl.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+
+/ {
+	model = "Behringer Wing Compact (Console & Display)";
+	compatible = "behringer,wing-compact", "fsl,imx6dl";
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pnlc_boot>;
+
+	/*
+	 * WING Compact uses i.MX6 Solo-class silicon: the kernel still uses the
+	 * DualLite DTSI for the shared peripheral layout, but the SCU reports only
+	 * one Cortex-A9 core. Do not advertise the non-existent second CPU.
+	 */
+	cpus {
+		/delete-node/ cpu@1;
+	};
+
+	reg_usb_otg_vbus: regulator-usb-otg-vbus {
+		compatible = "regulator-fixed";
+		regulator-name = "usb_otg_vbus";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		gpio = <&gpio3 22 0>;
+		enable-active-high;
+	};
+
+	chosen {
+		stdout-path = "serial1:115200n8";
+		bootargs = "console=tty1 console=ttyGS0,115200 console=ttymxc1,115200 ignore_loglevel loglevel=8 g_serial.use_acm=1 root=/dev/ram0 rdinit=/init rw vt.global_cursor_default=1 usbcore.autosuspend=-1 usbhid.quirks=0x3434:0x0103:0x20000408";
+	};
+
+	memory@10000000 {
+		device_type = "memory";
+		reg = <0x10000000 0x40000000>;
+	};
+
+	panel_lvds: panel-lvds {
+		compatible = "panel-lvds";
+		width-mm = <217>;
+		height-mm = <136>;
+		data-mapping = "vesa-24";
+		data-width = <24>;
+
+		panel-timing {
+			clock-frequency = <71500000>;
+			hactive = <1280>;
+			vactive = <800>;
+			hback-porch = <70>;
+			hfront-porch = <70>;
+			hsync-len = <2>;
+			vback-porch = <15>;
+			vfront-porch = <21>;
+			vsync-len = <2>;
+			hsync-active = <0>;
+			vsync-active = <1>;
+			de-active = <1>;
+			pixelclk-active = <0>;
+		};
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&lvds0_out>;
+			};
+		};
+	};
+};
+
+&uart1 {
+	status = "okay";
+};
+
+&uart2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart2>;
+	status = "okay";
+};
+
+&uart3 {
+	status = "okay";
+};
+
+&uart4 {
+	status = "okay";
+};
+
+&uart5 {
+	status = "okay";
+};
+
+&gpio2 {
+	unused-cs-27 {
+		gpio-hog;
+		gpios = <27 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "unused-spi-cs-gpio2-27";
+	};
+
+	unused-cs-26 {
+		gpio-hog;
+		gpios = <26 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "unused-spi-cs-gpio2-26";
+	};
+};
+
+&gpio3 {
+	unused-cs-19 {
+		gpio-hog;
+		gpios = <19 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "unused-spi-cs-gpio3-19";
+	};
+
+	unused-cs-25 {
+		gpio-hog;
+		gpios = <25 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "unused-spi-cs-gpio3-25";
+	};
+};
+
+&usbotg {
+	dr_mode = "peripheral";
+	disable-over-current;
+	status = "okay";
+};
+
+&usbh1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usbh1>;
+	dr_mode = "host";
+	power-active-high;
+	status = "okay";
+};
+
+&usbh2 {
+	status = "disabled";
+};
+
+&usbh3 {
+	status = "disabled";
+};
+
+&fec {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_enet_rmii>;
+	phy-mode = "rmii";
+	local-mac-address = [ fa e1 25 be 5b 47 ];
+	status = "okay";
+
+	fixed-link {
+		speed = <100>;
+		full-duplex;
+	};
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		switch@0 {
+			compatible = "marvell,mv88e6085";
+			reg = <0>;
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				port@3 {
+					reg = <3>;
+					label = "lan1";
+				};
+
+				port@4 {
+					reg = <4>;
+					label = "lan2";
+				};
+
+				port@6 {
+					reg = <6>;
+					label = "cpu";
+					ethernet = <&fec>;
+					phy-mode = "rmii";
+
+					fixed-link {
+						speed = <100>;
+						full-duplex;
+					};
+				};
+			};
+		};
+	};
+};
+
+/* Disable all USDHC controllers to stop SDHCI/esdhc probing and register dumps */
+&usdhc1 {
+	status = "disabled";
+};
+
+&usdhc2 {
+	status = "disabled";
+};
+
+&usdhc3 {
+	status = "disabled";
+};
+
+&usdhc4 {
+	status = "disabled";
+};
+
+&ecspi1 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ecspi1>;
+	cs-gpios = <&gpio2 30 GPIO_ACTIVE_LOW>,
+		   <&gpio3 24 GPIO_ACTIVE_LOW>;
+	status = "okay";
+
+	flash: flash@0 {
+		compatible = "sst,sst25vf016b", "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <20000000>;
+	};
+
+	fpga: fpga@1 {
+		compatible = "rohm,dh2228fv";
+		reg = <1>;
+		spi-max-frequency = <20000000>;
+	};
+};
+
+&ecspi2 {
+	status = "disabled";
+};
+
+&ecspi3 {
+	status = "disabled";
+};
+
+&ecspi4 {
+	status = "disabled";
+};
+
+&i2c1 {
+	status = "okay";
+};
+
+&i2c2 {
+	status = "okay";
+};
+
+&i2c3 {
+	status = "okay";
+};
+
+&ldb {
+	status = "okay";
+
+	lvds-channel@0 {
+		fsl,data-mapping = "spwg";
+		fsl,data-width = <24>;
+		status = "okay";
+
+		port@4 {
+			reg = <4>;
+
+			lvds0_out: endpoint {
+				remote-endpoint = <&panel_in>;
+			};
+		};
+	};
+};
+
+&iomuxc {
+	pinctrl_ecspi1: ecspi1grp {
+		fsl,pins = <
+			MX6QDL_PAD_EIM_D16__ECSPI1_SCLK		0x1b0b0
+			MX6QDL_PAD_EIM_D17__ECSPI1_MISO		0x1b0b0
+			MX6QDL_PAD_EIM_D18__ECSPI1_MOSI		0x1b0b0
+			MX6QDL_PAD_EIM_EB2__GPIO2_IO30		0x1b008 /* SPI Flash CS */
+			MX6QDL_PAD_EIM_D24__GPIO3_IO24		0x1b0b0 /* SPI FPGA CS */
+			MX6QDL_PAD_EIM_D19__GPIO3_IO19		0x1b0b0 /* Unused CS */
+			MX6QDL_PAD_EIM_LBA__GPIO2_IO27		0x1b0b0 /* Unused CS */
+			MX6QDL_PAD_EIM_RW__GPIO2_IO26		0x1b0b0 /* Unused CS */
+			MX6QDL_PAD_EIM_D25__GPIO3_IO25		0x1b0b0 /* Unused CS */
+		>;
+	};
+
+	pinctrl_pnlc_boot: pnlcbootgrp {
+		fsl,pins = <
+			MX6QDL_PAD_CSI0_VSYNC__GPIO5_IO21 0x1b0b0
+			MX6QDL_PAD_CSI0_DAT4__GPIO5_IO22 0x1b0b0
+		>;
+	};
+
+	pinctrl_uart2: uart2grp {
+		fsl,pins = <
+			MX6QDL_PAD_EIM_D26__UART2_TX_DATA 0x1b0b0
+			MX6QDL_PAD_EIM_D27__UART2_RX_DATA 0x1b0b0
+		>;
+	};
+
+	pinctrl_usbh1: usbh1grp {
+		fsl,pins = <
+			MX6QDL_PAD_EIM_D30__USB_H1_OC  0xb000
+			MX6QDL_PAD_EIM_D31__USB_H1_PWR 0x0008
+		>;
+	};
+
+	pinctrl_enet_rmii: enetrmiigrp {
+		fsl,pins = <
+			MX6QDL_PAD_ENET_MDIO__ENET_MDIO       0x1b0b0
+			MX6QDL_PAD_ENET_MDC__ENET_MDC         0x0b0b0
+			MX6QDL_PAD_ENET_CRS_DV__ENET_RX_EN    0x10000
+			MX6QDL_PAD_ENET_REF_CLK__ENET_TX_CLK  0x40010000
+			MX6QDL_PAD_ENET_RX_ER__ENET_RX_ER     0x10000
+			MX6QDL_PAD_ENET_RXD0__ENET_RX_DATA0   0x10000
+			MX6QDL_PAD_ENET_RXD1__ENET_RX_DATA1   0x10000
+			MX6QDL_PAD_ENET_TX_EN__ENET_TX_EN     0x0b0b0
+			MX6QDL_PAD_ENET_TXD0__ENET_TX_DATA0   0x0b0b0
+			MX6QDL_PAD_ENET_TXD1__ENET_TX_DATA1   0x0b0b0
+			MX6QDL_PAD_GPIO_18__ENET_RX_CLK       0x10000
+			MX6QDL_PAD_GPIO_16__ENET_REF_CLK      0x40010000
+		>;
+	};
+};

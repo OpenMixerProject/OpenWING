@@ -716,13 +716,16 @@ static void usage_line(struct app *app)
     left_log(app, "  led <name> <color> <0|1>  e.g. led home white 1");
     left_log(app, "  csclights [value]      enable CSC LEDs, default 0x602f");
     left_log(app, "  cscleds <0|1>          turn all CSC LEDs on or off");
-    left_log(app, "  cscbrightness <led> <lamp> <glow> <patch>  set csc brightness (led: 0-15, others: 0|1)");
-    left_log(app, "  cscbrightness <led|lamp|glow|patch> <val>  set individual csc brightness");
+    left_log(app, "  cscbrightness <led> <lamp> <glow> <patch>  set csc brightness (all: 0-100)");
+    left_log(app, "  cscbrightness <led|lamp|glow|patch> <val>  set individual csc brightness (0-100)");
     left_log(app, "  csclatch <port> <value> <mask>");
     left_log(app, "  backlight              enable LCD backlight");
     left_log(app, "  touch                  enable touchscreen");
     left_log(app, "  raw csc|pnlc <cmd> [hex-byte ...]");
     left_log(app, "  raw-output [on|off]    show raw PLDC bytes");
+    left_log(app, "  scribble <0-15> <text1> [text2]           set text on scribble strip (default style 101)");
+    left_log(app, "  scribble_cfg <0-15> <explicit> <inverted> <style> <text1> [text2]");
+    left_log(app, "  scribble_bmp <0-15> <inverted> <style> <hex-bytes...>");
     left_log(app, "  help, quit");
 }
 
@@ -886,22 +889,15 @@ static void handle_command(struct app *app, char *line)
             strcmp(arg1, "glow") == 0 || strcmp(arg1, "patch") == 0) {
             char *val_s = strtok(NULL, " \t\r\n");
             unsigned int val;
-            if (!val_s || wing_parse_uint(val_s, 15, &val) != 0) {
-                left_log(app, "usage: cscbrightness <led|lamp|glow|patch> <val>");
+            if (!val_s || wing_parse_uint(val_s, 100, &val) != 0) {
+                left_log(app, "usage: cscbrightness <led|lamp|glow|patch> <val> (val: 0-100)");
                 return;
             }
             int led = -1, lamp = -1, glow = -1, patch = -1;
             if (strcmp(arg1, "led") == 0) led = (int)val;
-            else if (strcmp(arg1, "lamp") == 0) {
-                if (val > 1) { left_log(app, "lamp must be 0 or 1"); return; }
-                lamp = (int)val;
-            } else if (strcmp(arg1, "glow") == 0) {
-                if (val > 1) { left_log(app, "glow must be 0 or 1"); return; }
-                glow = (int)val;
-            } else if (strcmp(arg1, "patch") == 0) {
-                if (val > 1) { left_log(app, "patch must be 0 or 1"); return; }
-                patch = (int)val;
-            }
+            else if (strcmp(arg1, "lamp") == 0) lamp = (int)val;
+            else if (strcmp(arg1, "glow") == 0) glow = (int)val;
+            else if (strcmp(arg1, "patch") == 0) patch = (int)val;
             if (wing_surface_csc_brightness(&app->surface, led, lamp, glow, patch) != 0) {
                 char msg[96];
                 snprintf(msg, sizeof(msg), "CSC brightness update failed: %s", strerror(errno));
@@ -918,11 +914,11 @@ static void handle_command(struct app *app, char *line)
             char *arg4 = strtok(NULL, " \t\r\n");
             unsigned int led, lamp, glow, patch;
             if (!arg2 || !arg3 || !arg4 ||
-                wing_parse_uint(arg1, 15, &led) != 0 ||
-                wing_parse_uint(arg2, 1, &lamp) != 0 ||
-                wing_parse_uint(arg3, 1, &glow) != 0 ||
-                wing_parse_uint(arg4, 1, &patch) != 0) {
-                left_log(app, "usage: cscbrightness <led> <lamp> <glow> <patch> (led: 0-15, others: 0|1)");
+                wing_parse_uint(arg1, 100, &led) != 0 ||
+                wing_parse_uint(arg2, 100, &lamp) != 0 ||
+                wing_parse_uint(arg3, 100, &glow) != 0 ||
+                wing_parse_uint(arg4, 100, &patch) != 0) {
+                left_log(app, "usage: cscbrightness <led> <lamp> <glow> <patch> (all: 0-100)");
                 return;
             }
             if (wing_surface_csc_brightness(&app->surface, (int)led, (int)lamp, (int)glow, (int)patch) != 0) {
@@ -1012,6 +1008,184 @@ static void handle_command(struct app *app, char *line)
         }
         left_log(app, app->pnlc_raw_output ? "PLDC raw output enabled" :
                                              "PLDC raw output disabled");
+        return;
+    }
+    if (strcmp(cmd, "scribble") == 0) {
+        char *slot_s = strtok(NULL, " \t\r\n");
+        unsigned int slot;
+        if (!slot_s || wing_parse_uint(slot_s, 15, &slot) != 0) {
+            left_log(app, "usage: scribble <0-15> <text1> [text2]");
+            return;
+        }
+        
+        char *rest = slot_s + strlen(slot_s) + 1;
+        while (*rest == ' ' || *rest == '\t')
+            rest++;
+            
+        char *text1 = NULL;
+        char *text2 = NULL;
+        
+        if (*rest == '"') {
+            rest++;
+            text1 = rest;
+            while (*rest != '"' && *rest != '\0')
+                rest++;
+            if (*rest == '"') {
+                *rest = '\0';
+                rest++;
+            }
+        } else {
+            text1 = rest;
+            while (*rest != ' ' && *rest != '\t' && *rest != '\0')
+                rest++;
+            if (*rest != '\0') {
+                *rest = '\0';
+                rest++;
+            }
+        }
+        
+        while (*rest == ' ' || *rest == '\t')
+            rest++;
+            
+        if (*rest != '\0') {
+            if (*rest == '"') {
+                rest++;
+                text2 = rest;
+                while (*rest != '"' && *rest != '\0')
+                    rest++;
+                if (*rest == '"') {
+                    *rest = '\0';
+                }
+            } else {
+                text2 = rest;
+                while (*rest != ' ' && *rest != '\t' && *rest != '\0')
+                    rest++;
+                if (*rest != '\0') {
+                    *rest = '\0';
+                }
+            }
+        }
+        
+        if (!text1 || strlen(text1) == 0) {
+            left_log(app, "usage: scribble <0-15> <text1> [text2]");
+            return;
+        }
+        
+        if (wing_surface_scribble_text(&app->surface, slot, 0, 0, 101, text1, text2) != 0)
+            left_log(app, "scribble command failed");
+        else
+            left_log(app, "sent scribble text");
+        return;
+    }
+    if (strcmp(cmd, "scribble_cfg") == 0) {
+        char *slot_s = strtok(NULL, " \t\r\n");
+        char *explicit_s = strtok(NULL, " \t\r\n");
+        char *inverted_s = strtok(NULL, " \t\r\n");
+        char *style_s = strtok(NULL, " \t\r\n");
+        unsigned int slot, expl, inv, style;
+        
+        if (!slot_s || !explicit_s || !inverted_s || !style_s ||
+            wing_parse_uint(slot_s, 15, &slot) != 0 ||
+            wing_parse_uint(explicit_s, 1, &expl) != 0 ||
+            wing_parse_uint(inverted_s, 1, &inv) != 0 ||
+            wing_parse_uint(style_s, 65535, &style) != 0) {
+            left_log(app, "usage: scribble_cfg <slot> <explicit> <inverted> <style> <text1> [text2]");
+            return;
+        }
+        
+        char *rest = style_s + strlen(style_s) + 1;
+        while (*rest == ' ' || *rest == '\t')
+            rest++;
+            
+        char *text1 = NULL;
+        char *text2 = NULL;
+        
+        if (*rest == '"') {
+            rest++;
+            text1 = rest;
+            while (*rest != '"' && *rest != '\0')
+                rest++;
+            if (*rest == '"') {
+                *rest = '\0';
+                rest++;
+            }
+        } else {
+            text1 = rest;
+            while (*rest != ' ' && *rest != '\t' && *rest != '\0')
+                rest++;
+            if (*rest != '\0') {
+                *rest = '\0';
+                rest++;
+            }
+        }
+        
+        while (*rest == ' ' || *rest == '\t')
+            rest++;
+            
+        if (*rest != '\0') {
+            if (*rest == '"') {
+                rest++;
+                text2 = rest;
+                while (*rest != '"' && *rest != '\0')
+                    rest++;
+                if (*rest == '"') {
+                    *rest = '\0';
+                }
+            } else {
+                text2 = rest;
+                while (*rest != ' ' && *rest != '\t' && *rest != '\0')
+                    rest++;
+                if (*rest != '\0') {
+                    *rest = '\0';
+                }
+            }
+        }
+        
+        if (!text1 || strlen(text1) == 0) {
+            left_log(app, "usage: scribble_cfg <slot> <explicit> <inverted> <style> <text1> [text2]");
+            return;
+        }
+        
+        if (wing_surface_scribble_text(&app->surface, slot, expl, inv, style, text1, text2) != 0)
+            left_log(app, "scribble_cfg command failed");
+        else
+            left_log(app, "sent scribble text");
+        return;
+    }
+    if (strcmp(cmd, "scribble_bmp") == 0) {
+        char *slot_s = strtok(NULL, " \t\r\n");
+        char *inverted_s = strtok(NULL, " \t\r\n");
+        char *style_s = strtok(NULL, " \t\r\n");
+        unsigned int slot, inv, style;
+        
+        if (!slot_s || !inverted_s || !style_s ||
+            wing_parse_uint(slot_s, 15, &slot) != 0 ||
+            wing_parse_uint(inverted_s, 1, &inv) != 0 ||
+            wing_parse_uint(style_s, 65535, &style) != 0) {
+            left_log(app, "usage: scribble_bmp <slot> <inverted> <style> <hex_bytes...>");
+            return;
+        }
+        
+        uint8_t bitmap[256];
+        size_t len = 0;
+        char *tok;
+        while ((tok = strtok(NULL, " \t\r\n")) != NULL) {
+            if (len >= sizeof(bitmap) || wing_parse_hex_byte(tok, &bitmap[len]) != 0) {
+                left_log(app, "bad bitmap hex byte");
+                return;
+            }
+            ++len;
+        }
+        
+        if (len == 0) {
+            left_log(app, "usage: scribble_bmp <slot> <inverted> <style> <hex_bytes...>");
+            return;
+        }
+        
+        if (wing_surface_scribble_bitmap(&app->surface, slot, inv, style, bitmap, len) != 0)
+            left_log(app, "scribble_bmp command failed");
+        else
+            left_log(app, "sent scribble bitmap");
         return;
     }
     left_log(app, "unknown command; type help");

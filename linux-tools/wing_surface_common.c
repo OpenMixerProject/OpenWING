@@ -287,7 +287,12 @@ int wing_send_frame(int fd, uint8_t cmd, const uint8_t *payload, size_t len)
     if (len > 512)
         return -1;
     out[out_len++] = WING_FRAME_STAR;
-    out[out_len++] = cmd;
+    if (cmd == WING_FRAME_STAR) {
+        out[out_len++] = WING_FRAME_STAR;
+        out[out_len++] = 0x40;
+    } else {
+        out[out_len++] = cmd;
+    }
     for (size_t i = 0; i < len; ++i) {
         if (payload[i] == WING_FRAME_STAR) {
             out[out_len++] = WING_FRAME_STAR;
@@ -297,7 +302,13 @@ int wing_send_frame(int fd, uint8_t cmd, const uint8_t *payload, size_t len)
         }
     }
     out[out_len++] = WING_FRAME_STAR;
-    out[out_len++] = wing_frame_checksum(payload, len);
+    uint8_t chk = wing_frame_checksum(payload, len);
+    if (chk == WING_FRAME_STAR) {
+        out[out_len++] = WING_FRAME_STAR;
+        out[out_len++] = 0x40;
+    } else {
+        out[out_len++] = chk;
+    }
     return write_all(fd, out, out_len);
 }
 
@@ -713,10 +724,10 @@ void wing_surface_init_state(struct wing_surface *surface)
     memset(surface, 0, sizeof(*surface));
     surface->csc_fd = -1;
     surface->pnlc_fd = -1;
-    surface->csc_led_brightness = 15;
-    surface->csc_lamp_brightness = 1;
-    surface->csc_glow_brightness = 1;
-    surface->csc_patch_brightness = 1;
+    surface->csc_led_brightness = 50;
+    surface->csc_lamp_brightness = 50;
+    surface->csc_glow_brightness = 50;
+    surface->csc_patch_brightness = 50;
 }
 
 int wing_surface_open(struct wing_surface *surface, const char *csc_device,
@@ -758,30 +769,35 @@ int wing_surface_csc_lights(struct wing_surface *surface, uint32_t value)
 
 int wing_surface_csc_brightness(struct wing_surface *surface, int led, int lamp, int glow, int patch)
 {
+    if (surface->csc_fd < 0)
+        return -1;
+
     if (led >= 0) {
-        if (led > 15) return -1;
+        if (led > 100) return -1;
         surface->csc_led_brightness = (uint8_t)led;
+        if (send_u_level(surface->csc_fd, 0x38, surface->csc_led_brightness, 0x08) != 0)
+            return -1;
     }
     if (lamp >= 0) {
-        if (lamp > 1) return -1;
+        if (lamp > 100) return -1;
         surface->csc_lamp_brightness = (uint8_t)lamp;
+        if (send_u_level(surface->csc_fd, 0x3D, surface->csc_lamp_brightness, 0x08) != 0)
+            return -1;
     }
     if (glow >= 0) {
-        if (glow > 1) return -1;
+        if (glow > 100) return -1;
         surface->csc_glow_brightness = (uint8_t)glow;
+        if (send_u_level(surface->csc_fd, 0x3E, surface->csc_glow_brightness, 0x08) != 0)
+            return -1;
     }
     if (patch >= 0) {
-        if (patch > 1) return -1;
+        if (patch > 100) return -1;
         surface->csc_patch_brightness = (uint8_t)patch;
+        if (send_u_level(surface->csc_fd, 0x3F, surface->csc_patch_brightness, 0x08) != 0)
+            return -1;
     }
 
-    uint32_t value = 0;
-    value |= (surface->csc_led_brightness & 0xfu);
-    if (surface->csc_lamp_brightness) value |= 0x20u;
-    if (surface->csc_glow_brightness) value |= 0x2000u;
-    if (surface->csc_patch_brightness) value |= 0x4000u;
-
-    return wing_surface_csc_lights(surface, value);
+    return 0;
 }
 
 int wing_surface_csc_latch(struct wing_surface *surface, unsigned int port, uint32_t value,
@@ -982,13 +998,13 @@ int wing_surface_led_color(struct wing_surface *surface, const char *name, const
             return -1;
         if (id < 36) {
             uint8_t payload[9];
-            surface->strip_led_states[id] = on ? 1 : 0;
+            surface->strip_led_states[id] = on ? 3 : 0;
             pack_led_states(surface->strip_led_states, 36, payload, sizeof(payload));
             return wing_send_frame(surface->csc_fd, 'B', payload, sizeof(payload));
         }
         if (id >= 40 && id < 92) {
             uint8_t payload[13];
-            surface->layer_led_states[id - 40] = on ? 1 : 0;
+            surface->layer_led_states[id - 40] = on ? 3 : 0;
             pack_led_states(surface->layer_led_states, 52, payload, sizeof(payload));
             return wing_send_frame(surface->csc_fd, 'l', payload, sizeof(payload));
         }
@@ -1008,7 +1024,7 @@ int wing_surface_csc_leds_all(struct wing_surface *surface, int on)
     // 1. Update strip_led_states (0 to 35)
     uint8_t payload_B[9];
     for (int i = 0; i < 36; ++i) {
-        surface->strip_led_states[i] = on ? 1 : 0;
+        surface->strip_led_states[i] = on ? 3 : 0;
     }
     pack_led_states(surface->strip_led_states, 36, payload_B, sizeof(payload_B));
     if (wing_send_frame(surface->csc_fd, 'B', payload_B, sizeof(payload_B)) != 0)
@@ -1017,7 +1033,7 @@ int wing_surface_csc_leds_all(struct wing_surface *surface, int on)
     // 2. Update layer_led_states (0 to 51, mapped to pins 40-91)
     uint8_t payload_l[13];
     for (int i = 0; i < 52; ++i) {
-        surface->layer_led_states[i] = on ? 1 : 0;
+        surface->layer_led_states[i] = on ? 3 : 0;
     }
     pack_led_states(surface->layer_led_states, 52, payload_l, sizeof(payload_l));
     if (wing_send_frame(surface->csc_fd, 'l', payload_l, sizeof(payload_l)) != 0)
@@ -1147,6 +1163,81 @@ void wing_describe_frame(char *out, size_t out_len, const char *source, uint8_t 
     } else if (cmd == 'u' && len == 3) {
         unsigned int value = (unsigned int)payload[1] | ((unsigned int)payload[2] << 8);
         snprintf(out, out_len, "%s control value id=0x%02x value=%u", source, payload[0], value);
+    } else if (cmd >= 'A' && cmd <= 'P') {
+        unsigned int slot = cmd - 'A';
+        if (len >= 5) {
+            uint8_t type = payload[0];
+            uint8_t display = payload[1];
+            uint16_t style = payload[2] | (payload[3] << 8);
+            uint8_t len1 = payload[4];
+            if (type == 'U' && len >= 5 + len1) {
+                char txt[256];
+                size_t copy_len = len1 < sizeof(txt) - 1 ? len1 : sizeof(txt) - 1;
+                memcpy(txt, &payload[5], copy_len);
+                txt[copy_len] = '\0';
+                snprintf(out, out_len, "%s scribble slot=%u text1=\"%s\" style=%u inverted=%u",
+                         source, slot, txt, style, display);
+            } else if (type == 'V' && len >= 6 + len1) {
+                uint8_t len2 = payload[5 + len1];
+                if (len >= 6 + len1 + len2) {
+                    char txt1[256];
+                    char txt2[256];
+                    size_t copy_len1 = len1 < sizeof(txt1) - 1 ? len1 : sizeof(txt1) - 1;
+                    size_t copy_len2 = len2 < sizeof(txt2) - 1 ? len2 : sizeof(txt2) - 1;
+                    memcpy(txt1, &payload[5], copy_len1);
+                    txt1[copy_len1] = '\0';
+                    memcpy(txt2, &payload[6 + len1], copy_len2);
+                    txt2[copy_len2] = '\0';
+                    snprintf(out, out_len, "%s scribble slot=%u text1=\"%s\" text2=\"%s\" style=%u inverted=%u",
+                             source, slot, txt1, txt2, style, display);
+                } else {
+                    unknown = 1;
+                }
+            } else if (type == 'B' && len >= 5 + len1) {
+                snprintf(out, out_len, "%s scribble slot=%u bitmap len=%u style=%u inverted=%u",
+                         source, slot, len1, style, display);
+            } else {
+                unknown = 1;
+            }
+        } else {
+            unknown = 1;
+        }
+    } else if (cmd == 'T') {
+        if (len >= 6) {
+            unsigned int slot = payload[0];
+            uint8_t type = payload[1];
+            uint8_t display = payload[2];
+            uint16_t style = payload[3] | (payload[4] << 8);
+            uint8_t len1 = payload[5];
+            if (type == 'U' && len >= 6 + len1) {
+                char txt[256];
+                size_t copy_len = len1 < sizeof(txt) - 1 ? len1 : sizeof(txt) - 1;
+                memcpy(txt, &payload[6], copy_len);
+                txt[copy_len] = '\0';
+                snprintf(out, out_len, "%s scribble_explicit slot=%u text1=\"%s\" style=%u inverted=%u",
+                         source, slot, txt, style, display);
+            } else if (type == 'V' && len >= 7 + len1) {
+                uint8_t len2 = payload[6 + len1];
+                if (len >= 7 + len1 + len2) {
+                    char txt1[256];
+                    char txt2[256];
+                    size_t copy_len1 = len1 < sizeof(txt1) - 1 ? len1 : sizeof(txt1) - 1;
+                    size_t copy_len2 = len2 < sizeof(txt2) - 1 ? len2 : sizeof(txt2) - 1;
+                    memcpy(txt1, &payload[6], copy_len1);
+                    txt1[copy_len1] = '\0';
+                    memcpy(txt2, &payload[7 + len1], copy_len2);
+                    txt2[copy_len2] = '\0';
+                    snprintf(out, out_len, "%s scribble_explicit slot=%u text1=\"%s\" text2=\"%s\" style=%u inverted=%u",
+                             source, slot, txt1, txt2, style, display);
+                } else {
+                    unknown = 1;
+                }
+            } else {
+                unknown = 1;
+            }
+        } else {
+            unknown = 1;
+        }
     } else {
         unknown = 1;
         snprintf(out, out_len, "UNKNOWN %s cmd=%c payload=[", source, printable);
@@ -1157,3 +1248,107 @@ void wing_describe_frame(char *out, size_t out_len, const char *source, uint8_t 
     if (unknown)
         append_raw_frame(out, out_len, cmd, payload, len, check);
 }
+
+int wing_surface_scribble_text(struct wing_surface *surface, unsigned int slot, int explicit_addr,
+                              int inverted, uint16_t style, const char *text1, const char *text2)
+{
+    uint8_t payload[512];
+    size_t payload_len = 0;
+    uint8_t display = inverted ? 1 : 0;
+    uint8_t style_low = style & 0xffu;
+    uint8_t style_high = (style >> 8) & 0xffu;
+
+    if (surface->csc_fd < 0 || slot > 15) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    if (explicit_addr) {
+        payload[payload_len++] = (uint8_t)slot;
+    }
+
+    if (text2 == NULL) {
+        // Mode 'U'
+        payload[payload_len++] = 'U';
+        payload[payload_len++] = display;
+        payload[payload_len++] = style_low;
+        payload[payload_len++] = style_high;
+        size_t len1 = text1 ? strlen(text1) : 0;
+        if (len1 > 255) len1 = 255;
+        if (payload_len + 1 + len1 > sizeof(payload)) {
+            errno = EINVAL;
+            return -1;
+        }
+        payload[payload_len++] = (uint8_t)len1;
+        if (len1 > 0) {
+            memcpy(&payload[payload_len], text1, len1);
+            payload_len += len1;
+        }
+    } else {
+        // Mode 'V'
+        payload[payload_len++] = 'V';
+        payload[payload_len++] = display;
+        payload[payload_len++] = style_low;
+        payload[payload_len++] = style_high;
+        size_t len1 = text1 ? strlen(text1) : 0;
+        if (len1 > 255) len1 = 255;
+        size_t len2 = strlen(text2);
+        if (len2 > 255) len2 = 255;
+        if (payload_len + 2 + len1 + len2 > sizeof(payload)) {
+            errno = EINVAL;
+            return -1;
+        }
+        payload[payload_len++] = (uint8_t)len1;
+        if (len1 > 0) {
+            memcpy(&payload[payload_len], text1, len1);
+            payload_len += len1;
+        }
+        payload[payload_len++] = (uint8_t)len2;
+        if (len2 > 0) {
+            memcpy(&payload[payload_len], text2, len2);
+            payload_len += len2;
+        }
+    }
+
+    if (explicit_addr) {
+        return wing_send_frame(surface->csc_fd, 'T', payload, payload_len);
+    } else {
+        uint8_t cmd = (uint8_t)('A' + slot);
+        return wing_send_frame(surface->csc_fd, cmd, payload, payload_len);
+    }
+}
+
+int wing_surface_scribble_bitmap(struct wing_surface *surface, unsigned int slot,
+                                int inverted, uint16_t style, const uint8_t *bitmap, size_t bitmap_len)
+{
+    uint8_t payload[512];
+    size_t payload_len = 0;
+    uint8_t display = inverted ? 1 : 0;
+    uint8_t style_low = style & 0xffu;
+    uint8_t style_high = (style >> 8) & 0xffu;
+
+    if (surface->csc_fd < 0 || slot > 15 || bitmap_len > 255) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    payload[payload_len++] = 'B';
+    payload[payload_len++] = display;
+    payload[payload_len++] = style_low;
+    payload[payload_len++] = style_high;
+    payload[payload_len++] = (uint8_t)bitmap_len;
+
+    if (payload_len + bitmap_len > sizeof(payload)) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    if (bitmap_len > 0 && bitmap != NULL) {
+        memcpy(&payload[payload_len], bitmap, bitmap_len);
+        payload_len += bitmap_len;
+    }
+
+    uint8_t cmd = (uint8_t)('A' + slot);
+    return wing_send_frame(surface->csc_fd, cmd, payload, payload_len);
+}
+
