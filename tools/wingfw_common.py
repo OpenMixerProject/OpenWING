@@ -18,6 +18,7 @@ def _load_private_module():
     if spec is None or spec.loader is None:
         raise ImportError("private wingfw implementation not found")
     mod = util.module_from_spec(spec)
+    sys.path.insert(0, str(private_path.parent))
     spec.loader.exec_module(mod)
     return mod
 

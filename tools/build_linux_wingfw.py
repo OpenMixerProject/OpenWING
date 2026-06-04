@@ -13,6 +13,7 @@ def _load_and_run():
     if spec is None or spec.loader is None:
         raise SystemExit("private implementation not found")
     mod = importlib.util.module_from_spec(spec)
+    sys.path.insert(0, str(private.parent))
     spec.loader.exec_module(mod)
     if hasattr(mod, "main"):
         mod.main()
