@@ -329,17 +329,10 @@ mkdir -p "${ROOTFS_DIR}/usr/bin"
     "${ROOT_DIR}/linux-tools/wing_surface_common.c" \
     "${ROOT_DIR}/linux-tools/wing_control_names.c" \
     -lncurses -ltinfo
-"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-fader-calibrate" \
-    "${ROOT_DIR}/linux-tools/wing_fader_calibrate.c" \
-    "${ROOT_DIR}/linux-tools/wing_surface_common.c" \
-    "${ROOT_DIR}/linux-tools/wing_control_names.c"
 "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-draw" \
     "${ROOT_DIR}/linux-tools/wing_draw.c"
-"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-touch-cal" \
-    "${ROOT_DIR}/linux-tools/wing_touch_cal.c"
-"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-touch-verify" \
-    "${ROOT_DIR}/linux-tools/wing_touch_verify.c"
-
+"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/pnlc_raw_dump" \
+    "${ROOT_DIR}/linux-tools/pnlc_raw_dump.c"
 cd "${ROOTFS_DIR}"
 cp -a "${ROOT_DIR}/initramfs_root/"* .
 mkdir -p dev proc root sys tmp
