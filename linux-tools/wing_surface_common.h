@@ -72,6 +72,11 @@ int wing_surface_raw_csc(struct wing_surface *surface, uint8_t cmd, const uint8_
 int wing_surface_raw_pnlc(struct wing_surface *surface, uint8_t cmd, const uint8_t *payload,
                           size_t len);
 
+int wing_surface_csc_text(struct wing_surface *surface, int style, const char *line1, const char *line2);
+int wing_surface_csc_meters(struct wing_surface *surface, const uint8_t *levels);
+int wing_surface_csc_meter_update(struct wing_surface *surface, int index, int value);
+
+
 void wing_describe_frame(char *out, size_t out_len, const char *source, uint8_t cmd,
                          const uint8_t *payload, size_t len, uint8_t check);
 int wing_parse_uint(const char *s, unsigned int max, unsigned int *out);

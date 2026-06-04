@@ -40,6 +40,9 @@ struct app {
     size_t input_len;
     WINDOW *left;
     WINDOW *right;
+    int csc_test_active;
+    unsigned long long csc_test_start_ms;
+    unsigned int csc_test_phase;
 };
 
 static void on_signal(int signo)
@@ -726,6 +729,10 @@ static void usage_line(struct app *app)
     left_log(app, "  scribble <0-15> <text1> [text2]           set text on scribble strip (default style 101)");
     left_log(app, "  scribble_cfg <0-15> <explicit> <inverted> <style> <text1> [text2]");
     left_log(app, "  scribble_bmp <0-15> <inverted> <style> <hex-bytes...>");
+    left_log(app, "  csctext <style> <line1> [line2]   draw centered text on CSC display");
+    left_log(app, "  cscmeters <val0>..<val7>          draw all CSC display meters (0-255)");
+    left_log(app, "  cscmeter <index> <val>            update individual CSC display meter (0-255)");
+    left_log(app, "  csctest <on|off>                  run dynamic CSC display test pattern");
     left_log(app, "  help, quit");
 }
 
@@ -930,6 +937,126 @@ static void handle_command(struct app *app, char *line)
                 snprintf(msg, sizeof(msg), "sent CSC brightness led=%u lamp=%u glow=%u patch=%u", led, lamp, glow, patch);
                 left_log(app, msg);
             }
+        }
+        return;
+    }
+    if (strcmp(cmd, "csctext") == 0) {
+        char *style_s = strtok(NULL, " \t\r\n");
+        unsigned int style;
+        if (!style_s || wing_parse_uint(style_s, 255, &style) != 0) {
+            left_log(app, "usage: csctext <style> <line1> [line2]");
+            return;
+        }
+
+        char *rest = style_s + strlen(style_s) + 1;
+        while (*rest == ' ' || *rest == '\t')
+            rest++;
+
+        char *text1 = NULL;
+        char *text2 = NULL;
+
+        if (*rest == '"') {
+            rest++;
+            text1 = rest;
+            while (*rest != '"' && *rest != '\0')
+                rest++;
+            if (*rest == '"') {
+                *rest = '\0';
+                rest++;
+            }
+        } else {
+            text1 = rest;
+            while (*rest != ' ' && *rest != '\t' && *rest != '\0')
+                rest++;
+            if (*rest != '\0') {
+                *rest = '\0';
+                rest++;
+            }
+        }
+
+        while (*rest == ' ' || *rest == '\t')
+            rest++;
+
+        if (*rest != '\0') {
+            if (*rest == '"') {
+                rest++;
+                text2 = rest;
+                while (*rest != '"' && *rest != '\0')
+                    rest++;
+                if (*rest == '"') {
+                    *rest = '\0';
+                }
+            } else {
+                text2 = rest;
+                while (*rest != ' ' && *rest != '\t' && *rest != '\0')
+                    rest++;
+                if (*rest != '\0') {
+                    *rest = '\0';
+                }
+            }
+        }
+
+        if (!text1 || strlen(text1) == 0) {
+            left_log(app, "usage: csctext <style> <line1> [line2]");
+            return;
+        }
+
+        if (wing_surface_csc_text(&app->surface, (int)style, text1, text2 ? text2 : "") != 0)
+            left_log(app, "csctext command failed");
+        else
+            left_log(app, "sent CSC text layout");
+        return;
+    }
+    if (strcmp(cmd, "cscmeters") == 0) {
+        uint8_t levels[8];
+        for (int i = 0; i < 8; ++i) {
+            char *val_s = strtok(NULL, " \t\r\n");
+            unsigned int val;
+            if (!val_s || wing_parse_uint(val_s, 255, &val) != 0) {
+                left_log(app, "usage: cscmeters <val0> .. <val7> (each 0-255)");
+                return;
+            }
+            levels[i] = (uint8_t)val;
+        }
+        if (wing_surface_csc_meters(&app->surface, levels) != 0)
+            left_log(app, "cscmeters command failed");
+        else
+            left_log(app, "sent CSC meters layout");
+        return;
+    }
+    if (strcmp(cmd, "cscmeter") == 0) {
+        char *index_s = strtok(NULL, " \t\r\n");
+        char *val_s = strtok(NULL, " \t\r\n");
+        unsigned int index, val;
+        if (!index_s || !val_s ||
+            wing_parse_uint(index_s, 7, &index) != 0 ||
+            wing_parse_uint(val_s, 255, &val) != 0) {
+            left_log(app, "usage: cscmeter <index 0-7> <val 0-255>");
+            return;
+        }
+        if (wing_surface_csc_meter_update(&app->surface, (int)index, (int)val) != 0)
+            left_log(app, "cscmeter command failed");
+        else {
+            char msg[80];
+            snprintf(msg, sizeof(msg), "updated CSC meter %u with %u", index, val);
+            left_log(app, msg);
+        }
+        return;
+    }
+    if (strcmp(cmd, "csctest") == 0) {
+        char *state_s = strtok(NULL, " \t\r\n");
+        if (!state_s) {
+            left_log(app, "usage: csctest <on|off>");
+            return;
+        }
+        if (strcmp(state_s, "on") == 0 || strcmp(state_s, "1") == 0) {
+            app->csc_test_active = 1;
+            app->csc_test_start_ms = monotonic_ms();
+            app->csc_test_phase = 0;
+            left_log(app, "CSC test pattern active");
+        } else {
+            app->csc_test_active = 0;
+            left_log(app, "CSC test pattern inactive");
         }
         return;
     }
@@ -1237,6 +1364,41 @@ int main(int argc, char **argv)
             (void)wing_enable_pnlc_touch(app.surface.pnlc_fd);
             next_pnlc_enable = now + 3000ull;
         }
+
+        if (app.csc_test_active) {
+            static unsigned long long last_csc_test_update = 0;
+            if (now - last_csc_test_update >= 50ull) {
+                last_csc_test_update = now;
+                unsigned long long elapsed = now - app.csc_test_start_ms;
+                if (elapsed < 2000ull) {
+                    if (app.csc_test_phase == 0) {
+                        (void)wing_surface_csc_text(&app.surface, 0, "OpenWING Display", "Test Pattern");
+                        app.csc_test_phase = 1;
+                    }
+                } else {
+                    if (app.csc_test_phase == 1) {
+                        uint8_t zero_levels[8] = {0};
+                        (void)wing_surface_csc_meters(&app.surface, zero_levels);
+                        app.csc_test_phase = 2;
+                    }
+                    if (app.csc_test_phase == 2) {
+                        static int counter = 0;
+                        counter = (counter + 2) % 512;
+                        for (int i = 0; i < 8; ++i) {
+                            int offset_counter = (counter + i * 32) % 512;
+                            int val;
+                            if (offset_counter < 256) {
+                                val = offset_counter;
+                            } else {
+                                val = 511 - offset_counter;
+                            }
+                            (void)wing_surface_csc_meter_update(&app.surface, i, val);
+                        }
+                    }
+                }
+            }
+        }
+
 
         pfds[0].fd = app.surface.csc_fd;
         pfds[0].events = POLLIN;

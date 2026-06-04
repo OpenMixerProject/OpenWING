@@ -1348,7 +1348,61 @@ int wing_surface_scribble_bitmap(struct wing_surface *surface, unsigned int slot
         payload_len += bitmap_len;
     }
 
+
     uint8_t cmd = (uint8_t)('A' + slot);
     return wing_send_frame(surface->csc_fd, cmd, payload, payload_len);
 }
+
+int wing_surface_csc_text(struct wing_surface *surface, int style, const char *line1, const char *line2)
+{
+    uint8_t payload[512];
+    size_t len = 0;
+
+    if (surface->pnlc_fd < 0)
+        return -1;
+
+    payload[len++] = 2; // Mode 2
+    payload[len++] = (uint8_t)style;
+
+    size_t l1 = strlen(line1);
+    if (len + l1 + 1 > sizeof(payload))
+        return -1;
+    memcpy(payload + len, line1, l1 + 1);
+    len += l1 + 1;
+
+    size_t l2 = strlen(line2);
+    if (len + l2 + 1 > sizeof(payload))
+        return -1;
+    memcpy(payload + len, line2, l2 + 1);
+    len += l2 + 1;
+
+    return wing_send_frame(surface->pnlc_fd, 'D', payload, len);
+}
+
+int wing_surface_csc_meters(struct wing_surface *surface, const uint8_t *levels)
+{
+    uint8_t payload[9];
+
+    if (surface->pnlc_fd < 0)
+        return -1;
+
+    payload[0] = 4; // Mode 4
+    memcpy(payload + 1, levels, 8);
+
+    return wing_send_frame(surface->pnlc_fd, 'D', payload, sizeof(payload));
+}
+
+int wing_surface_csc_meter_update(struct wing_surface *surface, int index, int value)
+{
+    uint8_t payload[2];
+
+    if (surface->pnlc_fd < 0)
+        return -1;
+
+    payload[0] = (uint8_t)index;
+    payload[1] = (uint8_t)value;
+
+    return wing_send_frame(surface->pnlc_fd, 'v', payload, sizeof(payload));
+}
+
 
