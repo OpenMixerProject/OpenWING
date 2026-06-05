@@ -43,6 +43,15 @@ struct app_state {
     unsigned long touch_events;
 };
 
+struct stock_touch_decoder {
+    uint8_t payload[512];
+    size_t len;
+    bool in_frame;
+    bool after_star;
+    bool have_cmd;
+    uint8_t cmd;
+};
+
 static volatile sig_atomic_t running = 1;
 static struct termios saved_stdin_termios;
 static bool saved_stdin_termios_valid;
@@ -64,7 +73,7 @@ static void usage(const char *prog)
             "\n"
             "\n"
             "wing-draw enables the stock PNLC touch-report mode and decodes\n"
-            "2A 41/81/01/E1 touchscreen reports with packed 12-bit coordinates.\n"
+            "stock 'p' touch frames and 2A 41/81/01/E1 raw touch reports.\n"
             "\n"
             "Serial-console keys while running: c=clear, q=quit, Ctrl-C=quit.\n",
             prog, DEFAULT_FB_PATH, DEFAULT_TOUCH_PATH);
@@ -462,6 +471,96 @@ static void touch_decoder_feed_byte(struct touch_decoder *decoder, struct app_st
     }
 }
 
+static void stock_touch_decoder_reset(struct stock_touch_decoder *decoder)
+{
+    memset(decoder, 0, sizeof(*decoder));
+}
+
+static void handle_stock_touch_frame(struct app_state *app, uint8_t cmd,
+                                     const uint8_t *payload, size_t len, uint8_t check)
+{
+    if (check != frame_checksum(payload, len))
+        return;
+
+    app->frames_seen++;
+
+    if (cmd == 'p' && len == 5) {
+        uint8_t phase = payload[0] & 0xf0u;
+        uint16_t raw_x = (uint16_t)payload[1] | ((uint16_t)payload[2] << 8);
+        uint16_t raw_y = (uint16_t)payload[3] | ((uint16_t)payload[4] << 8);
+        int x, y;
+
+        if (phase == 0x00) {
+            app->touching = false;
+            app->touch_events++;
+            return;
+        }
+
+        map_touch(app, raw_x, raw_y, &x, &y);
+        app->touch_events++;
+
+        if (app->touching)
+            draw_line(&app->fb, app->last_x, app->last_y, x, y, app->brush_radius, app->color);
+        else
+            draw_dot(&app->fb, x, y, app->brush_radius, app->color);
+
+        app->touching = true;
+        app->last_x = x;
+        app->last_y = y;
+    } else if (cmd == 't' && len == 2) {
+        if (payload[1] == 0)
+            app->touching = false;
+        app->touch_events++;
+    }
+}
+
+static void stock_touch_decoder_feed_byte(struct stock_touch_decoder *decoder,
+                                          struct app_state *app, uint8_t byte)
+{
+    if (!decoder->in_frame) {
+        if (byte == 0x2A) {
+            decoder->in_frame = true;
+            decoder->after_star = true;
+            decoder->have_cmd = false;
+            decoder->len = 0;
+        }
+        return;
+    }
+
+    if (decoder->after_star) {
+        decoder->after_star = false;
+        if (byte == 0x2A) {
+            decoder->have_cmd = false;
+            decoder->len = 0;
+            decoder->after_star = true;
+        } else if (byte == 0x40) {
+            if (decoder->len < sizeof(decoder->payload))
+                decoder->payload[decoder->len++] = 0x2A;
+        } else if (byte & 0x80) {
+            if (decoder->have_cmd)
+                handle_stock_touch_frame(app, decoder->cmd, decoder->payload,
+                                         decoder->len, byte);
+            stock_touch_decoder_reset(decoder);
+        } else if (!decoder->have_cmd) {
+            decoder->cmd = byte;
+            decoder->have_cmd = true;
+        } else if (decoder->len + 2 <= sizeof(decoder->payload)) {
+            decoder->payload[decoder->len++] = 0x2A;
+            decoder->payload[decoder->len++] = byte;
+        }
+        return;
+    }
+
+    if (byte == 0x2A) {
+        decoder->after_star = true;
+    } else if (!decoder->have_cmd) {
+        decoder->cmd = byte;
+        decoder->have_cmd = true;
+    } else if (decoder->len < sizeof(decoder->payload)) {
+        decoder->payload[decoder->len++] = byte;
+    }
+}
+
 static void handle_stdin_key(struct app_state *app, int key)
 {
     switch (key) {
@@ -486,6 +585,7 @@ int main(int argc, char **argv)
     const char *fb_path = DEFAULT_FB_PATH;
     const char *touch_path = DEFAULT_TOUCH_PATH;
     struct touch_decoder decoder = { 0 };
+    struct stock_touch_decoder stock_decoder = { 0 };
     struct app_state app = {
         .fb = { .fd = -1 },
         .brush_radius = 6,
@@ -573,6 +673,7 @@ int main(int argc, char **argv)
     setup_stdin_raw();
     fb_clear(&app.fb);
     touch_decoder_reset(&decoder);
+    stock_touch_decoder_reset(&stock_decoder);
 
     printf("wing-draw: framebuffer %ux%u %ubpp, touch %s @ 115200 8N1 raw %ux%u\n",
            app.fb.var.xres, app.fb.var.yres, app.fb.var.bits_per_pixel,
@@ -599,8 +700,10 @@ int main(int argc, char **argv)
             ssize_t n;
 
             while ((n = read(touch_fd, buf, sizeof(buf))) > 0) {
-                for (ssize_t i = 0; i < n; i++)
+                for (ssize_t i = 0; i < n; i++) {
                     touch_decoder_feed_byte(&decoder, &app, buf[i]);
+                    stock_touch_decoder_feed_byte(&stock_decoder, &app, buf[i]);
+                }
             }
             if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
                 fprintf(stderr, "read %s: %s\n", touch_path, strerror(errno));
