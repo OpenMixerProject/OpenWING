@@ -19,7 +19,25 @@
 
 #define DEFAULT_FB_PATH "/dev/fb0"
 #define DEFAULT_TOUCH_PATH "/dev/ttymxc3"
+#define CALIBRATION_POINTS 5
 #include "touchscreen_parser.h"
+
+struct calibration_sample {
+    double raw_x;
+    double raw_y;
+    double screen_x;
+    double screen_y;
+};
+
+struct touch_calibration {
+    bool valid;
+    bool active;
+    bool waiting_release;
+    unsigned int index;
+    struct calibration_sample samples[CALIBRATION_POINTS];
+    double x_coeff[3];
+    double y_coeff[3];
+};
 
 struct framebuffer {
     int fd;
@@ -41,6 +59,8 @@ struct app_state {
     int last_y;
     unsigned long frames_seen;
     unsigned long touch_events;
+    bool suppress_touch_until_release;
+    struct touch_calibration calibration;
 };
 
 struct stock_touch_decoder {
@@ -50,6 +70,12 @@ struct stock_touch_decoder {
     bool after_star;
     bool have_cmd;
     uint8_t cmd;
+};
+
+static const struct touch_calibration default_calibration = {
+    .valid = true,
+    .x_coeff = { 1.008553746, 0.013419642, -13.539 },
+    .y_coeff = { -0.000442457, 0.998999220, -5.510 },
 };
 
 static volatile sig_atomic_t running = 1;
@@ -75,7 +101,7 @@ static void usage(const char *prog)
             "wing-draw enables the stock PNLC touch-report mode and decodes\n"
             "stock 'p' touch frames and 2A 41/81/01/E1 raw touch reports.\n"
             "\n"
-            "Serial-console keys while running: c=clear, q=quit, Ctrl-C=quit.\n",
+            "Serial-console keys while running: c=clear, k=calibrate, q=quit, Ctrl-C=quit.\n",
             prog, DEFAULT_FB_PATH, DEFAULT_TOUCH_PATH);
 }
 
@@ -245,6 +271,11 @@ static void fb_clear(struct framebuffer *fb)
     fb_fill_rect(fb, 0, 0, (int)fb->var.xres, (int)fb->var.yres, 0x000000);
 }
 
+static int min_int(int a, int b)
+{
+    return a < b ? a : b;
+}
+
 static void draw_dot(struct framebuffer *fb, int cx, int cy, unsigned int radius, uint32_t color)
 {
     int r = (int)radius;
@@ -375,24 +406,299 @@ static int send_touch_enable(int fd)
 }
 
 
-
-static void map_touch(const struct app_state *app, int raw_x, int raw_y, int *x, int *y)
+static int clamp_to_range(int value, int max)
 {
-    // Apply calibration coefficients derived from logic analyzer corner captures
+    if (value < 0)
+        return 0;
+    if (value >= max)
+        return max - 1;
+    return value;
+}
+
+static void map_touch_default(const struct app_state *app, int raw_x, int raw_y, int *x, int *y)
+{
     double sx = 1.152 * raw_x - 0.145 * raw_y;
     double sy = -0.044 * raw_x + 1.112 * raw_y;
-
     int ix = (int)(sx + 0.5);
     int iy = (int)(sy + 0.5);
 
-    // Clamp coordinates to screen boundaries
-    if (ix < 0) ix = 0;
-    if (iy < 0) iy = 0;
-    if (ix >= (int)app->fb.var.xres) ix = (int)app->fb.var.xres - 1;
-    if (iy >= (int)app->fb.var.yres) iy = (int)app->fb.var.yres - 1;
+    *x = clamp_to_range(ix, (int)app->fb.var.xres);
+    *y = clamp_to_range(iy, (int)app->fb.var.yres);
+}
 
-    *x = ix;
-    *y = iy;
+static void map_touch(const struct app_state *app, int raw_x, int raw_y, int *x, int *y)
+{
+    const struct touch_calibration *cal = &app->calibration;
+
+    if (cal->valid) {
+        double sx = cal->x_coeff[0] * raw_x + cal->x_coeff[1] * raw_y + cal->x_coeff[2];
+        double sy = cal->y_coeff[0] * raw_x + cal->y_coeff[1] * raw_y + cal->y_coeff[2];
+        int ix = (int)(sx + 0.5);
+        int iy = (int)(sy + 0.5);
+
+        *x = clamp_to_range(ix, (int)app->fb.var.xres);
+        *y = clamp_to_range(iy, (int)app->fb.var.yres);
+        return;
+    }
+
+    map_touch_default(app, raw_x, raw_y, x, y);
+}
+
+static double abs_double(double value)
+{
+    return value < 0.0 ? -value : value;
+}
+
+static int solve_3x3(double matrix[3][3], double rhs[3], double out[3])
+{
+    double a[3][4];
+
+    for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 3; col++)
+            a[row][col] = matrix[row][col];
+        a[row][3] = rhs[row];
+    }
+
+    for (int col = 0; col < 3; col++) {
+        int pivot = col;
+        double best = abs_double(a[col][col]);
+
+        for (int row = col + 1; row < 3; row++) {
+            double candidate = abs_double(a[row][col]);
+            if (candidate > best) {
+                best = candidate;
+                pivot = row;
+            }
+        }
+        if (best < 0.000001)
+            return -1;
+        if (pivot != col) {
+            for (int i = col; i < 4; i++) {
+                double tmp = a[col][i];
+                a[col][i] = a[pivot][i];
+                a[pivot][i] = tmp;
+            }
+        }
+
+        double div = a[col][col];
+        for (int i = col; i < 4; i++)
+            a[col][i] /= div;
+
+        for (int row = 0; row < 3; row++) {
+            if (row == col)
+                continue;
+            double factor = a[row][col];
+            for (int i = col; i < 4; i++)
+                a[row][i] -= factor * a[col][i];
+        }
+    }
+
+    out[0] = a[0][3];
+    out[1] = a[1][3];
+    out[2] = a[2][3];
+    return 0;
+}
+
+static int solve_touch_calibration(struct touch_calibration *cal)
+{
+    double normal[3][3] = { 0 };
+    double rhs_x[3] = { 0 };
+    double rhs_y[3] = { 0 };
+    double x_coeff[3];
+    double y_coeff[3];
+
+    for (unsigned int i = 0; i < CALIBRATION_POINTS; i++) {
+        const struct calibration_sample *sample = &cal->samples[i];
+        double terms[3] = { sample->raw_x, sample->raw_y, 1.0 };
+
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++)
+                normal[row][col] += terms[row] * terms[col];
+            rhs_x[row] += terms[row] * sample->screen_x;
+            rhs_y[row] += terms[row] * sample->screen_y;
+        }
+    }
+
+    double normal_y[3][3];
+    memcpy(normal_y, normal, sizeof(normal_y));
+    if (solve_3x3(normal, rhs_x, x_coeff) != 0)
+        return -1;
+    if (solve_3x3(normal_y, rhs_y, y_coeff) != 0)
+        return -1;
+    memcpy(cal->x_coeff, x_coeff, sizeof(cal->x_coeff));
+    memcpy(cal->y_coeff, y_coeff, sizeof(cal->y_coeff));
+    cal->valid = true;
+    return 0;
+}
+
+static void calibration_target(const struct app_state *app, unsigned int index, int *x, int *y)
+{
+    int min_dim = min_int((int)app->fb.var.xres, (int)app->fb.var.yres);
+    int margin = min_dim / 8;
+    int right;
+    int bottom;
+
+    if (margin < 24)
+        margin = 24;
+    if (margin > 80)
+        margin = 80;
+
+    right = (int)app->fb.var.xres - 1 - margin;
+    bottom = (int)app->fb.var.yres - 1 - margin;
+
+    switch (index) {
+    case 0:
+        *x = margin;
+        *y = margin;
+        break;
+    case 1:
+        *x = right;
+        *y = margin;
+        break;
+    case 2:
+        *x = right;
+        *y = bottom;
+        break;
+    case 3:
+        *x = margin;
+        *y = bottom;
+        break;
+    default:
+        *x = (int)app->fb.var.xres / 2;
+        *y = (int)app->fb.var.yres / 2;
+        break;
+    }
+}
+
+static void draw_calibration_target(struct app_state *app)
+{
+    int x;
+    int y;
+
+    calibration_target(app, app->calibration.index, &x, &y);
+    fb_clear(&app->fb);
+    draw_line(&app->fb, x - 20, y, x + 20, y, 1, 0x00ff00);
+    draw_line(&app->fb, x, y - 20, x, y + 20, 1, 0x00ff00);
+    draw_dot(&app->fb, x, y, 5, 0xffffff);
+}
+
+static void start_touch_calibration(struct app_state *app)
+{
+    app->calibration.active = true;
+    app->calibration.waiting_release = false;
+    app->calibration.index = 0;
+    app->touching = false;
+    app->suppress_touch_until_release = false;
+    draw_calibration_target(app);
+    printf("calibration: tap target 1/%u\n", CALIBRATION_POINTS);
+    fflush(stdout);
+}
+
+static void apply_default_calibration(struct app_state *app)
+{
+    app->calibration = default_calibration;
+}
+
+static void finish_touch_calibration(struct app_state *app)
+{
+    if (solve_touch_calibration(&app->calibration) != 0) {
+        printf("calibration: failed, keeping previous mapping\n");
+    } else {
+        printf("calibration: x = %.9f*raw_x + %.9f*raw_y + %.3f\n",
+               app->calibration.x_coeff[0], app->calibration.x_coeff[1],
+               app->calibration.x_coeff[2]);
+        printf("calibration: y = %.9f*raw_x + %.9f*raw_y + %.3f\n",
+               app->calibration.y_coeff[0], app->calibration.y_coeff[1],
+               app->calibration.y_coeff[2]);
+    }
+    fflush(stdout);
+
+    app->calibration.active = false;
+    app->calibration.waiting_release = false;
+    app->touching = false;
+    app->suppress_touch_until_release = true;
+    fb_clear(&app->fb);
+}
+
+static int calibration_capture_touch(struct app_state *app, int raw_x, int raw_y)
+{
+    struct touch_calibration *cal = &app->calibration;
+    struct calibration_sample *sample;
+    int screen_x;
+    int screen_y;
+    int mapped_x;
+    int mapped_y;
+
+    if (!cal->active)
+        return 0;
+    if (cal->waiting_release)
+        return 1;
+
+    calibration_target(app, cal->index, &screen_x, &screen_y);
+    map_touch(app, raw_x, raw_y, &mapped_x, &mapped_y);
+
+    sample = &cal->samples[cal->index];
+    sample->raw_x = raw_x;
+    sample->raw_y = raw_y;
+    sample->screen_x = screen_x;
+    sample->screen_y = screen_y;
+
+    printf("calibration: point %u raw=(%d,%d) screen=(%d,%d) current=(%d,%d) delta=(%d,%d)\n",
+           cal->index + 1, raw_x, raw_y, screen_x, screen_y, mapped_x, mapped_y,
+           mapped_x - screen_x, mapped_y - screen_y);
+    fflush(stdout);
+
+    cal->index++;
+    cal->waiting_release = true;
+    if (cal->index >= CALIBRATION_POINTS)
+        finish_touch_calibration(app);
+    return 1;
+}
+
+static void calibration_release_touch(struct app_state *app)
+{
+    struct touch_calibration *cal = &app->calibration;
+
+    if (!cal->active || !cal->waiting_release)
+        return;
+    cal->waiting_release = false;
+    if (cal->index < CALIBRATION_POINTS) {
+        draw_calibration_target(app);
+        printf("calibration: tap target %u/%u\n", cal->index + 1, CALIBRATION_POINTS);
+        fflush(stdout);
+    }
+}
+
+static void handle_touch_point(struct app_state *app, int raw_x, int raw_y)
+{
+    int x;
+    int y;
+
+    if (calibration_capture_touch(app, raw_x, raw_y))
+        return;
+    if (app->suppress_touch_until_release)
+        return;
+
+    map_touch(app, raw_x, raw_y, &x, &y);
+    app->touch_events++;
+
+    if (app->touching)
+        draw_line(&app->fb, app->last_x, app->last_y, x, y, app->brush_radius, app->color);
+    else
+        draw_dot(&app->fb, x, y, app->brush_radius, app->color);
+
+    app->touching = true;
+    app->last_x = x;
+    app->last_y = y;
+}
+
+static void handle_touch_release(struct app_state *app)
+{
+    if (app->calibration.active)
+        calibration_release_touch(app);
+    app->suppress_touch_until_release = false;
+    app->touching = false;
+    app->touch_events++;
 }
 
 static void flush_touch_decoder(struct touch_decoder *decoder, struct app_state *app) {
@@ -413,23 +719,10 @@ static void flush_touch_decoder(struct touch_decoder *decoder, struct app_state 
             uint16_t raw_x = ((uint16_t)A << 4) | (B >> 4);
             uint16_t raw_y = ((uint16_t)(B & 0x0F) << 8) | C;
 
-            int x, y;
-            map_touch(app, raw_x, raw_y, &x, &y);
-            app->touch_events++;
-
-            if (app->touching) {
-                draw_line(&app->fb, app->last_x, app->last_y, x, y, app->brush_radius, app->color);
-            } else {
-                draw_dot(&app->fb, x, y, app->brush_radius, app->color);
-            }
-
-            app->touching = true;
-            app->last_x = x;
-            app->last_y = y;
+            handle_touch_point(app, raw_x, raw_y);
         }
     } else if (type == 0x01) {
-        app->touching = false;
-        app->touch_events++;
+        handle_touch_release(app);
     }
 
     decoder->in_frame = 0;
@@ -471,6 +764,11 @@ static void touch_decoder_feed_byte(struct touch_decoder *decoder, struct app_st
     }
 }
 
+static int is_wing_frame_cmd(uint8_t byte)
+{
+    return byte >= 0x20 && byte < 0x7f;
+}
+
 static void stock_touch_decoder_reset(struct stock_touch_decoder *decoder)
 {
     memset(decoder, 0, sizeof(*decoder));
@@ -488,29 +786,23 @@ static void handle_stock_touch_frame(struct app_state *app, uint8_t cmd,
         uint8_t phase = payload[0] & 0xf0u;
         uint16_t raw_x = (uint16_t)payload[1] | ((uint16_t)payload[2] << 8);
         uint16_t raw_y = (uint16_t)payload[3] | ((uint16_t)payload[4] << 8);
-        int x, y;
-
+        if ((payload[0] & 0x0fu) != 0)
+            return;
+        if (phase != 0x00 && phase != 0x10 && phase != 0x20)
+            return;
+        if (raw_x >= app->raw_width || raw_y >= app->raw_height)
+            return;
         if (phase == 0x00) {
-            app->touching = false;
-            app->touch_events++;
+            handle_touch_release(app);
             return;
         }
 
-        map_touch(app, raw_x, raw_y, &x, &y);
-        app->touch_events++;
-
-        if (app->touching)
-            draw_line(&app->fb, app->last_x, app->last_y, x, y, app->brush_radius, app->color);
-        else
-            draw_dot(&app->fb, x, y, app->brush_radius, app->color);
-
-        app->touching = true;
-        app->last_x = x;
-        app->last_y = y;
+        handle_touch_point(app, raw_x, raw_y);
     } else if (cmd == 't' && len == 2) {
+        if (payload[1] != 0 && payload[1] != 1)
+            return;
         if (payload[1] == 0)
-            app->touching = false;
-        app->touch_events++;
+            handle_touch_release(app);
     }
 }
 
@@ -561,6 +853,49 @@ static void stock_touch_decoder_feed_byte(struct stock_touch_decoder *decoder,
     }
 }
 
+static void feed_touch_stream(struct touch_decoder *raw_decoder,
+                              struct stock_touch_decoder *stock_decoder,
+                              int *pending_star,
+                              struct app_state *app,
+                              uint8_t byte)
+{
+    if (stock_decoder->in_frame) {
+        stock_touch_decoder_feed_byte(stock_decoder, app, byte);
+        return;
+    }
+
+    if (raw_decoder->in_frame || raw_decoder->pending_star) {
+        if (raw_decoder->pending_star &&
+            !is_touchscreen_type(byte) &&
+            is_wing_frame_cmd(byte)) {
+            touch_decoder_reset(raw_decoder);
+            stock_touch_decoder_feed_byte(stock_decoder, app, 0x2A);
+            stock_touch_decoder_feed_byte(stock_decoder, app, byte);
+            return;
+        }
+        touch_decoder_feed_byte(raw_decoder, app, byte);
+        return;
+    }
+
+    if (*pending_star) {
+        if (byte == 0x2A) {
+            return;
+        }
+        if (is_touchscreen_type(byte)) {
+            touch_decoder_feed_byte(raw_decoder, app, 0x2A);
+            touch_decoder_feed_byte(raw_decoder, app, byte);
+        } else if (is_wing_frame_cmd(byte)) {
+            stock_touch_decoder_feed_byte(stock_decoder, app, 0x2A);
+            stock_touch_decoder_feed_byte(stock_decoder, app, byte);
+        }
+        *pending_star = 0;
+        return;
+    }
+
+    if (byte == 0x2A)
+        *pending_star = 1;
+}
+
 static void handle_stdin_key(struct app_state *app, int key)
 {
     switch (key) {
@@ -568,8 +903,14 @@ static void handle_stdin_key(struct app_state *app, int key)
     case 'C':
         fb_clear(&app->fb);
         app->touching = false;
+        app->calibration.active = false;
+        app->suppress_touch_until_release = false;
         printf("cleared framebuffer\n");
         fflush(stdout);
+        break;
+    case 'k':
+    case 'K':
+        start_touch_calibration(app);
         break;
     case 'q':
     case 'Q':
@@ -586,6 +927,7 @@ int main(int argc, char **argv)
     const char *touch_path = DEFAULT_TOUCH_PATH;
     struct touch_decoder decoder = { 0 };
     struct stock_touch_decoder stock_decoder = { 0 };
+    int pending_frame_star = 0;
     struct app_state app = {
         .fb = { .fd = -1 },
         .brush_radius = 6,
@@ -650,6 +992,7 @@ int main(int argc, char **argv)
         app.raw_width = app.fb.var.xres;
         app.raw_height = app.fb.var.yres;
     }
+    apply_default_calibration(&app);
 
     touch_fd = serial_open_pnlc(touch_path);
     if (touch_fd < 0) {
@@ -678,7 +1021,10 @@ int main(int argc, char **argv)
     printf("wing-draw: framebuffer %ux%u %ubpp, touch %s @ 115200 8N1 raw %ux%u\n",
            app.fb.var.xres, app.fb.var.yres, app.fb.var.bits_per_pixel,
            touch_path, app.raw_width, app.raw_height);
-    printf("wing-draw: PNLC touch mode enabled; black canvas, white brush; serial keys: c=clear, q=quit\n");
+    printf("wing-draw: PNLC touch mode enabled; black canvas, white brush; serial keys: c=clear, k=calibrate, q=quit\n");
+    printf("wing-draw: default calibration x=%.9f*raw_x + %.9f*raw_y + %.3f, y=%.9f*raw_x + %.9f*raw_y + %.3f\n",
+           app.calibration.x_coeff[0], app.calibration.x_coeff[1], app.calibration.x_coeff[2],
+           app.calibration.y_coeff[0], app.calibration.y_coeff[1], app.calibration.y_coeff[2]);
     fflush(stdout);
 
     while (running) {
@@ -700,10 +1046,9 @@ int main(int argc, char **argv)
             ssize_t n;
 
             while ((n = read(touch_fd, buf, sizeof(buf))) > 0) {
-                for (ssize_t i = 0; i < n; i++) {
-                    touch_decoder_feed_byte(&decoder, &app, buf[i]);
-                    stock_touch_decoder_feed_byte(&stock_decoder, &app, buf[i]);
-                }
+                for (ssize_t i = 0; i < n; i++)
+                    feed_touch_stream(&decoder, &stock_decoder, &pending_frame_star,
+                                      &app, buf[i]);
             }
             if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
                 fprintf(stderr, "read %s: %s\n", touch_path, strerror(errno));

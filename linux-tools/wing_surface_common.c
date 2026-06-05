@@ -747,14 +747,17 @@ int wing_surface_open(struct wing_surface *surface, const char *csc_device,
         return -1;
 
     if (open_pnlc) {
-        (void)wing_init_pnlc_transport();
         surface->pnlc_fd = wing_serial_open_pnlc(pnlc_device);
         if (surface->pnlc_fd >= 0) {
-            tcflush(surface->pnlc_fd, TCIFLUSH);
-            (void)wing_enable_pnlc_backlight(surface->pnlc_fd);
-            usleep(20000);
+            /*
+             * Do not reset/reconfigure PNLC here. The boot-time panel init has
+             * already brought the STM32 application up; resetting it from this
+             * console can leave touch reporting dead until the full init runs
+             * again. Match wing-draw/pnlc_raw_dump and only enable reports.
+             */
             (void)wing_enable_pnlc_touch(surface->pnlc_fd);
             usleep(100000);
+            tcflush(surface->pnlc_fd, TCIFLUSH);
         }
     }
     return 0;
@@ -1405,4 +1408,3 @@ int wing_surface_csc_meter_update(struct wing_surface *surface, int index, int v
 
     return wing_send_frame(surface->pnlc_fd, 'v', payload, sizeof(payload));
 }
-

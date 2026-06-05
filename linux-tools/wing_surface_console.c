@@ -546,8 +546,15 @@ static void handle_rx_byte_pnlc(struct app *app, uint8_t byte, int parity_error)
 {
     app->pnlc_last_rx_ms = monotonic_ms();
 
-    // 1. If standard/raw frame is active, let them handle it.
-    if (app->pnlc_parser.in_frame || app->pnlc_raw_len > 0) {
+    // 1. If a standard WING frame is active, keep all bytes on that parser.
+    // Letting the PLDC raw detector see the delimiter/checksum first can steal
+    // the checksum byte from stock 'p' touch frames.
+    if (app->pnlc_parser.in_frame) {
+        wing_parser_feed(&app->pnlc_parser, "PNLC", byte, frame_cb, app);
+        return;
+    }
+
+    if (app->pnlc_raw_len > 0) {
         int raw_status = handle_pnlc_raw_report(app, byte, parity_error);
         if (raw_status == 2) {
             wing_parser_reset(&app->pnlc_parser);
