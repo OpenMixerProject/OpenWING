@@ -24,6 +24,70 @@ INCLUDE_DOOM="${INCLUDE_DOOM:-}"
 
 UBOOT_IMX="${OUT_DIR}/u-boot-linux.imx"
 OUTPUT_WINGFW="${OUT_DIR}/wing-compact-usb-console-linux.wingfw"
+OMC_DIR="${ROOT_DIR}/software/omc"
+OMC_BIN="${OMC_DIR}/build/wing/wing-omc"
+OMC_STAMP="${OMC_DIR}/build/wing/.wing-omc.inputs.sha256"
+
+hash_file() {
+    local digest
+    if command -v sha256sum >/dev/null 2>&1; then
+        digest="$(sha256sum "$1")"
+    else
+        digest="$(shasum -a 256 "$1")"
+    fi
+    printf '%s\n' "${digest%% *}"
+}
+
+hash_stream() {
+    local digest
+    if command -v sha256sum >/dev/null 2>&1; then
+        digest="$(sha256sum)"
+    else
+        digest="$(shasum -a 256)"
+    fi
+    printf '%s\n' "${digest%% *}"
+}
+
+omc_input_signature() {
+    (
+        cd "${OMC_DIR}"
+        {
+            printf '%s\n' "Makefile_wing"
+            printf '%s\n' "compile-wing-docker.sh"
+            find src lib files -type f -print
+        } | LC_ALL=C sort | while IFS= read -r input_path; do
+            if [[ -f "${input_path}" ]]; then
+                printf '%s\n' "${input_path}"
+                hash_file "${input_path}"
+            fi
+        done
+    ) | hash_stream
+}
+
+build_omc_if_needed() {
+    local current_signature previous_signature
+
+    current_signature="$(omc_input_signature)"
+    previous_signature=""
+    if [[ -f "${OMC_STAMP}" ]]; then
+        previous_signature="$(<"${OMC_STAMP}")"
+    fi
+
+    if [[ -f "${OMC_BIN}" && "${current_signature}" == "${previous_signature}" ]]; then
+        echo "[build] omc (wing target): unchanged, skipping compilation"
+        return
+    fi
+
+    echo "[build] omc (wing target)"
+    "${OMC_DIR}/compile-wing-docker.sh"
+
+    if [[ ! -f "${OMC_BIN}" ]]; then
+        echo "[error] omc build did not produce ${OMC_BIN}" >&2
+        exit 1
+    fi
+    mkdir -p "$(dirname "${OMC_STAMP}")"
+    printf '%s\n' "${current_signature}" > "${OMC_STAMP}"
+}
 
 mkdir -p "${BUILD_DIR}" "${OUT_DIR}" "${DOCKER_CONFIG_DIR}"
 
@@ -59,8 +123,7 @@ RUN dpkg --add-architecture armhf \
   && rm -rf /var/lib/apt/lists/*
 DOCKERFILE
 
-echo "[build] omc (wing target)"
-"${ROOT_DIR}/software/omc/compile-wing-docker.sh"
+build_omc_if_needed
 
 DOCKER_CONFIG="${DOCKER_CONFIG_DIR}" DOCKER_HOST="${DOCKER_HOST_URI}" \
 docker run --rm \

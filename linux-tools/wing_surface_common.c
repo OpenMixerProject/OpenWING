@@ -233,7 +233,8 @@ int wing_serial_open(const char *path, unsigned int baud)
     tio.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
     tio.c_oflag &= ~OPOST;
     tio.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
-    tio.c_cflag &= ~(CSIZE|PARENB);
+    tio.c_cflag &= ~(CSIZE|PARENB|CSTOPB);
+    tio.c_cflag &= ~CRTSCTS;
     tio.c_cflag |= CS8 | CLOCAL | CREAD;
     cfsetispeed(&tio, speed);
     cfsetospeed(&tio, speed);
@@ -260,15 +261,15 @@ int wing_serial_open_pnlc(const char *path)
         return -1;
     }
     cfmakeraw(&tio);
-    tio.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON|INPCK);
+    tio.c_iflag = 0;
+    tio.c_oflag = 0;
+    tio.c_lflag = 0;
+    tio.c_cflag = CS8 | CREAD | CLOCAL;
+    tio.c_cflag &= ~PARENB;
+    tio.c_cflag &= ~CSTOPB;
+    tio.c_cflag &= ~CRTSCTS;
     cfsetispeed(&tio, B115200);
     cfsetospeed(&tio, B115200);
-    tio.c_cflag |= CLOCAL | CREAD;
-    tio.c_cflag |= PARENB;
-    tio.c_cflag &= ~PARODD;
-    tio.c_cflag &= ~CSTOPB;
-    tio.c_cflag &= ~CSIZE;
-    tio.c_cflag |= CS8;
     tio.c_cc[VMIN] = 0;
     tio.c_cc[VTIME] = 0;
     if (tcsetattr(fd, TCSANOW, &tio) != 0) {
@@ -1404,5 +1405,4 @@ int wing_surface_csc_meter_update(struct wing_surface *surface, int index, int v
 
     return wing_send_frame(surface->pnlc_fd, 'v', payload, sizeof(payload));
 }
-
 

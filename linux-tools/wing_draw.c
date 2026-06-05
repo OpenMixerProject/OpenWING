@@ -14,6 +14,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
 
 #define DEFAULT_FB_PATH "/dev/fb0"
@@ -63,7 +64,7 @@ static void usage(const char *prog)
             "\n"
             "\n"
             "wing-draw enables the stock PNLC touch-report mode and decodes\n"
-            "framed 'p' packets with 16-bit x/y coordinates.\n"
+            "2A 41/81/01/E1 touchscreen reports with packed 12-bit coordinates.\n"
             "\n"
             "Serial-console keys while running: c=clear, q=quit, Ctrl-C=quit.\n",
             prog, DEFAULT_FB_PATH, DEFAULT_TOUCH_PATH);
@@ -327,14 +328,15 @@ static int serial_open_pnlc(const char *path)
     }
 
     cfmakeraw(&tio);
+    tio.c_iflag = 0;
+    tio.c_oflag = 0;
+    tio.c_lflag = 0;
+    tio.c_cflag = CS8 | CREAD | CLOCAL;
+    tio.c_cflag &= ~PARENB;
+    tio.c_cflag &= ~CSTOPB;
+    tio.c_cflag &= ~CRTSCTS;
     cfsetispeed(&tio, B115200);
     cfsetospeed(&tio, B115200);
-    tio.c_cflag |= CLOCAL | CREAD;
-    tio.c_cflag |= PARENB;
-    tio.c_cflag &= ~PARODD;
-    tio.c_cflag &= ~CSTOPB;
-    tio.c_cflag &= ~CSIZE;
-    tio.c_cflag |= CS8;
     tio.c_cc[VMIN] = 0;
     tio.c_cc[VTIME] = 0;
 
@@ -345,6 +347,22 @@ static int serial_open_pnlc(const char *path)
 
     tcflush(fd, TCIOFLUSH);
     return fd;
+}
+
+static unsigned long long mono_ms(void)
+{
+    struct timespec ts;
+
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (unsigned long long)ts.tv_sec * 1000ULL +
+           (unsigned long long)ts.tv_nsec / 1000000ULL;
+}
+
+static int send_touch_enable(int fd)
+{
+    const uint8_t touch_on[] = { 1 };
+
+    return send_pnlc_frame(fd, 'I', touch_on, sizeof(touch_on));
 }
 
 
@@ -474,6 +492,7 @@ int main(int argc, char **argv)
         .color = 0xffffff,
     };
     bool raw_size_set = false;
+    unsigned long long next_touch_enable;
     int touch_fd;
     int opt;
     static const struct option long_options[] = {
@@ -539,24 +558,23 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    if (send_touch_enable(touch_fd) != 0) {
+        fprintf(stderr, "enable PNLC touch reports: %s\n", strerror(errno));
+        close(touch_fd);
+        fb_close(&app.fb);
+        return 1;
+    }
     {
-        const uint8_t touch_on[] = { 0 };
-
-        if (send_pnlc_frame(touch_fd, 'I', touch_on, sizeof(touch_on)) != 0) {
-            fprintf(stderr, "enable PNLC touch reports: %s\n", strerror(errno));
-            close(touch_fd);
-            fb_close(&app.fb);
-            return 1;
-        }
         usleep(100000);
         tcflush(touch_fd, TCIFLUSH);
     }
+    next_touch_enable = mono_ms() + 3000ULL;
 
     setup_stdin_raw();
     fb_clear(&app.fb);
     touch_decoder_reset(&decoder);
 
-    printf("wing-draw: framebuffer %ux%u %ubpp, touch %s raw %ux%u\n",
+    printf("wing-draw: framebuffer %ux%u %ubpp, touch %s @ 115200 8N1 raw %ux%u\n",
            app.fb.var.xres, app.fb.var.yres, app.fb.var.bits_per_pixel,
            touch_path, app.raw_width, app.raw_height);
     printf("wing-draw: PNLC touch mode enabled; black canvas, white brush; serial keys: c=clear, q=quit\n");
@@ -597,6 +615,14 @@ int main(int argc, char **argv)
                 for (ssize_t i = 0; i < n; i++)
                     handle_stdin_key(&app, keys[i]);
             }
+        }
+
+        if (mono_ms() >= next_touch_enable) {
+            if (send_touch_enable(touch_fd) != 0) {
+                fprintf(stderr, "enable PNLC touch reports: %s\n", strerror(errno));
+                break;
+            }
+            next_touch_enable = mono_ms() + 3000ULL;
         }
     }
 
