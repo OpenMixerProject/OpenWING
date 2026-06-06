@@ -36,7 +36,7 @@ Datasheet: https://www.nxp.com/docs/en/data-sheet/IMX6SDLCEC.pdf
 
 ## TODOs
 
-- understand the Scribbe Strip LCDs
+- understand the Scribble Strip LCDs
 - finish groundworks on surface input and output (Buttons, Encoders, Faders, LCDs, LEDs)
 - get the Trion FPGA working
 - get the four DSPs working
