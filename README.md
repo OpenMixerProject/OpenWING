@@ -30,20 +30,23 @@ Datasheet: https://www.nxp.com/docs/en/data-sheet/IMX6SDLCEC.pdf
 
 ### Software
 
-- OpenMixerControl starts
+- OpenMixerControl starts and can be "used", but the WING audio hardware is currently not (yet) ready
 
-<img width="3000" height="4000" alt="IMG_20260604_020730" src="https://github.com/user-attachments/assets/51cb410b-7d2b-4a9d-9ea8-ab00bf1b646f" />
+<img width="3000" height="4000" alt="IMG_20260607_182642" src="https://github.com/user-attachments/assets/13924386-fbdd-4a5d-8371-0ff2e37143da" />
+<img width="4000" height="3000" alt="IMG_20260607_174217" src="https://github.com/user-attachments/assets/50e9e0c2-e282-453f-a69b-497ceb20157a" />
+<img width="3000" height="4000" alt="IMG_20260607_182549" src="https://github.com/user-attachments/assets/a6c39231-d984-4066-8214-f5afbd509c15" />
+
 
 ## TODOs
 
-- understand the Scribble Strip LCDs
-- finish groundworks on surface input and output (Buttons, Encoders, Faders, LCDs, LEDs)
-- get the Trion FPGA working
-- get the four DSPs working
-- get the Audiosystem working (ADDA-Chips, digital audio interfaces like StageConnect, AES/EBU, AES50)
-- optimize the build chain and dial in the build parameter for max performance
-- add usefull tools to the OS
-- port OpenMixerControl to use the hardware of the WING
+- [x] understand the Scribble Strip LCDs
+- [x] finish groundworks on surface input and output (Buttons, Encoders, Faders, LCDs, LEDs)
+- [ ] get the Trion FPGA working
+- [ ] get the four DSPs working
+- [ ] get the Audiosystem working (ADDA-Chips, digital audio interfaces like StageConnect, AES/EBU, AES50)
+- [ ] optimize the build chain and dial in the build parameter for max performance
+- [ ] add usefull tools to the OS
+- [ ] fully port OpenMixerControl to use the hardware of the WING (Touch, Non-Pushbutton-Encoder, FPGA, DSPs, ...)
 
 # Social, Web, Community
 
