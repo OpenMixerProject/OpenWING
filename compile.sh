@@ -245,7 +245,39 @@ make ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" CONFIG_PREFIX="${ROOTFS_DIR
 
 echo "[build] Dropbear SSH server"
 cd "${BUILD_DIR}/dropbear-${DROPBEAR_VER}"
+cat > localoptions.h.tmp <<'EOF'
+/* OpenWING initramfs SSH settings.
+ *
+ * Keep Dropbear's Linux re-exec path enabled: current Dropbear passes the
+ * pre-auth childpipe fd through re-exec, so authenticated sessions are removed
+ * from the unauthenticated-client accounting correctly. Older cached builds
+ * without that fix can stop accepting connections after MAX_UNAUTH_CLIENTS
+ * sequential logins.
+ *
+ * The WING image is an experimental root/blank-password initramfs used on a
+ * trusted development network. VSCode/build deploys can open bursts of SSH
+ * connections, so use less aggressive unauthenticated-connection limits than
+ * Dropbear's default 5-per-IP / 30-global values.
+ */
+#define DROPBEAR_REEXEC 1
+#define MAX_UNAUTH_PER_IP 16
+#define MAX_UNAUTH_CLIENTS 64
+EOF
+if ! cmp -s localoptions.h.tmp localoptions.h; then
+    mv localoptions.h.tmp localoptions.h
+else
+    rm localoptions.h.tmp
+fi
+
+DROPBEAR_NEED_BUILD=0
 if [[ ! -f dropbearmulti ]]; then
+    DROPBEAR_NEED_BUILD=1
+elif [[ localoptions.h -nt dropbearmulti || "${ROOT_DIR}/compile.sh" -nt dropbearmulti ]]; then
+    DROPBEAR_NEED_BUILD=1
+fi
+
+if [[ "${DROPBEAR_NEED_BUILD}" -eq 1 ]]; then
+    make distclean >/dev/null 2>&1 || true
     ./configure \
         --build="$(gcc -dumpmachine)" \
         --host="${CROSS_COMPILE%-}" \
@@ -265,7 +297,7 @@ if [[ ! -f dropbearmulti ]]; then
     make PROGRAMS="dropbear dropbearkey scp" STATIC=1 MULTI=1 -j"$(nproc)"
     "${CROSS_COMPILE}strip" dropbearmulti
 else
-    echo "[build] Dropbear SSH server: already built, skipping compilation"
+    echo "[build] Dropbear SSH server: up to date, skipping compilation"
 fi
 install -D -m 0755 dropbearmulti "${ROOTFS_DIR}/usr/sbin/dropbearmulti"
 ln -sf /usr/sbin/dropbearmulti "${ROOTFS_DIR}/usr/sbin/dropbear"
