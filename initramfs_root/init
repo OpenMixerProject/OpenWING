@@ -21,6 +21,12 @@ echo "Wing USB console Linux booted"
 echo "Bringing up PNLC before starting the USB console..."
 /usr/bin/wing_panel_init
 
+# Start the touchscreen uinput driver in the background
+if [ -x /usr/bin/wing-touch-uinput ]; then
+    echo "Starting wing-touch-uinput daemon..."
+    /usr/bin/wing-touch-uinput &
+fi
+
 # Start a getty on the framebuffer console (tty1) if it exists.
 if [ -c /dev/tty1 ]; then
     (

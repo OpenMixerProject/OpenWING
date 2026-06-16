@@ -120,6 +120,13 @@ RUN dpkg --add-architecture armhf \
     python3 \
     u-boot-tools \
     xz-utils \
+    cmake \
+    qtbase5-dev:armhf \
+    qtbase5-dev-tools \
+    libegl1-mesa-dev:armhf \
+    libgles2-mesa-dev:armhf \
+    libgbm-dev:armhf \
+    libgl1-mesa-dri:armhf \
   && rm -rf /var/lib/apt/lists/*
 DOCKERFILE
 
@@ -149,6 +156,72 @@ set -euo pipefail
 ARCH=arm
 CROSS_COMPILE=arm-linux-gnueabihf-
 ROOTFS_DIR="${BUILD_DIR}/rootfs"
+
+copy_deps() {
+    local binary="$1"
+    local dest="$2"
+
+    # 1. Copy program interpreter (dynamic linker)
+    local interpreter
+    interpreter=$(arm-linux-gnueabihf-readelf -l "$binary" 2>/dev/null | grep "interpreter:" | sed -r 's/.*interpreter: (.*)\]/\1/')
+    if [[ -n "${interpreter}" ]]; then
+        local real_interpreter
+        real_interpreter=$(realpath "${interpreter}")
+        if [[ -f "${real_interpreter}" ]]; then
+            local dest_path="${dest}/${interpreter#/}"
+            mkdir -p "$(dirname "${dest_path}")"
+            echo "[copy_deps] Copying interpreter: ${real_interpreter} -> ${dest_path}"
+            cp -L "${real_interpreter}" "${dest_path}"
+        fi
+    fi
+
+    # 2. Recursively find and copy libraries
+    local to_resolve=("$binary")
+    local resolved=()
+
+    while [[ ${#to_resolve[@]} -gt 0 ]]; do
+        local current="${to_resolve[0]}"
+        to_resolve=("${to_resolve[@]:1}")
+
+        local needed
+        needed=$(arm-linux-gnueabihf-readelf -d "$current" 2>/dev/null | grep "NEEDED" | sed -r 's/.*Shared library: \[(.*)\]/\1/')
+        for lib in $needed; do
+            # Skip if already resolved
+            local already_resolved=0
+            for r in "${resolved[@]:-}"; do
+                if [[ "$r" == "$lib" ]]; then
+                    already_resolved=1
+                    break
+                fi
+            done
+            if [[ $already_resolved -eq 1 ]]; then
+                continue
+            fi
+
+            # Find library in standard toolchain search paths
+            local lib_path=""
+            for p in "/lib/arm-linux-gnueabihf" "/usr/lib/arm-linux-gnueabihf" "/lib" "/usr/lib"; do
+                if [[ -f "${p}/${lib}" ]]; then
+                    lib_path=$(realpath "${p}/${lib}")
+                    break
+                fi
+            done
+
+            if [[ -n "${lib_path}" ]]; then
+                local dest_dir="${dest}/${lib_path%/*}"
+                dest_dir="${dest_dir//\/\///}" # clean up double slashes
+                mkdir -p "${dest_dir}"
+                echo "[copy_deps] Copying dependency: ${lib_path} -> ${dest_dir}/${lib}"
+                cp -L "${lib_path}" "${dest_dir}/${lib}"
+                resolved+=("$lib")
+                to_resolve+=("$lib_path")
+            else
+                echo "[copy_deps] Warning: Could not find library ${lib} needed by ${current}"
+            fi
+        done
+    done
+}
+
 LINUX_URL="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${LINUX_VER}.tar.xz"
 BUSYBOX_URL="https://busybox.net/downloads/busybox-${BUSYBOX_VER}.tar.bz2"
 DROPBEAR_URL="https://matt.ucc.asn.au/dropbear/releases/dropbear-${DROPBEAR_VER}.tar.bz2"
@@ -422,6 +495,80 @@ mkdir -p "${ROOTFS_DIR}/usr/bin"
     "${ROOT_DIR}/linux-tools/wing_draw.c"
 "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/pnlc_raw_dump" \
     "${ROOT_DIR}/linux-tools/pnlc_raw_dump.c"
+"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-touch-uinput" \
+    "${ROOT_DIR}/linux-tools/wing_touch_uinput.c"
+
+echo "[build] Qt Demo application"
+mkdir -p "${BUILD_DIR}/qt-demo"
+(
+    cd "${BUILD_DIR}/qt-demo"
+    cmake -S "${ROOT_DIR}/software/qt-demo" -B . \
+        -DCMAKE_SYSTEM_NAME=Linux \
+        -DCMAKE_SYSTEM_PROCESSOR=arm \
+        -DCMAKE_C_COMPILER="${CROSS_COMPILE}gcc" \
+        -DCMAKE_CXX_COMPILER="${CROSS_COMPILE}g++" \
+        -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER \
+        -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY \
+        -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY \
+        -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY
+    make -j"$(nproc)"
+)
+install -D -m 0755 "${BUILD_DIR}/qt-demo/wing-qt-demo" "${ROOTFS_DIR}/usr/bin/wing-qt-demo"
+
+# Copy the linuxfb platform plugin
+install -D -m 0755 "/usr/lib/arm-linux-gnueabihf/qt5/plugins/platforms/libqlinuxfb.so" \
+    "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/qt5/plugins/platforms/libqlinuxfb.so"
+
+# Copy the eglfs platform plugin
+install -D -m 0755 "/usr/lib/arm-linux-gnueabihf/qt5/plugins/platforms/libqeglfs.so" \
+    "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/qt5/plugins/platforms/libqeglfs.so"
+
+# Copy the Etnaviv DRI GPU driver
+install -D -m 0755 "/usr/lib/arm-linux-gnueabihf/dri/etnaviv_dri.so" \
+    "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/dri/etnaviv_dri.so"
+
+# Run dependency copy script for all of them
+copy_deps "${ROOTFS_DIR}/usr/bin/wing-qt-demo" "${ROOTFS_DIR}"
+copy_deps "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/qt5/plugins/platforms/libqlinuxfb.so" "${ROOTFS_DIR}"
+copy_deps "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/qt5/plugins/platforms/libqeglfs.so" "${ROOTFS_DIR}"
+copy_deps "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/dri/etnaviv_dri.so" "${ROOTFS_DIR}"
+
+# Create run-qt-demo launcher script in rootfs
+cat > "${ROOTFS_DIR}/usr/bin/run-qt-demo" <<'EOF'
+#!/bin/sh
+# Find Wing Touchscreen input event device
+EVDEV=""
+for dev in /sys/class/input/event*; do
+    if [ -f "$dev/device/name" ]; then
+        if grep -q "Wing Touchscreen" "$dev/device/name"; then
+            EVDEV="/dev/input/$(basename "$dev")"
+            break
+        fi
+    fi
+done
+
+if [ -n "$EVDEV" ]; then
+    echo "Found Wing Touchscreen at $EVDEV"
+    export QT_QPA_EVDEV_TOUCHSCREEN_PARAMETERS="$EVDEV:rotate=0"
+else
+    echo "Warning: Wing Touchscreen input device not found!"
+fi
+
+# Set plugin paths and configure EGLFS platform (defaulting to GPU accelerated eglfs)
+export QT_QPA_PLATFORM_PLUGIN_PATH=/usr/lib/arm-linux-gnueabihf/qt5/plugins
+export QT_QPA_PLATFORM=eglfs
+export QT_QPA_EGLFS_PHYSICAL_WIDTH=217
+export QT_QPA_EGLFS_PHYSICAL_HEIGHT=136
+
+# Allow overriding platform backend via command line arguments
+if [ $# -gt 0 ]; then
+    exec /usr/bin/wing-qt-demo "$@"
+else
+    exec /usr/bin/wing-qt-demo
+fi
+EOF
+chmod 0755 "${ROOTFS_DIR}/usr/bin/run-qt-demo"
+
 cd "${ROOTFS_DIR}"
 cp -a "${ROOT_DIR}/initramfs_root/"* .
 mkdir -p dev proc root sys tmp
@@ -501,6 +648,7 @@ cp "${ROOT_DIR}/configs/config_linux" .config
 scripts/config --set-str INITRAMFS_SOURCE "${BUILD_DIR}/initramfs.cpio.gz"
 scripts/config --enable INPUT
 scripts/config --enable INPUT_EVDEV
+scripts/config --enable INPUT_UINPUT
 scripts/config --enable HID_SUPPORT
 scripts/config --enable HID
 scripts/config --enable HID_GENERIC
