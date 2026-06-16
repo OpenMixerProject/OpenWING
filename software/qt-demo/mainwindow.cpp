@@ -11,6 +11,18 @@ TouchDrawWidget::TouchDrawWidget(QWidget *parent)
 {
     setAttribute(Qt::WA_StaticContents);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    // Continuous repaint loop at ~60 FPS to measure rendering speed
+    QTimer *renderTimer = new QTimer(this);
+    connect(renderTimer, &QTimer::timeout, this, [this]() { update(); });
+    renderTimer->start(16); // ~60 FPS
+}
+
+int TouchDrawWidget::getAndResetFrameCount()
+{
+    int count = m_frameCount;
+    m_frameCount = 0;
+    return count;
 }
 
 void TouchDrawWidget::clear()
@@ -23,6 +35,7 @@ void TouchDrawWidget::clear()
 
 void TouchDrawWidget::paintEvent(QPaintEvent *event)
 {
+    m_frameCount++;
     Q_UNUSED(event);
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
@@ -93,6 +106,12 @@ MainWindow::MainWindow(QWidget *parent)
     setupUI();
     applyStyleSheet();
     resize(1280, 800);
+
+    // Timer to calculate and update FPS display every second
+    QTimer *fpsTimer = new QTimer(this);
+    connect(fpsTimer, &QTimer::timeout, this, &MainWindow::updateFps);
+    fpsTimer->start(1000);
+    m_fpsElapsedTimer.start();
 }
 
 MainWindow::~MainWindow()
@@ -167,9 +186,19 @@ void MainWindow::setupUI()
     diagLayout->setContentsMargins(15, 15, 15, 15);
     diagLayout->setSpacing(12);
 
+    QHBoxLayout *headerLayout = new QHBoxLayout();
+    headerLayout->setContentsMargins(0, 0, 0, 0);
+
     QLabel *titleLabel = new QLabel("OpenWING Touch Diagnostics", diagPanel);
     titleLabel->setObjectName("PanelTitle");
     titleLabel->setAlignment(Qt::AlignLeft);
+
+    m_fpsLabel = new QLabel("FPS: --", diagPanel);
+    m_fpsLabel->setObjectName("FpsCounter");
+    m_fpsLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
+    headerLayout->addWidget(titleLabel);
+    headerLayout->addWidget(m_fpsLabel);
 
     QLabel *descLabel = new QLabel("Draw on the canvas below to test the touchscreen calibration and alignment.", diagPanel);
     descLabel->setObjectName("PanelDesc");
@@ -191,7 +220,7 @@ void MainWindow::setupUI()
     buttonLayout->addStretch();
     buttonLayout->addWidget(quitButton);
 
-    diagLayout->addWidget(titleLabel);
+    diagLayout->addLayout(headerLayout);
     diagLayout->addWidget(descLabel);
     diagLayout->addWidget(m_drawWidget, 1);
     diagLayout->addLayout(buttonLayout);
@@ -275,6 +304,14 @@ void MainWindow::applyStyleSheet()
             color: #ffffff;
         }
 
+        #FpsCounter {
+            color: #00d1b2; /* neon teal */
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 15px;
+            padding-right: 5px;
+        }
+
         #PanelDesc {
             color: #9ca3af;
             font-size: 13px;
@@ -349,4 +386,14 @@ void MainWindow::applyStyleSheet()
         }
     )";
     setStyleSheet(style);
+}
+
+void MainWindow::updateFps()
+{
+    int frames = m_drawWidget->getAndResetFrameCount();
+    qint64 elapsed = m_fpsElapsedTimer.restart();
+    if (elapsed > 0) {
+        double fps = (frames * 1000.0) / elapsed;
+        m_fpsLabel->setText(QString("FPS: %1").arg(qRound(fps)));
+    }
 }
