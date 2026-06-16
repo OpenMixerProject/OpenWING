@@ -23,6 +23,18 @@ add_executable(wing-qt-demo
     main.cpp
     mainwindow.h
     mainwindow.cpp
+    rotaryknob.h
+    rotaryknob.cpp
+    levelmeter.h
+    levelmeter.cpp
+    eqgraphwidget.h
+    eqgraphwidget.cpp
+    scribblestrip.h
+    scribblestrip.cpp
+    audioparameter.h
+    mixerchannel.h
+    parameterbinder.h
+    oscclient.h
 )
 
 target_link_libraries(wing-qt-demo PRIVATE ${QT_LIBRARIES})

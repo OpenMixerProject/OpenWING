@@ -163,7 +163,7 @@ copy_deps() {
 
     # 1. Copy program interpreter (dynamic linker)
     local interpreter
-    interpreter=$(arm-linux-gnueabihf-readelf -l "$binary" 2>/dev/null | grep "interpreter:" | sed -r 's/.*interpreter: (.*)\]/\1/')
+    interpreter=$(arm-linux-gnueabihf-readelf -l "$binary" 2>/dev/null | grep "interpreter:" | sed -r 's/.*interpreter: (.*)\]/\1/' || true)
     if [[ -n "${interpreter}" ]]; then
         local real_interpreter
         real_interpreter=$(realpath "${interpreter}")
@@ -184,7 +184,7 @@ copy_deps() {
         to_resolve=("${to_resolve[@]:1}")
 
         local needed
-        needed=$(arm-linux-gnueabihf-readelf -d "$current" 2>/dev/null | grep "NEEDED" | sed -r 's/.*Shared library: \[(.*)\]/\1/')
+        needed=$(arm-linux-gnueabihf-readelf -d "$current" 2>/dev/null | grep "NEEDED" | sed -r 's/.*Shared library: \[(.*)\]/\1/' || true)
         for lib in $needed; do
             # Skip if already resolved
             local already_resolved=0

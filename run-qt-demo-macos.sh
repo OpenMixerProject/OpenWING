@@ -7,6 +7,11 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_DIR="${ROOT_DIR}/build-macos"
 
 echo "============================================="
+echo "Terminating existing WING Qt Demo processes..."
+echo "============================================="
+pkill -x wing-qt-demo || killall wing-qt-demo || true
+
+echo "============================================="
 echo "Building WING Qt Demo on macOS..."
 echo "============================================="
 
