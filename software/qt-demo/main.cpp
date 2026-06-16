@@ -11,8 +11,13 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
 
     MainWindow w;
-    // On the embedded framebuffer, we want to run in full screen
+#if defined(__APPLE__)
+    // On macOS host, run in normal windowed mode (1280x800) for testing
+    w.show();
+#else
+    // On the embedded framebuffer, run in full screen
     w.showFullScreen();
+#endif
 
     return a.exec();
 }

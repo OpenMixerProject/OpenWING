@@ -536,6 +536,26 @@ copy_deps "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/dri/etnaviv_dri.so" "${ROOT
 # Create run-qt-demo launcher script in rootfs
 cat > "${ROOTFS_DIR}/usr/bin/run-qt-demo" <<'EOF'
 #!/bin/sh
+
+# Start the touch driver dynamically if not already running
+TOUCH_PID=""
+if ! pgrep wing-touch-uinput >/dev/null; then
+    echo "Starting wing-touch-uinput daemon..."
+    /usr/bin/wing-touch-uinput &
+    TOUCH_PID=$!
+    # Wait briefly for uinput device node creation
+    sleep 1
+fi
+
+cleanup() {
+    if [ -n "$TOUCH_PID" ]; then
+        echo "Stopping wing-touch-uinput daemon..."
+        kill "$TOUCH_PID" 2>/dev/null
+    fi
+}
+# Set trap to clean up the touch daemon on exit
+trap cleanup EXIT INT TERM
+
 # Find Wing Touchscreen input event device
 EVDEV=""
 for dev in /sys/class/input/event*; do
@@ -560,12 +580,8 @@ export QT_QPA_PLATFORM=eglfs
 export QT_QPA_EGLFS_PHYSICAL_WIDTH=217
 export QT_QPA_EGLFS_PHYSICAL_HEIGHT=136
 
-# Allow overriding platform backend via command line arguments
-if [ $# -gt 0 ]; then
-    exec /usr/bin/wing-qt-demo "$@"
-else
-    exec /usr/bin/wing-qt-demo
-fi
+# Execute the Qt app (do not use exec so the cleanup trap can fire when it exits)
+/usr/bin/wing-qt-demo "$@"
 EOF
 chmod 0755 "${ROOTFS_DIR}/usr/bin/run-qt-demo"
 

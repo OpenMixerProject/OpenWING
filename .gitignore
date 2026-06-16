@@ -184,3 +184,4 @@ __pycache__/
 *.imx
 scratch
 core
+build-macos/
