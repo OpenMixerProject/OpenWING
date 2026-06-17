@@ -495,6 +495,41 @@ QComboBox[cls="GateHeaderCombo"] QAbstractItemView {
     outline: none;
 }
 
+QComboBox[cls="YellowHeaderCombo"] {
+    background-color: transparent;
+    color: #ffffff;
+    border: none;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 0;
+}
+
+QComboBox[cls="YellowHeaderCombo"]::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
+    width: 18px;
+    border: none;
+}
+
+QComboBox[cls="YellowHeaderCombo"]::down-arrow {
+    image: none;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #6b7280;
+    margin-right: 4px;
+}
+
+QComboBox[cls="YellowHeaderCombo"] QAbstractItemView {
+    background-color: #181822;
+    color: #ffffff;
+    border: 1px solid #fbbf24;
+    selection-background-color: #78350f;
+    selection-color: #ffffff;
+    outline: none;
+}
+
 /* Second-row tool buttons (XOVER SOLO / MODE, KEY SOLO / FILTER) */
 QPushButton[cls="CompToolBtn"], QPushButton[cls="CompToolBtnBlue"], QPushButton[cls="CompToolBtnGreen"] {
     background-color: #161620;
@@ -526,6 +561,28 @@ QPushButton[cls="GateToolBtn"]:checked {
     background-color: #7c2d12;
     color: #ffffff;
     border-color: #f97316;
+}
+
+QPushButton[cls="EqToolBtn"] {
+    background-color: #161620;
+    color: #6b7280;
+    border: 1px solid #252535;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 11px;
+    font-weight: bold;
+    text-align: left;
+}
+
+QPushButton[cls="EqToolBtn"]:hover {
+    border-color: #3f3f54;
+    color: #9ca3af;
+}
+
+QPushButton[cls="EqToolBtn"]:checked {
+    background-color: #78350f;
+    color: #ffffff;
+    border-color: #fbbf24;
 }
 QPushButton[cls="CompToolBtn"]:hover,
 QPushButton[cls="CompToolBtnBlue"]:hover,

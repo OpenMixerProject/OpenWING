@@ -52,6 +52,7 @@ private:
     void selectInsertSlot(int slotIdx);
     void populateInsertSlotUI();
     void updateOverviewLabels();
+    void updateEqBandButtonsText();
 
     // Designer-generated UI (forms/mainwindow.ui)
     Ui::MainWindow *ui;
@@ -78,6 +79,9 @@ private:
     ParameterBinder m_bindEqGain;
     ParameterBinder m_bindEqFreq;
     ParameterBinder m_bindEqQ;
+    ParameterBinder m_bindEqGlobalActive;
+    ParameterBinder m_bindEqType;
+    ParameterBinder m_bindEqBandSolo;
 
     // Dynamics panel binders
     ParameterBinder m_bindGateActive;
@@ -103,6 +107,7 @@ private:
     // Live connections rebound when the selected channel changes
     QVector<QMetaObject::Connection> m_compConnections;
     QVector<QMetaObject::Connection> m_gateConnections;
+    QVector<QMetaObject::Connection> m_eqConnections;
 
     // Main mix panel binders
     ParameterBinder m_bindScreenFader;

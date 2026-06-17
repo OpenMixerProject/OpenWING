@@ -97,6 +97,21 @@ void RotaryKnob::setRealValue(double val)
 
 QString RotaryKnob::formattedValue() const
 {
+    if (m_label.contains("TYPE", Qt::CaseInsensitive)) {
+        int idx = qRound(realValue());
+        if (m_label.contains("EQ1", Qt::CaseInsensitive)) {
+            if (idx == 0) return "L-CUT";
+            if (idx == 1) return "SHELF";
+            if (idx == 2) return "PEQ";
+        } else if (m_label.contains("EQ6", Qt::CaseInsensitive)) {
+            if (idx == 0) return "H-CUT";
+            if (idx == 1) return "SHELF";
+            if (idx == 2) return "PEQ";
+        } else if (m_label.contains("INS", Qt::CaseInsensitive)) {
+            QStringList types = {"NONE", "EQ", "COMP", "DELAY", "REVERB", "CHORUS"};
+            if (idx >= 0 && idx < types.size()) return types[idx];
+        }
+    }
     if (minimum() == 0 && maximum() == 1) {
         return value() > 0.5 ? "ON" : "OFF";
     }

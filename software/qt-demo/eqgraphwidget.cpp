@@ -15,15 +15,19 @@ EqGraphWidget::EqGraphWidget(QWidget *parent)
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMouseTracking(true);
 
-    // Initialize 4 EQ Bands
-    // Band 0: Low Shelf (Magenta/Orange-red)
-    m_bands.append({60.0, 3.0, 1.0, true, QColor("#f43f5e"), 0});
-    // Band 1: Parametric 1 (Orange/Yellow)
-    m_bands.append({250.0, -2.0, 1.5, true, QColor("#fbbf24"), 1});
-    // Band 2: Parametric 2 (Teal/Cyan)
-    m_bands.append({1500.0, 4.0, 2.0, true, QColor("#06b6d4"), 2});
-    // Band 3: High Shelf (Blue/Purple)
-    m_bands.append({8000.0, 2.0, 1.0, true, QColor("#a855f7"), 3});
+    // Initialize 6 EQ Bands
+    // Band 0: L - Low Shelf
+    m_bands.append({80.0, 0.0, 1.0, true, QColor("#f43f5e"), 0});
+    // Band 1: 1 - Peaking
+    m_bands.append({250.0, 0.0, 1.5, true, QColor("#fbbf24"), 1});
+    // Band 2: 2 - Peaking
+    m_bands.append({600.0, 0.0, 1.5, true, QColor("#10b981"), 1});
+    // Band 3: 3 - Peaking
+    m_bands.append({2000.0, 0.0, 2.0, true, QColor("#06b6d4"), 1});
+    // Band 4: 4 - Peaking
+    m_bands.append({6000.0, 0.0, 1.5, true, QColor("#3b82f6"), 1});
+    // Band 5: H - High Shelf
+    m_bands.append({12000.0, 0.0, 1.0, true, QColor("#a855f7"), 3});
 
     // Start analyzer simulation timer (~30 FPS)
     m_timerId = startTimer(33);
@@ -36,6 +40,14 @@ void EqGraphWidget::setBand(int index, double frequency, double gain, double q, 
         m_bands[index].gain = qBound(-15.0, gain, 15.0);
         m_bands[index].q = qBound(0.5, q, 10.0);
         m_bands[index].active = active;
+        update();
+    }
+}
+
+void EqGraphWidget::setBandType(int index, int type)
+{
+    if (index >= 0 && index < m_bands.size()) {
+        m_bands[index].type = type;
         update();
     }
 }
@@ -91,7 +103,13 @@ double EqGraphWidget::getResponseAt(double freq) const
         double G = band.gain;
         double Q = band.q;
 
-        if (band.type == 0) {
+        if (band.type == 4) {
+            // Low Cut / HPF (24 dB/octave Butterworth approximation)
+            totalDb += -10.0 * std::log10(1.0 + std::pow(f0 / f, 8.0));
+        } else if (band.type == 5) {
+            // High Cut / LPF (24 dB/octave Butterworth approximation)
+            totalDb += -10.0 * std::log10(1.0 + std::pow(f / f0, 8.0));
+        } else if (band.type == 0) {
             // Low Shelf
             totalDb += G / (1.0 + std::pow(f / f0, 2.0));
         } else if (band.type == 3) {
@@ -255,6 +273,24 @@ void EqGraphWidget::paintEvent(QPaintEvent *event)
     painter.setBrush(Qt::NoBrush);
     painter.drawPath(eqPath);
 
+    // 4.5 Draw Vertical Grid Lines for each active band
+    for (int i = 0; i < m_bands.size(); ++i) {
+        if (!m_bands[i].active) continue;
+        double bx = freqToX(m_bands[i].frequency);
+        bool isActive = (i == m_activeBandIndex);
+        QColor lineCol = isActive ? m_bands[i].color : QColor("#3f3f4e");
+        lineCol.setAlpha(isActive ? 150 : 60);
+        painter.setPen(QPen(lineCol, isActive ? 1.5 : 1.0, Qt::SolidLine));
+        painter.drawLine(QPointF(bx, 0), QPointF(bx, h));
+
+        // Draw top label at top of the line
+        painter.setPen(QColor("#ffffff"));
+        QFont topLabelFont("Inter", 10, QFont::Bold);
+        painter.setFont(topLabelFont);
+        QString labelStr = (i == 0) ? "L" : (i == 5) ? "H" : QString::number(i);
+        painter.drawText(QRectF(bx - 15, 8, 30, 16), Qt::AlignCenter, labelStr);
+    }
+
     // 5. Draw Interactive Band Handles
     for (int i = 0; i < m_bands.size(); ++i) {
         const auto &band = m_bands[i];
@@ -263,28 +299,21 @@ void EqGraphWidget::paintEvent(QPaintEvent *event)
         double bx = freqToX(band.frequency);
         double by = gainToY(band.gain);
 
-        // Highlight active band
+        // Highlight active band (outer glow)
         if (i == m_activeBandIndex) {
-            painter.setPen(QPen(QColor(255, 255, 255, 80), 6));
-            painter.setBrush(Qt::NoBrush);
-            painter.drawEllipse(QPointF(bx, by), 14, 14);
+            painter.setPen(QPen(band.color, 3.0));
+        } else {
+            painter.setPen(QPen(QColor("#71717a"), 2.0));
         }
+        painter.setBrush(QColor("#141419"));
+        painter.drawEllipse(QPointF(bx, by), 8, 8);
 
-        // Handle outer ring (band color)
-        painter.setPen(QPen(band.color, 2.5));
-        painter.setBrush(QColor("#111115"));
-        painter.drawEllipse(QPointF(bx, by), 9, 9);
-
-        // Center dot
-        painter.setPen(Qt::NoPen);
-        painter.setBrush(band.color);
-        painter.drawEllipse(QPointF(bx, by), 4, 4);
-
-        // Label inside/above handle
-        painter.setPen(QColor("#ffffff"));
-        QFont labelFont("Inter", 8, QFont::Bold);
-        painter.setFont(labelFont);
-        painter.drawText(QRectF(bx - 12, by - 24, 24, 12), Qt::AlignCenter, QString::number(i + 1));
+        // Draw inner dot when active
+        if (i == m_activeBandIndex) {
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(band.color);
+            painter.drawEllipse(QPointF(bx, by), 3.0, 3.0);
+        }
     }
 }
 
@@ -315,6 +344,11 @@ void EqGraphWidget::mouseMoveEvent(QMouseEvent *event)
         double newFreq = xToFreq(event->pos().x());
         double newGain = yToGain(event->pos().y());
         
+        int bType = m_bands[m_activeBandIndex].type;
+        if (bType == 4 || bType == 5) {
+            newGain = 0.0;
+        }
+
         // Snap/bounds
         newFreq = qBound(20.0, newFreq, 20000.0);
         newGain = qBound(-15.0, newGain, 15.0);

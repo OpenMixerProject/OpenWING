@@ -22,11 +22,13 @@ public:
     void setThemeColor(const QColor &c);
 
     void setThreshold(double db);
+    void setRatio(double ratio);
     void setDepth(double db);
     void setActive(bool active);
 
 signals:
     void thresholdChanged(double db);
+    void ratioChanged(double ratio);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -45,6 +47,7 @@ private:
 
     QColor m_theme;
     double m_threshold; // dB
+    double m_ratio;     // expansion ratio below threshold
     double m_depth;     // dB
     bool   m_active;
 

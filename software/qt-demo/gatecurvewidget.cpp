@@ -15,6 +15,7 @@ static const int    kAxisB = 18;    // height reserved for input labels
 GateCurveWidget::GateCurveWidget(QWidget *parent)
     : QWidget(parent)
     , m_threshold(-55.0)
+    , m_ratio(10.0)
     , m_depth(40.0)
     , m_active(true)
     , m_draggingKnee(false)
@@ -34,6 +35,12 @@ void GateCurveWidget::setThreshold(double db)
 {
     db = qBound(kMinDb, db, kMaxDb);
     if (qAbs(db - m_threshold) > 0.001) { m_threshold = db; update(); }
+}
+
+void GateCurveWidget::setRatio(double ratio)
+{
+    ratio = qBound(1.0, ratio, 100.0);
+    if (qAbs(ratio - m_ratio) > 0.001) { m_ratio = ratio; update(); }
 }
 
 void GateCurveWidget::setDepth(double db)
@@ -86,8 +93,8 @@ double GateCurveWidget::transfer(double inDb) const
     if (inDb >= m_threshold) {
         return inDb;
     } else {
-        // Drop steeply (e.g. 5:1 expansion ratio below threshold)
-        double out = m_threshold + (inDb - m_threshold) * 5.0;
+        // Drop steeply based on ratio below threshold
+        double out = m_threshold + (inDb - m_threshold) * m_ratio;
         // Clamp maximum attenuation to m_depth
         double maxAttenuation = m_depth;
         if (inDb - out > maxAttenuation) {
@@ -195,6 +202,12 @@ void GateCurveWidget::paintEvent(QPaintEvent *)
     p.setBrush(theme);
     p.drawEllipse(QPointF(hx, hy), 3.5, 3.5);
 
+    // Ratio readout near the handle
+    p.setPen(QColor("#e5e7eb"));
+    p.setFont(QFont("Inter", 8, QFont::Bold));
+    QString ratioStr = (m_ratio >= 100.0) ? QString::fromUtf8("∞:1") : QString("%1:1").arg(m_ratio, 0, 'f', 1);
+    p.drawText(QRectF(hx + 12, hy - 20, 70, 14), Qt::AlignLeft | Qt::AlignVCenter, ratioStr);
+
     // Draw slider handle on the right edge with a burger icon ≡
     double sx = plot.right();
     double sy = ty;
@@ -268,7 +281,26 @@ void GateCurveWidget::mousePressEvent(QMouseEvent *event)
 
 void GateCurveWidget::mouseMoveEvent(QMouseEvent *event)
 {
-    if (m_draggingKnee || m_draggingSlider) {
+    if (m_draggingKnee) {
+        double newThr = xToDb(event->pos().x());
+
+        // Vertical position relative to the unity line drives the ratio
+        double yUnity = dbToY(newThr);
+        double yPos = event->pos().y();
+        double drop = (yPos - yUnity); // pixels below unity line
+        double pxRange = plotRect().height() * 0.5;
+        double t = qBound(0.0, drop / qMax(1.0, pxRange), 1.0);
+        double newRatio = 1.0 + t * 99.0; // 1:1 .. 100:1
+
+        setThreshold(newThr);
+        setRatio(newRatio);
+        emit thresholdChanged(m_threshold);
+        emit ratioChanged(m_ratio);
+        event->accept();
+        return;
+    }
+
+    if (m_draggingSlider) {
         double newThr = yToDb(event->pos().y());
         setThreshold(newThr);
         emit thresholdChanged(m_threshold);

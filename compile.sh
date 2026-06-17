@@ -107,6 +107,7 @@ RUN dpkg --add-architecture armhf \
     device-tree-compiler \
     flex \
     gcc \
+    g++ \
     gcc-arm-linux-gnueabihf \
     g++-arm-linux-gnueabihf \
     libc6-dev \
@@ -116,7 +117,7 @@ RUN dpkg --add-architecture armhf \
     libssl-dev \
     make \
     patch \
-    pkg-config \
+    pkg-config:armhf \
     python3 \
     u-boot-tools \
     xz-utils \
@@ -203,7 +204,14 @@ copy_deps() {
                 continue
             fi
 
-            for p in "${BUILD_DIR}/custom_libs/usr/lib" "${BUILD_DIR}/custom_libs/usr/lib/arm-linux-gnueabihf" "/lib/arm-linux-gnueabihf" "/usr/lib/arm-linux-gnueabihf" "/lib" "/usr/lib"; do
+            local search_paths=()
+            if [[ "$lib" =~ ^libQt5 || "$lib" =~ ^libEGL || "$lib" =~ ^libGLESv2 || "$lib" =~ ^libgbm || "$lib" =~ ^libglapi || "$lib" =~ ^libdrm || "$lib" =~ ^libexpat || "$lib" =~ ^libz ]]; then
+                search_paths=("${BUILD_DIR}/custom_libs/usr/lib" "${BUILD_DIR}/custom_libs/usr/lib/arm-linux-gnueabihf")
+            else
+                search_paths=("${BUILD_DIR}/custom_libs/usr/lib" "${BUILD_DIR}/custom_libs/usr/lib/arm-linux-gnueabihf" "/lib/arm-linux-gnueabihf" "/usr/lib/arm-linux-gnueabihf" "/lib" "/usr/lib")
+            fi
+
+            for p in "${search_paths[@]}"; do
                 if [[ -f "${p}/${lib}" ]]; then
                     lib_path=$(realpath "${p}/${lib}")
                     break
@@ -219,7 +227,12 @@ copy_deps() {
                 resolved+=("$lib")
                 to_resolve+=("$lib_path")
             else
-                echo "[copy_deps] Warning: Could not find library ${lib} needed by ${current}"
+                if [[ "$lib" =~ ^libQt5 || "$lib" =~ ^libEGL || "$lib" =~ ^libGLESv2 || "$lib" =~ ^libgbm || "$lib" =~ ^libglapi || "$lib" =~ ^libdrm || "$lib" =~ ^libexpat || "$lib" =~ ^libz ]]; then
+                    echo "[copy_deps] ERROR: Required custom library ${lib} not found in custom_libs!" >&2
+                    exit 1
+                else
+                    echo "[copy_deps] Warning: Could not find library ${lib} needed by ${current}"
+                fi
             fi
         done
     done
@@ -322,7 +335,7 @@ c = 'arm-linux-gnueabihf-gcc'
 cpp = 'arm-linux-gnueabihf-g++'
 ar = 'arm-linux-gnueabihf-ar'
 strip = 'arm-linux-gnueabihf-strip'
-pkgconfig = 'pkg-config'
+pkg-config = 'arm-linux-gnueabihf-pkg-config'
 
 [host_machine]
 system = 'linux'
@@ -346,7 +359,7 @@ EOF
         -Dvc4=disabled \
         -Detnaviv=enabled \
         -Dvalgrind=disabled
-    ninja -C builddir install DESTDIR="${custom_dir}"
+    DESTDIR="${custom_dir}" ninja -C builddir install
     cd "${BUILD_DIR}"
 
     # 2. Build Mesa
@@ -357,7 +370,7 @@ c = 'arm-linux-gnueabihf-gcc'
 cpp = 'arm-linux-gnueabihf-g++'
 ar = 'arm-linux-gnueabihf-ar'
 strip = 'arm-linux-gnueabihf-strip'
-pkgconfig = 'pkg-config'
+pkg-config = 'arm-linux-gnueabihf-pkg-config'
 
 [host_machine]
 system = 'linux'
@@ -367,15 +380,15 @@ endian = 'little'
 EOF
     export PKG_CONFIG_PATH="${custom_dir}/usr/lib/pkgconfig:${custom_dir}/usr/share/pkgconfig"
     export PKG_CONFIG_LIBDIR=""
-    export PKG_CONFIG_SYSROOT_DIR=""
+    export PKG_CONFIG_SYSROOT_DIR="${custom_dir}"
 
     meson setup builddir \
         --cross-file cross.txt \
         --prefix=/usr \
         --libdir=lib \
-        -Dplatforms=surfaceless \
+        -Dplatforms= \
         -Dgallium-drivers=etnaviv,kmsro \
-        -Dvulcan-drivers= \
+        -Dvulkan-drivers= \
         -Dllvm=disabled \
         -Dshared-glapi=enabled \
         -Dgbm=enabled \
@@ -386,7 +399,7 @@ EOF
         -Dglx=disabled \
         -Dvalgrind=disabled \
         -Dlibunwind=disabled
-    ninja -C builddir install DESTDIR="${custom_dir}"
+    DESTDIR="${custom_dir}" ninja -C builddir install
     cd "${BUILD_DIR}"
 
     # 3. Build Qt base
@@ -395,11 +408,29 @@ EOF
     else
         cd "qtbase-everywhere-opensource-src-${QT_VER}"
     fi
+
+    # Fix compiler prefix in mkspec for armhf
+    sed -i 's/arm-linux-gnueabi-/arm-linux-gnueabihf-/g' mkspecs/linux-arm-gnueabi-g++/qmake.conf
+    # Add rpath-link to custom libs to resolve indirect dependencies when linking
+    if ! grep -q "rpath-link" mkspecs/linux-arm-gnueabi-g++/qmake.conf; then
+        echo "QMAKE_LFLAGS += -Wl,-rpath-link,${custom_dir}/usr/lib" >> mkspecs/linux-arm-gnueabi-g++/qmake.conf
+    fi
+    # Fix 64-bit time_t / file offset mismatch on modern glibc (armhf cross)
+    if ! grep -q "_FILE_OFFSET_BITS" mkspecs/linux-arm-gnueabi-g++/qmake.conf; then
+        echo "QMAKE_CFLAGS += -U_TIME_BITS -D_FILE_OFFSET_BITS=64" >> mkspecs/linux-arm-gnueabi-g++/qmake.conf
+        echo "QMAKE_CXXFLAGS += -U_TIME_BITS -D_FILE_OFFSET_BITS=64" >> mkspecs/linux-arm-gnueabi-g++/qmake.conf
+    fi
+
+    # Delete config cache to force reconfiguration tests to run
+    rm -f config.cache
     
-    export PKG_CONFIG_PATH="${custom_dir}/usr/lib/pkgconfig:${custom_dir}/usr/share/pkgconfig"
+    export PKG_CONFIG="arm-linux-gnueabihf-pkg-config"
+    export PKG_CONFIG_LIBDIR="${custom_dir}/usr/lib/pkgconfig:${custom_dir}/usr/share/pkgconfig"
+    export PKG_CONFIG_SYSROOT_DIR="${custom_dir}"
 
     ./configure \
-        -xplatform linux-arm-gnueabihf-g++ \
+        -xplatform linux-arm-gnueabi-g++ \
+        -pkg-config \
         -prefix /usr \
         -extprefix "${custom_dir}/usr" \
         -release \
@@ -409,8 +440,7 @@ EOF
         -nomake examples \
         -nomake tests \
         -no-icu \
-        -no-opengl \
-        -gles2 \
+        -opengl es2 \
         -eglfs \
         -gbm \
         -no-dbus \
@@ -680,16 +710,14 @@ install -D -m 0755 "${BUILD_DIR}/custom_libs/usr/plugins/platforms/libqlinuxfb.s
 install -D -m 0755 "${BUILD_DIR}/custom_libs/usr/plugins/platforms/libqeglfs.so" \
     "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/qt5/plugins/platforms/libqeglfs.so"
 
-# Copy the libdril_dri.so and create symbolic links
-install -D -m 0755 "${BUILD_DIR}/custom_libs/usr/lib/dri/libdril_dri.so" \
-    "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/dri/libdril_dri.so"
-for driver in etnaviv_dri.so imx-drm_dri.so kms_swrast_dri.so swrast_dri.so; do
-    ln -sf libdril_dri.so "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/dri/${driver}"
+# Copy the custom etnaviv_dri.so and create symbolic links
+install -D -m 0755 "${BUILD_DIR}/custom_libs/usr/lib/dri/etnaviv_dri.so" \
+    "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/dri/etnaviv_dri.so"
+for driver in imx-drm_dri.so kms_swrast_dri.so swrast_dri.so; do
+    ln -sf etnaviv_dri.so "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/dri/${driver}"
 done
 
-# Copy the GBM dri module
-install -D -m 0755 "${BUILD_DIR}/custom_libs/usr/lib/gbm/dri_gbm.so" \
-    "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/gbm/dri_gbm.so"
+# GBM DRI backend is statically built into our custom libgbm.so, so no separate dri_gbm.so module is needed.
 
 # Copy the eglfs device integration plugins
 for plugin in "${BUILD_DIR}/custom_libs"/usr/plugins/egldeviceintegrations/*.so; do
@@ -713,8 +741,7 @@ done
 copy_deps "${ROOTFS_DIR}/usr/bin/wing-qt-demo" "${ROOTFS_DIR}"
 copy_deps "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/qt5/plugins/platforms/libqlinuxfb.so" "${ROOTFS_DIR}"
 copy_deps "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/qt5/plugins/platforms/libqeglfs.so" "${ROOTFS_DIR}"
-copy_deps "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/dri/libdril_dri.so" "${ROOTFS_DIR}"
-copy_deps "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/gbm/dri_gbm.so" "${ROOTFS_DIR}"
+copy_deps "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/dri/etnaviv_dri.so" "${ROOTFS_DIR}"
 
 # Create run-qt-demo launcher script in rootfs
 cat > "${ROOTFS_DIR}/usr/bin/run-qt-demo" <<'EOF'
@@ -771,6 +798,10 @@ chmod 0755 "${ROOTFS_DIR}/usr/bin/run-qt-demo"
 cd "${ROOTFS_DIR}"
 cp -a "${ROOT_DIR}/initramfs_root/"* .
 mkdir -p dev proc root sys tmp
+
+# Strip all ELF files (executables and shared libraries) in the rootfs to reduce size
+echo "[build] Stripping binaries in rootfs..."
+find . -type f \( -name "*.so*" -o -perm -111 \) -exec "${CROSS_COMPILE}strip" --strip-unneeded {} + 2>/dev/null || true
 find . -print0 | cpio --null -o -H newc > "${BUILD_DIR}/initramfs.rootfs.cpio"
 python3 - "${BUILD_DIR}/initramfs.rootfs.cpio" "${BUILD_DIR}/initramfs.cpio" <<'PY'
 import stat

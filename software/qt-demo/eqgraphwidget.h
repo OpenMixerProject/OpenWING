@@ -22,6 +22,7 @@ public:
     explicit EqGraphWidget(QWidget *parent = nullptr);
 
     void setBand(int index, double frequency, double gain, double q, bool active = true);
+    void setBandType(int index, int type);
     EqBand band(int index) const { return m_bands[index]; }
     
     int activeBandIndex() const { return m_activeBandIndex; }

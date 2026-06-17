@@ -28,12 +28,24 @@ public:
         m_parameters["hicut_freq"] = new AudioParameter("Hi Freq", 2000.0, 20000.0, 12000.0, "Hz", 1.0, QColor("#00d1b2"), this);
         m_parameters["tilt"] = new AudioParameter("Tilt", -6.0, 6.0, 0.0, "dB", 0.1, QColor("#10b981"), this);
 
-        // 2. EQ parameters (4 bands: Low Shelf, Peaking 1, Peaking 2, High Shelf)
-        QVector<QColor> eqColors = {QColor("#f43f5e"), QColor("#fbbf24"), QColor("#06b6d4"), QColor("#a855f7")};
-        for (int i = 0; i < 4; ++i) {
+        // 2. EQ parameters (6 bands: L, 1, 2, 3, 4, H)
+        QVector<QColor> eqColors = {
+            QColor("#f43f5e"), // L (Red)
+            QColor("#fbbf24"), // 1 (Amber)
+            QColor("#10b981"), // 2 (Green)
+            QColor("#06b6d4"), // 3 (Cyan)
+            QColor("#3b82f6"), // 4 (Blue)
+            QColor("#a855f7")  // H (Purple)
+        };
+        QVector<double> eqFreqs = {80.0, 250.0, 600.0, 2000.0, 6000.0, 12000.0};
+        m_parameters["eq_active"] = new AudioParameter("EQ On", 0.0, 1.0, 1.0, "", 1.0, QColor("#fbbf24"), this);
+        m_parameters["eq_band_solo"] = new AudioParameter("Band Solo", 0.0, 1.0, 0.0, "", 1.0, QColor("#fbbf24"), this);
+        m_parameters["eq1_type"] = new AudioParameter("EQ1 Type", 0.0, 2.0, 1.0, "", 1.0, eqColors[0], this);
+        m_parameters["eq6_type"] = new AudioParameter("EQ6 Type", 0.0, 2.0, 1.0, "", 1.0, eqColors[5], this);
+        for (int i = 0; i < 6; ++i) {
             QString prefix = QString("eq%1_").arg(i + 1);
             m_parameters[prefix + "active"] = new AudioParameter(QString("EQ%1 On").arg(i + 1), 0.0, 1.0, 1.0, "", 1.0, eqColors[i], this);
-            m_parameters[prefix + "freq"] = new AudioParameter(QString("EQ%1 Freq").arg(i + 1), 20.0, 20000.0, (i==0?80.0:(i==1?400.0:(i==2?1500.0:10000.0))), "Hz", 1.0, eqColors[i], this);
+            m_parameters[prefix + "freq"] = new AudioParameter(QString("EQ%1 Freq").arg(i + 1), 20.0, 20000.0, eqFreqs[i], "Hz", 1.0, eqColors[i], this);
             m_parameters[prefix + "gain"] = new AudioParameter(QString("EQ%1 Gain").arg(i + 1), -15.0, 15.0, 0.0, "dB", 0.1, eqColors[i], this);
             m_parameters[prefix + "q"] = new AudioParameter(QString("EQ%1 Q").arg(i + 1), 0.5, 10.0, 1.0, "", 0.1, eqColors[i], this);
         }
@@ -46,6 +58,7 @@ public:
         m_parameters["gate_hold"] = new AudioParameter("Gate Hold", 10.0, 2000.0, 50.0, "ms", 1.0, QColor("#f97316"), this);
         m_parameters["gate_release"] = new AudioParameter("Gate Rel", 10.0, 4000.0, 250.0, "ms", 1.0, QColor("#f97316"), this);
         m_parameters["gate_depth"] = new AudioParameter("Gate Dpt", 0.0, 60.0, 40.0, "dB", 1.0, QColor("#f97316"), this);
+        m_parameters["gate_ratio"] = new AudioParameter("Gate Ratio", 1.0, 100.0, 10.0, ":1", 0.1, QColor("#f97316"), this);
         m_parameters["gate_model"] = new AudioParameter("Gate Model", 0.0, 1.0, 0.0, "", 1.0, QColor("#f97316"), this);
         m_parameters["gate_key_source"] = new AudioParameter("Gate Key Src", 0.0, 3.0, 0.0, "", 1.0, QColor("#f97316"), this);
         m_parameters["gate_accent"] = new AudioParameter("Gate Accent", 0.0, 100.0, 0.0, "%", 1.0, QColor("#f97316"), this);

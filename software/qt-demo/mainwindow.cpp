@@ -113,7 +113,7 @@ void MainWindow::initChannelModel()
             ch->parameter("eq3_gain")->setValue(4.0); // Add click/articulation
         }
         if (setup.num == "07" || setup.num == "08") {
-            ch->parameter("eq4_gain")->setValue(2.5); // Air boost
+            ch->parameter("eq6_gain")->setValue(2.5); // Air boost
         }
 
         // Dynamics configs
@@ -176,8 +176,8 @@ void MainWindow::setupUI()
     connect(ui->EqGraph, &EqGraphWidget::bandSelected, this, &MainWindow::onEqBandSelected);
     connect(ui->EqGraph, &EqGraphWidget::bandChanged, this, &MainWindow::onEqGraphChanged);
 
-    QPushButton *eqBandBtns[4] = { ui->eqBandBtn0, ui->eqBandBtn1, ui->eqBandBtn2, ui->eqBandBtn3 };
-    for (int i = 0; i < 4; ++i) {
+    QPushButton *eqBandBtns[6] = { ui->eqBandBtnL, ui->eqBandBtn1, ui->eqBandBtn2, ui->eqBandBtn3, ui->eqBandBtn4, ui->eqBandBtnH };
+    for (int i = 0; i < 6; ++i) {
         connect(eqBandBtns[i], &QPushButton::clicked, this, [this, i]() { onEqBandSelected(i); });
     }
 
@@ -199,6 +199,9 @@ void MainWindow::setupUI()
 
     connect(ui->gateCurve, &GateCurveWidget::thresholdChanged, this, [this](double db) {
         m_channels[m_selectedChannelIndex]->parameter("gate_threshold")->setValue(db);
+    });
+    connect(ui->gateCurve, &GateCurveWidget::ratioChanged, this, [this](double r) {
+        m_channels[m_selectedChannelIndex]->parameter("gate_ratio")->setValue(r);
     });
     connect(ui->gateEnvelope, &EnvelopeGraphWidget::attackChanged, this, [this](double ms) {
         m_channels[m_selectedChannelIndex]->parameter("gate_attack")->setValue(ms);
@@ -499,7 +502,7 @@ void MainWindow::populateUIFromSelectedChannel()
     });
 
     // 3. Bind EQ parameters & update EQ graph
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 6; ++i) {
         ui->EqGraph->setBand(i,
             ch->parameter(QString("eq%1_freq").arg(i + 1))->value(),
             ch->parameter(QString("eq%1_gain").arg(i + 1))->value(),
@@ -508,9 +511,34 @@ void MainWindow::populateUIFromSelectedChannel()
         );
     }
 
+    for (const auto &c : m_eqConnections) disconnect(c);
+    m_eqConnections.clear();
+
+    for (int i = 0; i < 6; ++i) {
+        QString prefix = QString("eq%1_").arg(i + 1);
+        AudioParameter *freqParam = ch->parameter(prefix + "freq");
+        AudioParameter *gainParam = ch->parameter(prefix + "gain");
+        AudioParameter *qParam = ch->parameter(prefix + "q");
+        AudioParameter *activeParam = ch->parameter(prefix + "active");
+
+        auto updateGraphBand = [this, i, freqParam, gainParam, qParam, activeParam]() {
+            ui->EqGraph->setBand(i,
+                freqParam->value(),
+                gainParam->value(),
+                qParam->value(),
+                activeParam->value() > 0.5
+            );
+        };
+
+        m_eqConnections << connect(freqParam, &AudioParameter::valueChanged, this, updateGraphBand);
+        m_eqConnections << connect(gainParam, &AudioParameter::valueChanged, this, updateGraphBand);
+        m_eqConnections << connect(qParam, &AudioParameter::valueChanged, this, updateGraphBand);
+        m_eqConnections << connect(activeParam, &AudioParameter::valueChanged, this, updateGraphBand);
+    }
+
     m_activeEqBandIndex = ui->EqGraph->activeBandIndex();
-    QPushButton *eqBandBtns[4] = { ui->eqBandBtn0, ui->eqBandBtn1, ui->eqBandBtn2, ui->eqBandBtn3 };
-    for (int i = 0; i < 4; ++i) {
+    QPushButton *eqBandBtns[6] = { ui->eqBandBtnL, ui->eqBandBtn1, ui->eqBandBtn2, ui->eqBandBtn3, ui->eqBandBtn4, ui->eqBandBtnH };
+    for (int i = 0; i < 6; ++i) {
         eqBandBtns[i]->setChecked(i == m_activeEqBandIndex);
     }
 
@@ -548,12 +576,15 @@ void MainWindow::populateUIFromSelectedChannel()
     m_gateConnections << connect(ch->parameter("gate_active"), &AudioParameter::valueChanged, this,
         [this](double v) { ui->gateActiveBtn->setText(v > 0.5 ? "ON" : "OFF"); });
 
-    // Gate Curve widget reflects threshold / depth / active
+    // Gate Curve widget reflects threshold / ratio / depth / active
     ui->gateCurve->setThreshold(ch->parameter("gate_threshold")->value());
+    ui->gateCurve->setRatio(ch->parameter("gate_ratio")->value());
     ui->gateCurve->setDepth(ch->parameter("gate_depth")->value());
     ui->gateCurve->setActive(gateActive);
     m_gateConnections << connect(ch->parameter("gate_threshold"), &AudioParameter::valueChanged, this,
         [this](double v) { ui->gateCurve->setThreshold(v); });
+    m_gateConnections << connect(ch->parameter("gate_ratio"), &AudioParameter::valueChanged, this,
+        [this](double v) { ui->gateCurve->setRatio(v); });
     m_gateConnections << connect(ch->parameter("gate_depth"), &AudioParameter::valueChanged, this,
         [this](double v) { ui->gateCurve->setDepth(v); });
 
@@ -807,7 +838,7 @@ void MainWindow::updateBottomEncodersLayout()
         activeParams[0] = ch->parameter("gain");
         activeParams[1] = ch->parameter("locut_freq");
         activeParams[2] = ch->parameter("eq1_freq");
-        activeParams[3] = ch->parameter("eq4_freq");
+        activeParams[3] = ch->parameter("eq6_freq");
         activeParams[4] = ch->parameter("comp_threshold");
         activeParams[5] = ch->parameter("pan");
     } else if (pageIdx == 1) { // Input
@@ -818,7 +849,7 @@ void MainWindow::updateBottomEncodersLayout()
         activeParams[4] = ch->parameter("tilt");
         activeParams[5] = ch->parameter("pan");
     } else if (pageIdx == 2) { // Gate
-        activeParams[0] = ch->parameter("gate_active");
+        activeParams[0] = ch->parameter("gate_ratio");
         activeParams[1] = ch->parameter("gate_threshold");
         activeParams[2] = ch->parameter("gate_attack");
         activeParams[3] = ch->parameter("gate_hold");
@@ -837,8 +868,6 @@ void MainWindow::updateBottomEncodersLayout()
         activeParams[1] = ch->parameter(eqPrefix + "gain");
         activeParams[2] = ch->parameter(eqPrefix + "q");
         activeParams[3] = ch->parameter(eqPrefix + "active");
-        activeParams[4] = ch->parameter("pan");
-        activeParams[5] = ch->parameter("level");
     } else if (pageIdx == 5) { // Main
         activeParams[0] = ch->parameter("pan");
         activeParams[1] = ch->parameter("mute");
@@ -871,7 +900,10 @@ void MainWindow::updateBottomEncodersLayout()
 void MainWindow::onEqBandSelected(int bandIdx)
 {
     m_activeEqBandIndex = bandIdx;
-    ui->EqGraph->setActiveBandIndex(bandIdx);
+    if (ui->EqGraph->activeBandIndex() != bandIdx) {
+        ui->EqGraph->setActiveBandIndex(bandIdx);
+        return;
+    }
 
     // Bind parameters of the newly selected EQ band to detail controls
     populateUIFromSelectedChannel();
