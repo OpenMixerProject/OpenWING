@@ -33,6 +33,12 @@ add_executable(wing-qt-demo
     levelmeter.cpp
     eqgraphwidget.h
     eqgraphwidget.cpp
+    compcurvewidget.h
+    compcurvewidget.cpp
+    gatecurvewidget.h
+    gatecurvewidget.cpp
+    envelopegraphwidget.h
+    envelopegraphwidget.cpp
     scribblestrip.h
     scribblestrip.cpp
     audioparameter.h

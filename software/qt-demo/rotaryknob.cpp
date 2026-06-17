@@ -113,6 +113,11 @@ QString RotaryKnob::formattedValue() const
         return QString("%1 %2").arg(qRound(rVal)).arg(m_unit);
     } else if (m_unit == "%") {
         return QString("%1%2").arg(qRound(rVal)).arg(m_unit);
+    } else if (m_unit == ":1") {
+        if (rVal >= 100.0) {
+            return QString::fromUtf8("∞:1");
+        }
+        return QString("%1:1").arg(rVal, 0, 'f', 1);
     }
     return QString("%1 %2").arg(rVal, 0, 'f', 1).arg(m_unit).trimmed();
 }

@@ -46,16 +46,26 @@ public:
         m_parameters["gate_hold"] = new AudioParameter("Gate Hold", 10.0, 2000.0, 50.0, "ms", 1.0, QColor("#f97316"), this);
         m_parameters["gate_release"] = new AudioParameter("Gate Rel", 10.0, 4000.0, 250.0, "ms", 1.0, QColor("#f97316"), this);
         m_parameters["gate_depth"] = new AudioParameter("Gate Dpt", 0.0, 60.0, 40.0, "dB", 1.0, QColor("#f97316"), this);
+        m_parameters["gate_model"] = new AudioParameter("Gate Model", 0.0, 1.0, 0.0, "", 1.0, QColor("#f97316"), this);
+        m_parameters["gate_key_source"] = new AudioParameter("Gate Key Src", 0.0, 3.0, 0.0, "", 1.0, QColor("#f97316"), this);
+        m_parameters["gate_accent"] = new AudioParameter("Gate Accent", 0.0, 100.0, 0.0, "%", 1.0, QColor("#f97316"), this);
+        m_parameters["gate_key_solo"] = new AudioParameter("Gate Key Solo", 0.0, 1.0, 0.0, "", 1.0, QColor("#f97316"), this);
+        m_parameters["gate_key_filter"] = new AudioParameter("Gate Key Fltr", 0.0, 3.0, 0.0, "", 1.0, QColor("#f97316"), this);
 
         // Compressor
         m_parameters["comp_active"] = new AudioParameter("Comp On", 0.0, 1.0, 0.0, "", 1.0, QColor("#3b82f6"), this);
-        m_parameters["comp_threshold"] = new AudioParameter("Comp Thr", -60.0, 0.0, -18.0, "dB", 1.0, QColor("#3b82f6"), this);
-        m_parameters["comp_ratio"] = new AudioParameter("Comp Ratio", 1.0, 20.0, 3.5, ":1", 0.1, QColor("#3b82f6"), this);
-        m_parameters["comp_attack"] = new AudioParameter("Comp Att", 0.1, 200.0, 10.0, "ms", 0.1, QColor("#3b82f6"), this);
-        m_parameters["comp_hold"] = new AudioParameter("Comp Hold", 0.0, 1000.0, 0.0, "ms", 1.0, QColor("#3b82f6"), this);
-        m_parameters["comp_release"] = new AudioParameter("Comp Rel", 10.0, 3000.0, 150.0, "ms", 1.0, QColor("#3b82f6"), this);
+        m_parameters["comp_threshold"] = new AudioParameter("Threshold", -60.0, 0.0, -18.0, "dB", 1.0, QColor("#3b82f6"), this);
+        m_parameters["comp_ratio"] = new AudioParameter("Ratio", 1.0, 100.0, 3.5, ":1", 0.1, QColor("#3b82f6"), this);
+        m_parameters["comp_attack"] = new AudioParameter("Attack", 0.1, 200.0, 10.0, "ms", 0.1, QColor("#3b82f6"), this);
+        m_parameters["comp_hold"] = new AudioParameter("Hold", 0.0, 1000.0, 0.0, "ms", 1.0, QColor("#3b82f6"), this);
+        m_parameters["comp_release"] = new AudioParameter("Release", 10.0, 3000.0, 150.0, "ms", 1.0, QColor("#3b82f6"), this);
         m_parameters["comp_sc_locut"] = new AudioParameter("SC LoCut", 20.0, 1000.0, 20.0, "Hz", 1.0, QColor("#3b82f6"), this);
         m_parameters["comp_sc_hicut"] = new AudioParameter("SC HiCut", 200.0, 20000.0, 20000.0, "Hz", 1.0, QColor("#3b82f6"), this);
+        // Compressor header / detector controls
+        m_parameters["comp_mix"]        = new AudioParameter("Mix", 0.0, 100.0, 100.0, "%", 1.0, QColor("#3b82f6"), this);
+        m_parameters["comp_gain"]       = new AudioParameter("Gain", -12.0, 12.0, 0.0, "dB", 0.1, QColor("#3b82f6"), this);
+        m_parameters["comp_knee"]       = new AudioParameter("Knee", 0.0, 24.0, 6.0, "dB", 1.0, QColor("#3b82f6"), this);
+        m_parameters["comp_key_source"] = new AudioParameter("Key Src", 0.0, 3.0, 0.0, "", 1.0, QColor("#3b82f6"), this);
 
         // 4. Mix / Level parameters
         m_parameters["level"] = new AudioParameter("Level", -80.0, 10.0, 0.0, "dB", 0.1, QColor("#ffffff"), this);

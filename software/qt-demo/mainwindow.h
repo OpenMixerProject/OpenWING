@@ -8,6 +8,7 @@
 #include <QLabel>
 #include <QSlider>
 #include <QTimer>
+#include <QButtonGroup>
 
 #include "rotaryknob.h"
 #include "levelmeter.h"
@@ -85,15 +86,23 @@ private:
     ParameterBinder m_bindGateHold;
     ParameterBinder m_bindGateRelease;
     ParameterBinder m_bindGateDepth;
+    ParameterBinder m_bindGateModel;
+    ParameterBinder m_bindGateKeySource;
+    ParameterBinder m_bindGateAccent;
+    ParameterBinder m_bindGateKeySolo;
+    ParameterBinder m_bindGateKeyFilter;
 
     ParameterBinder m_bindCompActive;
-    ParameterBinder m_bindCompThreshold;
-    ParameterBinder m_bindCompRatio;
+    ParameterBinder m_bindCompMix;
+    ParameterBinder m_bindCompGain;
+    ParameterBinder m_bindCompKeySource;
     ParameterBinder m_bindCompAttack;
-    ParameterBinder m_bindCompHold;
     ParameterBinder m_bindCompRelease;
-    ParameterBinder m_bindCompScLoCut;
-    ParameterBinder m_bindCompScHiCut;
+    ParameterBinder m_bindCompHold;
+
+    // Live connections rebound when the selected channel changes
+    QVector<QMetaObject::Connection> m_compConnections;
+    QVector<QMetaObject::Connection> m_gateConnections;
 
     // Main mix panel binders
     ParameterBinder m_bindScreenFader;

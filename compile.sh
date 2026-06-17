@@ -121,6 +121,11 @@ RUN dpkg --add-architecture armhf \
     u-boot-tools \
     xz-utils \
     cmake \
+    meson \
+    ninja-build \
+    python3-mako \
+    gperf \
+    xsltproc \
     qtbase5-dev:armhf \
     qtbase5-dev-tools \
     libegl1-mesa-dev:armhf \
@@ -198,9 +203,7 @@ copy_deps() {
                 continue
             fi
 
-            # Find library in standard toolchain search paths
-            local lib_path=""
-            for p in "/lib/arm-linux-gnueabihf" "/usr/lib/arm-linux-gnueabihf" "/lib" "/usr/lib"; do
+            for p in "${BUILD_DIR}/custom_libs/usr/lib" "${BUILD_DIR}/custom_libs/usr/lib/arm-linux-gnueabihf" "/lib/arm-linux-gnueabihf" "/usr/lib/arm-linux-gnueabihf" "/lib" "/usr/lib"; do
                 if [[ -f "${p}/${lib}" ]]; then
                     lib_path=$(realpath "${p}/${lib}")
                     break
@@ -231,6 +234,13 @@ HTOP_URL="https://github.com/htop-dev/htop/releases/download/${HTOP_VER}/htop-${
 UBOOT_VER="2024.01"
 UBOOT_URL="https://ftp.denx.de/pub/u-boot/u-boot-${UBOOT_VER}.tar.bz2"
 
+LIBDRM_VER="2.4.120"
+LIBDRM_URL="https://dri.freedesktop.org/libdrm/libdrm-${LIBDRM_VER}.tar.xz"
+MESA_VER="24.0.5"
+MESA_URL="https://archive.mesa3d.org/mesa-${MESA_VER}.tar.xz"
+QT_VER="5.15.12"
+QT_URL="https://download.qt.io/archive/qt/5.15/${QT_VER}/submodules/qtbase-everywhere-opensource-src-${QT_VER}.tar.xz"
+
 mkdir -p "${BUILD_DIR}" "${OUT_DIR}" "${ROOTFS_DIR}"
 cd "${BUILD_DIR}"
 
@@ -255,6 +265,15 @@ fi
 if [[ ! -f "u-boot-${UBOOT_VER}.tar.bz2" ]]; then
     curl -L -o "u-boot-${UBOOT_VER}.tar.bz2" "${UBOOT_URL}"
 fi
+if [[ ! -f "libdrm-${LIBDRM_VER}.tar.xz" ]]; then
+    curl -L -o "libdrm-${LIBDRM_VER}.tar.xz" "${LIBDRM_URL}"
+fi
+if [[ ! -f "mesa-${MESA_VER}.tar.xz" ]]; then
+    curl -L -o "mesa-${MESA_VER}.tar.xz" "${MESA_URL}"
+fi
+if [[ ! -f "qtbase-everywhere-opensource-src-${QT_VER}.tar.xz" ]]; then
+    curl -L -o "qtbase-everywhere-opensource-src-${QT_VER}.tar.xz" "${QT_URL}"
+fi
 
 if [[ ! -d "linux-${LINUX_VER}" ]]; then
     tar -xf "linux-${LINUX_VER}.tar.xz"
@@ -274,6 +293,141 @@ fi
 if [[ ! -d "u-boot-${UBOOT_VER}" ]]; then
     tar -xf "u-boot-${UBOOT_VER}.tar.bz2"
 fi
+if [[ ! -d "libdrm-${LIBDRM_VER}" ]]; then
+    tar -xf "libdrm-${LIBDRM_VER}.tar.xz"
+fi
+if [[ ! -d "mesa-${MESA_VER}" ]]; then
+    tar -xf "mesa-${MESA_VER}.tar.xz"
+fi
+if [[ ! -d "qtbase-everywhere-src-${QT_VER}" && ! -d "qtbase-everywhere-opensource-src-${QT_VER}" ]]; then
+    tar -xf "qtbase-everywhere-opensource-src-${QT_VER}.tar.xz"
+fi
+
+build_custom_libs() {
+    local custom_dir="${BUILD_DIR}/custom_libs"
+    if [ -f "${custom_dir}/usr/lib/libQt5Core.so" ]; then
+        echo "[build] Custom libraries (libdrm, Mesa, Qt) already built, skipping"
+        return
+    fi
+
+    echo "[build] Custom libraries (libdrm, Mesa, Qt)"
+    mkdir -p "${custom_dir}"
+    cd "${BUILD_DIR}"
+
+    # 1. Build libdrm
+    cd "libdrm-${LIBDRM_VER}"
+    cat > cross.txt <<EOF
+[binaries]
+c = 'arm-linux-gnueabihf-gcc'
+cpp = 'arm-linux-gnueabihf-g++'
+ar = 'arm-linux-gnueabihf-ar'
+strip = 'arm-linux-gnueabihf-strip'
+pkgconfig = 'pkg-config'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'arm'
+cpu = 'armv7hl'
+endian = 'little'
+EOF
+    meson setup builddir \
+        --cross-file cross.txt \
+        --prefix=/usr \
+        --libdir=lib \
+        -Dintel=disabled \
+        -Dradeon=disabled \
+        -Damdgpu=disabled \
+        -Dnouveau=disabled \
+        -Dvmwgfx=disabled \
+        -Domap=disabled \
+        -Dexynos=disabled \
+        -Dfreedreno=disabled \
+        -Dtegra=disabled \
+        -Dvc4=disabled \
+        -Detnaviv=enabled \
+        -Dvalgrind=disabled
+    ninja -C builddir install DESTDIR="${custom_dir}"
+    cd "${BUILD_DIR}"
+
+    # 2. Build Mesa
+    cd "mesa-${MESA_VER}"
+    cat > cross.txt <<EOF
+[binaries]
+c = 'arm-linux-gnueabihf-gcc'
+cpp = 'arm-linux-gnueabihf-g++'
+ar = 'arm-linux-gnueabihf-ar'
+strip = 'arm-linux-gnueabihf-strip'
+pkgconfig = 'pkg-config'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'arm'
+cpu = 'armv7hl'
+endian = 'little'
+EOF
+    export PKG_CONFIG_PATH="${custom_dir}/usr/lib/pkgconfig:${custom_dir}/usr/share/pkgconfig"
+    export PKG_CONFIG_LIBDIR=""
+    export PKG_CONFIG_SYSROOT_DIR=""
+
+    meson setup builddir \
+        --cross-file cross.txt \
+        --prefix=/usr \
+        --libdir=lib \
+        -Dplatforms=surfaceless \
+        -Dgallium-drivers=etnaviv,kmsro \
+        -Dvulcan-drivers= \
+        -Dllvm=disabled \
+        -Dshared-glapi=enabled \
+        -Dgbm=enabled \
+        -Degl=enabled \
+        -Dgles1=disabled \
+        -Dgles2=enabled \
+        -Dopengl=false \
+        -Dglx=disabled \
+        -Dvalgrind=disabled \
+        -Dlibunwind=disabled
+    ninja -C builddir install DESTDIR="${custom_dir}"
+    cd "${BUILD_DIR}"
+
+    # 3. Build Qt base
+    if [ -d "qtbase-everywhere-src-${QT_VER}" ]; then
+        cd "qtbase-everywhere-src-${QT_VER}"
+    else
+        cd "qtbase-everywhere-opensource-src-${QT_VER}"
+    fi
+    
+    export PKG_CONFIG_PATH="${custom_dir}/usr/lib/pkgconfig:${custom_dir}/usr/share/pkgconfig"
+
+    ./configure \
+        -xplatform linux-arm-gnueabihf-g++ \
+        -prefix /usr \
+        -extprefix "${custom_dir}/usr" \
+        -release \
+        -opensource \
+        -confirm-license \
+        -make libs \
+        -nomake examples \
+        -nomake tests \
+        -no-icu \
+        -no-opengl \
+        -gles2 \
+        -eglfs \
+        -gbm \
+        -no-dbus \
+        -no-xcb \
+        -no-harfbuzz \
+        -no-fontconfig \
+        -no-accessibility \
+        -no-sql-mysql -no-sql-psql -no-sql-sqlite \
+        -qt-libpng -qt-libjpeg -qt-zlib \
+        -I "${custom_dir}/usr/include" \
+        -L "${custom_dir}/usr/lib" \
+        -verbose
+
+    make -j"$(nproc)"
+    make install
+    cd "${BUILD_DIR}"
+}
 
 echo "[build] U-Boot bootloader"
 cd "${BUILD_DIR}/u-boot-${UBOOT_VER}"
@@ -306,6 +460,8 @@ if [[ "${UBOOT_NEED_BUILD}" -eq 1 ]]; then
 else
     echo "[build] U-Boot bootloader: up to date, skipping"
 fi
+
+build_custom_libs
 
 rm -rf "${ROOTFS_DIR}"
 mkdir -p "${ROOTFS_DIR}"
@@ -510,28 +666,55 @@ mkdir -p "${BUILD_DIR}/qt-demo"
         -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER \
         -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY \
         -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY \
-        -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY
+        -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY \
+        -DCMAKE_PREFIX_PATH="${BUILD_DIR}/custom_libs/usr"
     make -j"$(nproc)"
 )
 install -D -m 0755 "${BUILD_DIR}/qt-demo/wing-qt-demo" "${ROOTFS_DIR}/usr/bin/wing-qt-demo"
 
 # Copy the linuxfb platform plugin
-install -D -m 0755 "/usr/lib/arm-linux-gnueabihf/qt5/plugins/platforms/libqlinuxfb.so" \
+install -D -m 0755 "${BUILD_DIR}/custom_libs/usr/plugins/platforms/libqlinuxfb.so" \
     "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/qt5/plugins/platforms/libqlinuxfb.so"
 
 # Copy the eglfs platform plugin
-install -D -m 0755 "/usr/lib/arm-linux-gnueabihf/qt5/plugins/platforms/libqeglfs.so" \
+install -D -m 0755 "${BUILD_DIR}/custom_libs/usr/plugins/platforms/libqeglfs.so" \
     "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/qt5/plugins/platforms/libqeglfs.so"
 
-# Copy the Etnaviv DRI GPU driver
-install -D -m 0755 "/usr/lib/arm-linux-gnueabihf/dri/etnaviv_dri.so" \
-    "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/dri/etnaviv_dri.so"
+# Copy the libdril_dri.so and create symbolic links
+install -D -m 0755 "${BUILD_DIR}/custom_libs/usr/lib/dri/libdril_dri.so" \
+    "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/dri/libdril_dri.so"
+for driver in etnaviv_dri.so imx-drm_dri.so kms_swrast_dri.so swrast_dri.so; do
+    ln -sf libdril_dri.so "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/dri/${driver}"
+done
+
+# Copy the GBM dri module
+install -D -m 0755 "${BUILD_DIR}/custom_libs/usr/lib/gbm/dri_gbm.so" \
+    "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/gbm/dri_gbm.so"
+
+# Copy the eglfs device integration plugins
+for plugin in "${BUILD_DIR}/custom_libs"/usr/plugins/egldeviceintegrations/*.so; do
+    if [ -f "$plugin" ]; then
+        dest_plugin="${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/qt5/plugins/egldeviceintegrations/$(basename "$plugin")"
+        install -D -m 0755 "$plugin" "$dest_plugin"
+        copy_deps "$dest_plugin" "${ROOTFS_DIR}"
+    fi
+done
+
+# Copy the generic input plugins
+for plugin in "${BUILD_DIR}/custom_libs"/usr/plugins/generic/*.so; do
+    if [ -f "$plugin" ]; then
+        dest_plugin="${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/qt5/plugins/generic/$(basename "$plugin")"
+        install -D -m 0755 "$plugin" "$dest_plugin"
+        copy_deps "$dest_plugin" "${ROOTFS_DIR}"
+    fi
+done
 
 # Run dependency copy script for all of them
 copy_deps "${ROOTFS_DIR}/usr/bin/wing-qt-demo" "${ROOTFS_DIR}"
 copy_deps "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/qt5/plugins/platforms/libqlinuxfb.so" "${ROOTFS_DIR}"
 copy_deps "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/qt5/plugins/platforms/libqeglfs.so" "${ROOTFS_DIR}"
-copy_deps "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/dri/etnaviv_dri.so" "${ROOTFS_DIR}"
+copy_deps "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/dri/libdril_dri.so" "${ROOTFS_DIR}"
+copy_deps "${ROOTFS_DIR}/usr/lib/arm-linux-gnueabihf/gbm/dri_gbm.so" "${ROOTFS_DIR}"
 
 # Create run-qt-demo launcher script in rootfs
 cat > "${ROOTFS_DIR}/usr/bin/run-qt-demo" <<'EOF'
@@ -650,7 +833,7 @@ out += newc_entry("TRAILER!!!", 0)
 out += b"\0" * ((512 - len(out) % 512) % 512)
 open(dst, "wb").write(out)
 PY
-gzip -9 -f "${BUILD_DIR}/initramfs.cpio"
+xz -9 --check=crc32 -f "${BUILD_DIR}/initramfs.cpio"
 
 echo "[build] Linux kernel + unified console/display DTS"
 cd "${BUILD_DIR}/linux-${LINUX_VER}"
@@ -664,6 +847,7 @@ cp "${ROOT_DIR}/configs/config_linux" .config
 scripts/config --set-str INITRAMFS_SOURCE ""
 scripts/config --enable INPUT
 scripts/config --enable INPUT_EVDEV
+scripts/config --enable INPUT_MISC
 scripts/config --enable INPUT_UINPUT
 scripts/config --enable HID_SUPPORT
 scripts/config --enable HID
@@ -680,14 +864,14 @@ make ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" -j"$(nproc)" zImage nxp/imx
 
 cp arch/arm/boot/zImage "${OUT_DIR}/wing-usb-console-zImage"
 cp arch/arm/boot/dts/nxp/imx/imx6dl-wing-usb-console.dtb "${OUT_DIR}/imx6dl-wing-usb-console.dtb"
-cp "${BUILD_DIR}/initramfs.cpio.gz" "${OUT_DIR}/wing-usb-console-initramfs.cpio.gz"
+cp "${BUILD_DIR}/initramfs.cpio.xz" "${OUT_DIR}/wing-usb-console-initramfs.cpio.xz"
 
 echo "[build] wingfw package"
 python3 "${ROOT_DIR}/tools/build_linux_wingfw.py" \
     --uboot-imx "${UBOOT_IMX}" \
     --kernel "${OUT_DIR}/wing-usb-console-zImage" \
     --dtb "${OUT_DIR}/imx6dl-wing-usb-console.dtb" \
-    --initramfs "${OUT_DIR}/wing-usb-console-initramfs.cpio.gz" \
+    --initramfs "${OUT_DIR}/wing-usb-console-initramfs.cpio.xz" \
     --fit-output "${OUT_DIR}/wing-usb-console.itb" \
     --version "linux-usb-console" \
     -o "${OUTPUT_WINGFW}"

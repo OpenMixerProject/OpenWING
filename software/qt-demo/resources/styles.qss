@@ -404,3 +404,213 @@ QSlider::handle:vertical#PhysicalFaderSlider:hover {
     border-color: #10b981;
     color: #10b981;
 }
+
+/* =========================================================================
+   COMPRESSOR / DYNAMICS PAGE
+   ========================================================================= */
+
+/* Header dropdown cells (DYNAMICS MODEL, KEY SOURCE) */
+*[cls="CompHeaderCell"] {
+    background-color: #161620;
+    border: 1px solid #252535;
+    border-radius: 6px;
+}
+
+*[cls="CompCaption"] {
+    color: #71717a;
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    border: none;
+    padding: 0;
+}
+
+QComboBox[cls="CompHeaderCombo"] {
+    background-color: transparent;
+    color: #ffffff;
+    border: none;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 0;
+}
+
+QComboBox[cls="CompHeaderCombo"]::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
+    width: 18px;
+    border: none;
+}
+
+QComboBox[cls="CompHeaderCombo"]::down-arrow {
+    image: none;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #6b7280;
+    margin-right: 4px;
+}
+
+QComboBox[cls="CompHeaderCombo"] QAbstractItemView {
+    background-color: #181822;
+    color: #ffffff;
+    border: 1px solid #3b82f6;
+    selection-background-color: #1e3a8a;
+    selection-color: #ffffff;
+    outline: none;
+}
+
+QComboBox[cls="GateHeaderCombo"] {
+    background-color: transparent;
+    color: #ffffff;
+    border: none;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 0;
+}
+
+QComboBox[cls="GateHeaderCombo"]::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
+    width: 18px;
+    border: none;
+}
+
+QComboBox[cls="GateHeaderCombo"]::down-arrow {
+    image: none;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #6b7280;
+    margin-right: 4px;
+}
+
+QComboBox[cls="GateHeaderCombo"] QAbstractItemView {
+    background-color: #181822;
+    color: #ffffff;
+    border: 1px solid #f97316;
+    selection-background-color: #7c2d12;
+    selection-color: #ffffff;
+    outline: none;
+}
+
+/* Second-row tool buttons (XOVER SOLO / MODE, KEY SOLO / FILTER) */
+QPushButton[cls="CompToolBtn"], QPushButton[cls="CompToolBtnBlue"], QPushButton[cls="CompToolBtnGreen"] {
+    background-color: #161620;
+    color: #6b7280;
+    border: 1px solid #252535;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 11px;
+    font-weight: bold;
+    text-align: left;
+}
+
+QPushButton[cls="GateToolBtn"] {
+    background-color: #161620;
+    color: #6b7280;
+    border: 1px solid #252535;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 11px;
+    font-weight: bold;
+    text-align: left;
+}
+
+QPushButton[cls="GateToolBtn"]:hover {
+    border-color: #3f3f54;
+    color: #9ca3af;
+}
+QPushButton[cls="GateToolBtn"]:checked {
+    background-color: #7c2d12;
+    color: #ffffff;
+    border-color: #f97316;
+}
+QPushButton[cls="CompToolBtn"]:hover,
+QPushButton[cls="CompToolBtnBlue"]:hover,
+QPushButton[cls="CompToolBtnGreen"]:hover {
+    border-color: #3f3f54;
+    color: #9ca3af;
+}
+
+QPushButton[cls="CompToolBtnBlue"] { color: #93c5fd; }
+QPushButton[cls="CompToolBtnGreen"] { color: #6ee7b7; }
+
+QPushButton[cls="CompToolBtn"]:checked {
+    background-color: #1e3a8a;
+    color: #dbeafe;
+    border-color: #3b82f6;
+}
+QPushButton[cls="CompToolBtnBlue"]:checked {
+    background-color: #1e3a8a;
+    color: #ffffff;
+    border-color: #3b82f6;
+}
+QPushButton[cls="CompToolBtnGreen"]:checked {
+    background-color: #064e3b;
+    color: #ffffff;
+    border-color: #10b981;
+}
+
+/* Right-hand envelope panel */
+*[cls="CompPanel"] {
+    background-color: #161620;
+    border: 1px solid #252535;
+    border-radius: 6px;
+}
+
+*[cls="CompPanelTitle"] {
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    border: none;
+    padding: 2px 0;
+}
+
+*[cls="CompSegGroup"] {
+    background-color: transparent;
+    border: none;
+}
+
+*[cls="CompSegCaption"] {
+    color: #71717a;
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    border: none;
+    padding: 0;
+}
+
+/* Segmented two-button toggles */
+QPushButton[cls="SegBtnL"], QPushButton[cls="SegBtnR"] {
+    background-color: #1a1a24;
+    color: #9ca3af;
+    border: 1px solid #2b2b3b;
+    padding: 7px 4px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+QPushButton[cls="SegBtnL"] {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-right: none;
+}
+
+QPushButton[cls="SegBtnR"] {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+QPushButton[cls="SegBtnL"]:hover, QPushButton[cls="SegBtnR"]:hover {
+    background-color: #24242f;
+    color: #d1d5db;
+}
+
+QPushButton[cls="SegBtnL"]:checked, QPushButton[cls="SegBtnR"]:checked {
+    background-color: #fbbf24;
+    color: #1a1a24;
+    border-color: #d97706;
+}

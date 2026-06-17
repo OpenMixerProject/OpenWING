@@ -1096,452 +1096,562 @@
                 </layout>
                </widget>
                <widget class="QWidget" name="pageGate">
-                <layout class="QHBoxLayout" name="gateLayout" stretch="2,1">
+                <layout class="QVBoxLayout" name="gateLayout">
                  <property name="spacing">
-                  <number>15</number>
+                  <number>10</number>
                  </property>
                  <property name="leftMargin">
-                  <number>15</number>
+                  <number>12</number>
                  </property>
                  <property name="topMargin">
-                  <number>15</number>
+                  <number>12</number>
                  </property>
                  <property name="rightMargin">
-                  <number>15</number>
+                  <number>12</number>
                  </property>
                  <property name="bottomMargin">
-                  <number>15</number>
+                  <number>12</number>
                  </property>
                  <item>
-                  <widget class="QFrame" name="gateCtrlBox">
-                   <property name="cls" stdset="0">
-                    <string>DetailSectionBox</string>
+                  <layout class="QHBoxLayout" name="gateHeaderRow">
+                   <property name="spacing">
+                    <number>8</number>
                    </property>
-                   <layout class="QVBoxLayout" name="gateCtrlLayout" stretch="0,0,1">
-                    <property name="spacing">
-                     <number>12</number>
-                    </property>
-                    <property name="leftMargin">
-                     <number>15</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>15</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>15</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>15</number>
-                    </property>
-                    <item>
-                     <widget class="QLabel" name="gateCtrlTitle">
-                      <property name="text">
-                       <string>GATE CONTROLS</string>
+                   <item>
+                    <widget class="QPushButton" name="gateActiveBtn">
+                     <property name="text">
+                      <string>OFF</string>
+                     </property>
+                     <property name="checkable">
+                      <bool>true</bool>
+                     </property>
+                     <property name="cls" stdset="0">
+                      <string>OrangeLedBtn</string>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>64</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QFrame" name="gateModelCell">
+                     <property name="cls" stdset="0">
+                      <string>CompHeaderCell</string>
+                     </property>
+                     <layout class="QVBoxLayout" name="gateModelCellLayout">
+                      <property name="spacing">
+                       <number>1</number>
                       </property>
-                      <property name="alignment">
-                       <set>Qt::AlignCenter</set>
+                      <property name="leftMargin">
+                       <number>8</number>
                       </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="gateActiveBtn">
-                      <property name="text">
-                       <string>GATE ON</string>
+                      <property name="topMargin">
+                       <number>4</number>
                       </property>
-                      <property name="checkable">
-                       <bool>true</bool>
+                      <property name="rightMargin">
+                       <number>8</number>
                       </property>
-                      <property name="cls" stdset="0">
-                       <string>OrangeLedBtn</string>
+                      <property name="bottomMargin">
+                       <number>4</number>
                       </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <layout class="QHBoxLayout" name="gateKnobsLayout">
                       <item>
-                       <widget class="RotaryKnob" name="gateThresholdKnob">
-                        <property name="minimum">
-                         <number>-80</number>
+                       <widget class="QLabel" name="gateModelCaption">
+                        <property name="text">
+                         <string>GATE MODEL</string>
                         </property>
-                        <property name="maximum">
-                         <number>0</number>
-                        </property>
-                        <property name="value">
-                         <number>-55</number>
-                        </property>
-                        <property name="defaultValue" stdset="0">
-                         <double>-55.000000000000000</double>
-                        </property>
-                        <property name="label" stdset="0">
-                         <string>THRESHOLD</string>
+                        <property name="cls" stdset="0">
+                         <string>CompCaption</string>
                         </property>
                        </widget>
                       </item>
                       <item>
-                       <widget class="RotaryKnob" name="gateAttackKnob">
-                        <property name="minimum">
-                         <number>1</number>
+                       <widget class="QComboBox" name="gateModelCombo">
+                        <property name="cls" stdset="0">
+                         <string>GateHeaderCombo</string>
                         </property>
-                        <property name="maximum">
-                         <number>5000</number>
-                        </property>
-                        <property name="value">
-                         <number>10</number>
-                        </property>
-                        <property name="defaultValue" stdset="0">
-                         <double>10.000000000000000</double>
-                        </property>
-                        <property name="label" stdset="0">
-                         <string>ATTACK</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="RotaryKnob" name="gateHoldKnob">
-                        <property name="minimum">
-                         <number>10</number>
-                        </property>
-                        <property name="maximum">
-                         <number>2000</number>
-                        </property>
-                        <property name="value">
-                         <number>50</number>
-                        </property>
-                        <property name="defaultValue" stdset="0">
-                         <double>50.000000000000000</double>
-                        </property>
-                        <property name="label" stdset="0">
-                         <string>HOLD</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="RotaryKnob" name="gateReleaseKnob">
-                        <property name="minimum">
-                         <number>10</number>
-                        </property>
-                        <property name="maximum">
-                         <number>4000</number>
-                        </property>
-                        <property name="value">
-                         <number>250</number>
-                        </property>
-                        <property name="defaultValue" stdset="0">
-                         <double>250.000000000000000</double>
-                        </property>
-                        <property name="label" stdset="0">
-                         <string>RELEASE</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="RotaryKnob" name="gateDepthKnob">
-                        <property name="minimum">
-                         <number>0</number>
-                        </property>
-                        <property name="maximum">
-                         <number>60</number>
-                        </property>
-                        <property name="value">
-                         <number>40</number>
-                        </property>
-                        <property name="defaultValue" stdset="0">
-                         <double>40.000000000000000</double>
-                        </property>
-                        <property name="label" stdset="0">
-                         <string>DEPTH</string>
-                        </property>
+                        <item>
+                         <property name="text">
+                          <string>GATE/EXPANDER</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>DUCKER</string>
+                         </property>
+                        </item>
                        </widget>
                       </item>
                      </layout>
-                    </item>
-                   </layout>
-                  </widget>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QFrame" name="gateKeySrcCell">
+                     <property name="cls" stdset="0">
+                      <string>CompHeaderCell</string>
+                     </property>
+                     <layout class="QVBoxLayout" name="gateKeySrcCellLayout">
+                      <property name="spacing">
+                       <number>1</number>
+                      </property>
+                      <property name="leftMargin">
+                       <number>8</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>4</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>8</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>4</number>
+                      </property>
+                      <item>
+                       <widget class="QLabel" name="gateKeySrcCaption">
+                        <property name="text">
+                         <string>KEY SOURCE</string>
+                        </property>
+                        <property name="cls" stdset="0">
+                         <string>CompCaption</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QComboBox" name="gateKeySourceCombo">
+                        <property name="cls" stdset="0">
+                         <string>GateHeaderCombo</string>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>SELF</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>CH 1-8 BUS</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>SIDE CHAIN</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>EXTERNAL</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                  </layout>
                  </item>
                  <item>
-                  <widget class="QFrame" name="gateVisualBox">
-                   <property name="cls" stdset="0">
-                    <string>DetailSectionBox</string>
+                  <layout class="QHBoxLayout" name="gateToolRow">
+                   <property name="spacing">
+                    <number>8</number>
                    </property>
-                   <layout class="QVBoxLayout" name="gateVisualLayout" stretch="0,1">
-                    <property name="leftMargin">
-                     <number>15</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>15</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>15</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>15</number>
-                    </property>
-                    <item>
-                     <widget class="QLabel" name="gateVisualTitle">
-                      <property name="text">
-                       <string>GATE GRAPH &amp; DYNAMICS STATE</string>
+                   <item>
+                    <widget class="RotaryKnob" name="gateAccentKnob">
+                     <property name="minimum">
+                      <number>0</number>
+                     </property>
+                     <property name="maximum">
+                      <number>100</number>
+                     </property>
+                     <property name="value">
+                      <number>0</number>
+                     </property>
+                     <property name="small" stdset="0">
+                      <bool>true</bool>
+                     </property>
+                     <property name="label" stdset="0">
+                      <string>ACCENT</string>
+                     </property>
+                     <property name="unit" stdset="0">
+                      <string>%</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="gateToolSpacer">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="gateKeySoloBtn">
+                     <property name="text">
+                      <string>KEY SOLO</string>
+                     </property>
+                     <property name="checkable">
+                      <bool>true</bool>
+                     </property>
+                     <property name="cls" stdset="0">
+                      <string>GateToolBtn</string>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>90</width>
+                       <height>36</height>
+                      </size>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QFrame" name="gateKeyFilterCell">
+                     <property name="cls" stdset="0">
+                      <string>CompHeaderCell</string>
+                     </property>
+                     <layout class="QVBoxLayout" name="gateKeyFilterCellLayout">
+                      <property name="spacing">
+                       <number>1</number>
                       </property>
-                      <property name="alignment">
-                       <set>Qt::AlignCenter</set>
+                      <property name="leftMargin">
+                       <number>8</number>
                       </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="gateGraphPlaceholder">
-                      <property name="styleSheet">
-                       <string notr="true">color: #71717a; font-size: 12px; background-color: #0c0c10; border: 1px dashed #272737; border-radius: 4px;</string>
+                      <property name="topMargin">
+                       <number>4</number>
                       </property>
-                      <property name="text">
-                       <string>[ Gate Transfer Curve / Gain Reduction Display ]</string>
+                      <property name="rightMargin">
+                       <number>8</number>
                       </property>
-                      <property name="alignment">
-                       <set>Qt::AlignCenter</set>
+                      <property name="bottomMargin">
+                       <number>4</number>
                       </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
+                      <item>
+                       <widget class="QLabel" name="gateKeyFilterCaption">
+                        <property name="text">
+                         <string>KEY FILTER</string>
+                        </property>
+                        <property name="cls" stdset="0">
+                         <string>CompCaption</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QComboBox" name="gateKeyFilterCombo">
+                        <property name="cls" stdset="0">
+                         <string>GateHeaderCombo</string>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>FLAT</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>LO CUT</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>HI CUT</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>BAND PASS</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <layout class="QHBoxLayout" name="gateMainRow" stretch="3,2">
+                   <property name="spacing">
+                    <number>10</number>
+                   </property>
+                   <item>
+                    <widget class="GateCurveWidget" name="gateCurve"/>
+                   </item>
+                   <item>
+                    <widget class="QFrame" name="gateEnvPanel">
+                     <property name="cls" stdset="0">
+                      <string>CompPanel</string>
+                     </property>
+                     <layout class="QVBoxLayout" name="gateEnvPanelLayout" stretch="0,1,0">
+                      <property name="spacing">
+                       <number>8</number>
+                      </property>
+                      <property name="leftMargin">
+                       <number>10</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>8</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>10</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>10</number>
+                      </property>
+                      <item>
+                       <widget class="QLabel" name="gateEnvTitle">
+                        <property name="text">
+                         <string>ENVELOPE</string>
+                        </property>
+                        <property name="cls" stdset="0">
+                         <string>CompPanelTitle</string>
+                        </property>
+                        <property name="alignment">
+                         <set>Qt::AlignCenter</set>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="EnvelopeGraphWidget" name="gateEnvelope"/>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="gateSegRow">
+                        <property name="spacing">
+                         <number>10</number>
+                        </property>
+                        <item>
+                         <widget class="RotaryKnob" name="gateAttackKnob">
+                          <property name="minimum">
+                           <number>1</number>
+                          </property>
+                          <property name="maximum">
+                           <number>5000</number>
+                          </property>
+                          <property name="value">
+                           <number>10</number>
+                          </property>
+                          <property name="defaultValue" stdset="0">
+                           <double>10.0</double>
+                          </property>
+                          <property name="label" stdset="0">
+                           <string>ATTACK</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="RotaryKnob" name="gateHoldKnob">
+                          <property name="minimum">
+                           <number>10</number>
+                          </property>
+                          <property name="maximum">
+                           <number>2000</number>
+                          </property>
+                          <property name="value">
+                           <number>50</number>
+                          </property>
+                          <property name="defaultValue" stdset="0">
+                           <double>50.0</double>
+                          </property>
+                          <property name="label" stdset="0">
+                           <string>HOLD</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="RotaryKnob" name="gateReleaseKnob">
+                          <property name="minimum">
+                           <number>10</number>
+                          </property>
+                          <property name="maximum">
+                           <number>4000</number>
+                          </property>
+                          <property name="value">
+                           <number>250</number>
+                          </property>
+                          <property name="defaultValue" stdset="0">
+                           <double>250.0</double>
+                          </property>
+                          <property name="label" stdset="0">
+                           <string>RELEASE</string>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                  </layout>
                  </item>
                 </layout>
                </widget>
                <widget class="QWidget" name="pageComp">
-                <layout class="QHBoxLayout" name="compLayout" stretch="3,1">
-                 <property name="spacing">
-                  <number>15</number>
-                 </property>
-                 <property name="leftMargin">
-                  <number>15</number>
-                 </property>
-                 <property name="topMargin">
-                  <number>15</number>
-                 </property>
-                 <property name="rightMargin">
-                  <number>15</number>
-                 </property>
-                 <property name="bottomMargin">
-                  <number>15</number>
-                 </property>
+                <layout class="QVBoxLayout" name="compLayout">
+                 <property name="spacing"><number>10</number></property>
+                 <property name="leftMargin"><number>12</number></property>
+                 <property name="topMargin"><number>12</number></property>
+                 <property name="rightMargin"><number>12</number></property>
+                 <property name="bottomMargin"><number>12</number></property>
                  <item>
-                  <widget class="QFrame" name="compCtrlBox">
-                   <property name="cls" stdset="0">
-                    <string>DetailSectionBox</string>
-                   </property>
-                   <layout class="QVBoxLayout" name="compCtrlLayout" stretch="0,0,1">
-                    <property name="spacing">
-                     <number>12</number>
-                    </property>
-                    <property name="leftMargin">
-                     <number>15</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>15</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>15</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>15</number>
-                    </property>
-                    <item>
-                     <widget class="QLabel" name="compCtrlTitle">
-                      <property name="text">
-                       <string>COMPRESSOR CONTROLS</string>
-                      </property>
-                      <property name="alignment">
-                       <set>Qt::AlignCenter</set>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="compActiveBtn">
-                      <property name="text">
-                       <string>COMP ON</string>
-                      </property>
-                      <property name="checkable">
-                       <bool>true</bool>
-                      </property>
-                      <property name="cls" stdset="0">
-                       <string>BlueLedBtn</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <layout class="QHBoxLayout" name="compKnobsLayout">
+                  <layout class="QHBoxLayout" name="compHeaderRow">
+                   <property name="spacing"><number>8</number></property>
+                   <item>
+                    <widget class="QPushButton" name="compActiveBtn">
+                     <property name="text"><string>OFF</string></property>
+                     <property name="checkable"><bool>true</bool></property>
+                     <property name="cls" stdset="0"><string>BlueLedBtn</string></property>
+                     <property name="minimumSize"><size><width>64</width><height>0</height></size></property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="RotaryKnob" name="compMixKnob">
+                     <property name="minimum"><number>0</number></property>
+                     <property name="maximum"><number>100</number></property>
+                     <property name="value"><number>100</number></property>
+                     <property name="small" stdset="0"><bool>true</bool></property>
+                     <property name="label" stdset="0"><string>MIX</string></property>
+                     <property name="unit" stdset="0"><string>%</string></property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QFrame" name="compKeySrcCell">
+                     <property name="cls" stdset="0"><string>CompHeaderCell</string></property>
+                     <layout class="QVBoxLayout" name="compKeySrcCellLayout">
+                      <property name="spacing"><number>1</number></property>
+                      <property name="leftMargin"><number>8</number></property>
+                      <property name="topMargin"><number>4</number></property>
+                      <property name="rightMargin"><number>8</number></property>
+                      <property name="bottomMargin"><number>4</number></property>
                       <item>
-                       <widget class="RotaryKnob" name="compThresholdKnob">
-                        <property name="minimum">
-                         <number>-60</number>
-                        </property>
-                        <property name="maximum">
-                         <number>0</number>
-                        </property>
-                        <property name="value">
-                         <number>-18</number>
-                        </property>
-                        <property name="defaultValue" stdset="0">
-                         <double>-18.000000000000000</double>
-                        </property>
-                        <property name="label" stdset="0">
-                         <string>THRESHOLD</string>
-                        </property>
+                       <widget class="QLabel" name="compKeySrcCaption">
+                        <property name="text"><string>KEY SOURCE</string></property>
+                        <property name="cls" stdset="0"><string>CompCaption</string></property>
                        </widget>
                       </item>
                       <item>
-                       <widget class="RotaryKnob" name="compRatioKnob">
-                        <property name="minimum">
-                         <number>10</number>
-                        </property>
-                        <property name="maximum">
-                         <number>200</number>
-                        </property>
-                        <property name="value">
-                         <number>35</number>
-                        </property>
-                        <property name="defaultValue" stdset="0">
-                         <double>35.000000000000000</double>
-                        </property>
-                        <property name="label" stdset="0">
-                         <string>RATIO</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="RotaryKnob" name="compAttackKnob">
-                        <property name="minimum">
-                         <number>1</number>
-                        </property>
-                        <property name="maximum">
-                         <number>2000</number>
-                        </property>
-                        <property name="value">
-                         <number>100</number>
-                        </property>
-                        <property name="defaultValue" stdset="0">
-                         <double>100.000000000000000</double>
-                        </property>
-                        <property name="label" stdset="0">
-                         <string>ATTACK</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="RotaryKnob" name="compHoldKnob">
-                        <property name="minimum">
-                         <number>0</number>
-                        </property>
-                        <property name="maximum">
-                         <number>1000</number>
-                        </property>
-                        <property name="value">
-                         <number>0</number>
-                        </property>
-                        <property name="defaultValue" stdset="0">
-                         <double>0.000000000000000</double>
-                        </property>
-                        <property name="label" stdset="0">
-                         <string>HOLD</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="RotaryKnob" name="compReleaseKnob">
-                        <property name="minimum">
-                         <number>10</number>
-                        </property>
-                        <property name="maximum">
-                         <number>3000</number>
-                        </property>
-                        <property name="value">
-                         <number>150</number>
-                        </property>
-                        <property name="defaultValue" stdset="0">
-                         <double>150.000000000000000</double>
-                        </property>
-                        <property name="label" stdset="0">
-                         <string>RELEASE</string>
-                        </property>
+                       <widget class="QComboBox" name="compKeySourceCombo">
+                        <property name="cls" stdset="0"><string>CompHeaderCombo</string></property>
+                        <item><property name="text"><string>SELF</string></property></item>
+                        <item><property name="text"><string>CH 1-8 BUS</string></property></item>
+                        <item><property name="text"><string>SIDE CHAIN</string></property></item>
+                        <item><property name="text"><string>EXTERNAL</string></property></item>
                        </widget>
                       </item>
                      </layout>
-                    </item>
-                   </layout>
-                  </widget>
+                    </widget>
+                   </item>
+                  </layout>
                  </item>
                  <item>
-                  <widget class="QFrame" name="compScBox">
-                   <property name="cls" stdset="0">
-                    <string>DetailSectionBox</string>
-                   </property>
-                   <layout class="QVBoxLayout" name="compScLayout" stretch="0,1">
-                    <property name="spacing">
-                     <number>12</number>
-                    </property>
-                    <property name="leftMargin">
-                     <number>15</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>15</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>15</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>15</number>
-                    </property>
-                    <item>
-                     <widget class="QLabel" name="compScTitle">
-                      <property name="text">
-                       <string>SIDECHAIN FILTER</string>
-                      </property>
-                      <property name="alignment">
-                       <set>Qt::AlignCenter</set>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <layout class="QHBoxLayout" name="scKnobsLayout">
+                  <layout class="QHBoxLayout" name="compToolRow">
+                   <property name="spacing"><number>8</number></property>
+                   <item>
+                    <widget class="RotaryKnob" name="compGainKnob">
+                     <property name="minimum"><number>-120</number></property>
+                     <property name="maximum"><number>120</number></property>
+                     <property name="value"><number>0</number></property>
+                     <property name="small" stdset="0"><bool>true</bool></property>
+                     <property name="scaleFactor" stdset="0"><double>0.100000000000000</double></property>
+                     <property name="label" stdset="0"><string>GAIN</string></property>
+                     <property name="unit" stdset="0"><string>dB</string></property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <layout class="QHBoxLayout" name="compMainRow" stretch="3,2">
+                   <property name="spacing"><number>10</number></property>
+                   <item>
+                    <widget class="CompCurveWidget" name="compCurve"/>
+                   </item>
+                   <item>
+                    <widget class="QFrame" name="compEnvPanel">
+                     <property name="cls" stdset="0"><string>CompPanel</string></property>
+                     <layout class="QVBoxLayout" name="compEnvPanelLayout" stretch="0,1,0">
+                      <property name="spacing"><number>8</number></property>
+                      <property name="leftMargin"><number>10</number></property>
+                      <property name="topMargin"><number>8</number></property>
+                      <property name="rightMargin"><number>10</number></property>
+                      <property name="bottomMargin"><number>10</number></property>
                       <item>
-                       <widget class="RotaryKnob" name="compScLoCutKnob">
-                        <property name="minimum">
-                         <number>20</number>
-                        </property>
-                        <property name="maximum">
-                         <number>1000</number>
-                        </property>
-                        <property name="value">
-                         <number>20</number>
-                        </property>
-                        <property name="defaultValue" stdset="0">
-                         <double>20.000000000000000</double>
-                        </property>
-                        <property name="label" stdset="0">
-                         <string>SC LO CUT</string>
-                        </property>
+                       <widget class="QLabel" name="compEnvTitle">
+                        <property name="text"><string>ENVELOPE</string></property>
+                        <property name="cls" stdset="0"><string>CompPanelTitle</string></property>
+                        <property name="alignment"><set>Qt::AlignCenter</set></property>
                        </widget>
                       </item>
                       <item>
-                       <widget class="RotaryKnob" name="compScHiCutKnob">
-                        <property name="minimum">
-                         <number>200</number>
-                        </property>
-                        <property name="maximum">
-                         <number>20000</number>
-                        </property>
-                        <property name="value">
-                         <number>20000</number>
-                        </property>
-                        <property name="defaultValue" stdset="0">
-                         <double>20000.000000000000000</double>
-                        </property>
-                        <property name="label" stdset="0">
-                         <string>SC HI CUT</string>
-                        </property>
-                       </widget>
+                       <widget class="EnvelopeGraphWidget" name="compEnvelope"/>
+                      </item>
+                      <item>
+                       <layout class="QHBoxLayout" name="compSegRow">
+                        <property name="spacing"><number>10</number></property>
+                        <item>
+                         <widget class="RotaryKnob" name="compAttackKnob">
+                          <property name="minimum">
+                           <number>1</number>
+                          </property>
+                          <property name="maximum">
+                           <number>2000</number>
+                          </property>
+                          <property name="value">
+                           <number>100</number>
+                          </property>
+                          <property name="defaultValue" stdset="0">
+                           <double>100.0</double>
+                          </property>
+                          <property name="label" stdset="0">
+                           <string>ATTACK</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="RotaryKnob" name="compHoldKnob">
+                          <property name="minimum">
+                           <number>0</number>
+                          </property>
+                          <property name="maximum">
+                           <number>1000</number>
+                          </property>
+                          <property name="value">
+                           <number>0</number>
+                          </property>
+                          <property name="defaultValue" stdset="0">
+                           <double>0.0</double>
+                          </property>
+                          <property name="label" stdset="0">
+                           <string>HOLD</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="RotaryKnob" name="compReleaseKnob">
+                          <property name="minimum">
+                           <number>10</number>
+                          </property>
+                          <property name="maximum">
+                           <number>3000</number>
+                          </property>
+                          <property name="value">
+                           <number>150</number>
+                          </property>
+                          <property name="defaultValue" stdset="0">
+                           <double>150.0</double>
+                          </property>
+                          <property name="label" stdset="0">
+                           <string>RELEASE</string>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
                       </item>
                      </layout>
-                    </item>
-                   </layout>
-                  </widget>
+                    </widget>
+                   </item>
+                  </layout>
                  </item>
                 </layout>
                </widget>
@@ -2318,6 +2428,24 @@
    <class>EqGraphWidget</class>
    <extends>QWidget</extends>
    <header>eqgraphwidget.h</header>
+   <container>0</container>
+  </customwidget>
+  <customwidget>
+   <class>CompCurveWidget</class>
+   <extends>QWidget</extends>
+   <header>compcurvewidget.h</header>
+   <container>0</container>
+  </customwidget>
+  <customwidget>
+   <class>GateCurveWidget</class>
+   <extends>QWidget</extends>
+   <header>gatecurvewidget.h</header>
+   <container>0</container>
+  </customwidget>
+  <customwidget>
+   <class>EnvelopeGraphWidget</class>
+   <extends>QWidget</extends>
+   <header>envelopegraphwidget.h</header>
    <container>0</container>
   </customwidget>
  </customwidgets>

@@ -2,8 +2,11 @@
 #include "ui_mainwindow.h"
 #include "ui_channelstrip.h"
 #include "ui_encoderstrip.h"
+#include "compcurvewidget.h"
+#include "envelopegraphwidget.h"
 
 #include <QFrame>
+#include <QButtonGroup>
 #include <QVBoxLayout>
 #include <QSpinBox>
 #include <QComboBox>
@@ -177,6 +180,32 @@ void MainWindow::setupUI()
     for (int i = 0; i < 4; ++i) {
         connect(eqBandBtns[i], &QPushButton::clicked, this, [this, i]() { onEqBandSelected(i); });
     }
+
+
+
+    // Dragging the transfer curve / envelope edits the selected channel's params
+    connect(ui->compCurve, &CompCurveWidget::thresholdChanged, this, [this](double db) {
+        m_channels[m_selectedChannelIndex]->parameter("comp_threshold")->setValue(db);
+    });
+    connect(ui->compCurve, &CompCurveWidget::ratioChanged, this, [this](double r) {
+        m_channels[m_selectedChannelIndex]->parameter("comp_ratio")->setValue(r);
+    });
+    connect(ui->compEnvelope, &EnvelopeGraphWidget::attackChanged, this, [this](double ms) {
+        m_channels[m_selectedChannelIndex]->parameter("comp_attack")->setValue(ms);
+    });
+    connect(ui->compEnvelope, &EnvelopeGraphWidget::releaseChanged, this, [this](double ms) {
+        m_channels[m_selectedChannelIndex]->parameter("comp_release")->setValue(ms);
+    });
+
+    connect(ui->gateCurve, &GateCurveWidget::thresholdChanged, this, [this](double db) {
+        m_channels[m_selectedChannelIndex]->parameter("gate_threshold")->setValue(db);
+    });
+    connect(ui->gateEnvelope, &EnvelopeGraphWidget::attackChanged, this, [this](double ms) {
+        m_channels[m_selectedChannelIndex]->parameter("gate_attack")->setValue(ms);
+    });
+    connect(ui->gateEnvelope, &EnvelopeGraphWidget::releaseChanged, this, [this](double ms) {
+        m_channels[m_selectedChannelIndex]->parameter("gate_release")->setValue(ms);
+    });
 
     // --- Bottom parameter encoders (instantiated from encoderstrip.ui) ---
     for (int i = 0; i < 6; ++i) {
@@ -497,58 +526,126 @@ void MainWindow::populateUIFromSelectedChannel()
     ui->eqFreqKnob->setThemeColor(bandColor);
     ui->eqQKnob->setThemeColor(bandColor);
 
-    // 4. Bind Dynamics widgets
+    // 4. Bind Dynamics widgets - Noise Gate
     m_bindGateActive.bind(ui->gateActiveBtn, ch->parameter("gate_active"));
-    m_bindGateThreshold.bind(ui->gateThresholdKnob, ch->parameter("gate_threshold"));
+    m_bindGateModel.bind(ui->gateModelCombo, ch->parameter("gate_model"));
+    m_bindGateKeySource.bind(ui->gateKeySourceCombo, ch->parameter("gate_key_source"));
+    m_bindGateAccent.bind(ui->gateAccentKnob, ch->parameter("gate_accent"));
+    m_bindGateKeySolo.bind(ui->gateKeySoloBtn, ch->parameter("gate_key_solo"));
+    m_bindGateKeyFilter.bind(ui->gateKeyFilterCombo, ch->parameter("gate_key_filter"));
     m_bindGateAttack.bind(ui->gateAttackKnob, ch->parameter("gate_attack"));
     m_bindGateHold.bind(ui->gateHoldKnob, ch->parameter("gate_hold"));
     m_bindGateRelease.bind(ui->gateReleaseKnob, ch->parameter("gate_release"));
-    m_bindGateDepth.bind(ui->gateDepthKnob, ch->parameter("gate_depth"));
 
-    m_bindCompActive.bind(ui->compActiveBtn, ch->parameter("comp_active"));
-    m_bindCompThreshold.bind(ui->compThresholdKnob, ch->parameter("comp_threshold"));
-    m_bindCompRatio.bind(ui->compRatioKnob, ch->parameter("comp_ratio"));
-    m_bindCompAttack.bind(ui->compAttackKnob, ch->parameter("comp_attack"));
-    m_bindCompHold.bind(ui->compHoldKnob, ch->parameter("comp_hold"));
-    m_bindCompRelease.bind(ui->compReleaseKnob, ch->parameter("comp_release"));
-    m_bindCompScLoCut.bind(ui->compScLoCutKnob, ch->parameter("comp_sc_locut"));
-    m_bindCompScHiCut.bind(ui->compScHiCutKnob, ch->parameter("comp_sc_hicut"));
+    // Tear down the previous channel's gate-page live connections
+    for (const auto &c : m_gateConnections) disconnect(c);
+    m_gateConnections.clear();
 
-    // Enable/disable logic
     bool gateActive = ch->parameter("gate_active")->value() > 0.5;
-    ui->gateThresholdKnob->setEnabled(gateActive);
+
+    // ON/OFF button label reflects state
+    ui->gateActiveBtn->setText(gateActive ? "ON" : "OFF");
+    m_gateConnections << connect(ch->parameter("gate_active"), &AudioParameter::valueChanged, this,
+        [this](double v) { ui->gateActiveBtn->setText(v > 0.5 ? "ON" : "OFF"); });
+
+    // Gate Curve widget reflects threshold / depth / active
+    ui->gateCurve->setThreshold(ch->parameter("gate_threshold")->value());
+    ui->gateCurve->setDepth(ch->parameter("gate_depth")->value());
+    ui->gateCurve->setActive(gateActive);
+    m_gateConnections << connect(ch->parameter("gate_threshold"), &AudioParameter::valueChanged, this,
+        [this](double v) { ui->gateCurve->setThreshold(v); });
+    m_gateConnections << connect(ch->parameter("gate_depth"), &AudioParameter::valueChanged, this,
+        [this](double v) { ui->gateCurve->setDepth(v); });
+
+    // Envelope widget reflects attack / release / hold / active
+    ui->gateEnvelope->setAttack(ch->parameter("gate_attack")->value());
+    ui->gateEnvelope->setRelease(ch->parameter("gate_release")->value());
+    ui->gateEnvelope->setHold(ch->parameter("gate_hold")->value());
+    ui->gateEnvelope->setActive(gateActive);
+    m_gateConnections << connect(ch->parameter("gate_attack"), &AudioParameter::valueChanged, this,
+        [this](double v) { ui->gateEnvelope->setAttack(v); });
+    m_gateConnections << connect(ch->parameter("gate_release"), &AudioParameter::valueChanged, this,
+        [this](double v) { ui->gateEnvelope->setRelease(v); });
+    m_gateConnections << connect(ch->parameter("gate_hold"), &AudioParameter::valueChanged, this,
+        [this](double v) { ui->gateEnvelope->setHold(v); });
+
+    m_gateConnections << connect(ch->parameter("gate_active"), &AudioParameter::valueChanged, this,
+        [this](double v) { bool a = v > 0.5; ui->gateCurve->setActive(a); ui->gateEnvelope->setActive(a); });
+
+    // Enable/disable based on gate_active
+    ui->gateModelCombo->setEnabled(gateActive);
+    ui->gateKeySourceCombo->setEnabled(gateActive);
+    ui->gateAccentKnob->setEnabled(gateActive);
+    ui->gateKeySoloBtn->setEnabled(gateActive);
+    ui->gateKeyFilterCombo->setEnabled(gateActive);
     ui->gateAttackKnob->setEnabled(gateActive);
     ui->gateHoldKnob->setEnabled(gateActive);
     ui->gateReleaseKnob->setEnabled(gateActive);
-    ui->gateDepthKnob->setEnabled(gateActive);
 
-    bool compActive = ch->parameter("comp_active")->value() > 0.5;
-    ui->compThresholdKnob->setEnabled(compActive);
-    ui->compRatioKnob->setEnabled(compActive);
-    ui->compAttackKnob->setEnabled(compActive);
-    ui->compHoldKnob->setEnabled(compActive);
-    ui->compReleaseKnob->setEnabled(compActive);
-    ui->compScLoCutKnob->setEnabled(compActive);
-    ui->compScHiCutKnob->setEnabled(compActive);
-
-    connect(ch->parameter("gate_active"), &AudioParameter::valueChanged, this, [this](double val) {
+    m_gateConnections << connect(ch->parameter("gate_active"), &AudioParameter::valueChanged, this, [this](double val) {
         bool active = val > 0.5;
-        ui->gateThresholdKnob->setEnabled(active);
+        ui->gateModelCombo->setEnabled(active);
+        ui->gateKeySourceCombo->setEnabled(active);
+        ui->gateAccentKnob->setEnabled(active);
+        ui->gateKeySoloBtn->setEnabled(active);
+        ui->gateKeyFilterCombo->setEnabled(active);
         ui->gateAttackKnob->setEnabled(active);
         ui->gateHoldKnob->setEnabled(active);
         ui->gateReleaseKnob->setEnabled(active);
-        ui->gateDepthKnob->setEnabled(active);
     });
-    connect(ch->parameter("comp_active"), &AudioParameter::valueChanged, this, [this](double val) {
-        bool active = val > 0.5;
-        ui->compThresholdKnob->setEnabled(active);
-        ui->compRatioKnob->setEnabled(active);
-        ui->compAttackKnob->setEnabled(active);
-        ui->compHoldKnob->setEnabled(active);
-        ui->compReleaseKnob->setEnabled(active);
-        ui->compScLoCutKnob->setEnabled(active);
-        ui->compScHiCutKnob->setEnabled(active);
-    });
+
+    // Tear down the previous channel's compressor-page live connections
+    for (const auto &c : m_compConnections) disconnect(c);
+    m_compConnections.clear();
+
+    m_bindCompActive.bind(ui->compActiveBtn, ch->parameter("comp_active"));
+    m_bindCompMix.bind(ui->compMixKnob, ch->parameter("comp_mix"));
+    m_bindCompGain.bind(ui->compGainKnob, ch->parameter("comp_gain"));
+    m_bindCompKeySource.bind(ui->compKeySourceCombo, ch->parameter("comp_key_source"));
+    m_bindCompAttack.bind(ui->compAttackKnob, ch->parameter("comp_attack"));
+    m_bindCompRelease.bind(ui->compReleaseKnob, ch->parameter("comp_release"));
+    m_bindCompHold.bind(ui->compHoldKnob, ch->parameter("comp_hold"));
+
+    bool compActive = ch->parameter("comp_active")->value() > 0.5;
+
+    // ON/OFF button label reflects state
+    ui->compActiveBtn->setText(compActive ? "ON" : "OFF");
+    m_compConnections << connect(ch->parameter("comp_active"), &AudioParameter::valueChanged, this,
+        [this](double v) { ui->compActiveBtn->setText(v > 0.5 ? "ON" : "OFF"); });
+
+    // Transfer-curve widget reflects threshold / ratio / knee / makeup / active
+    ui->compCurve->setThreshold(ch->parameter("comp_threshold")->value());
+    ui->compCurve->setRatio(ch->parameter("comp_ratio")->value());
+    ui->compCurve->setKnee(ch->parameter("comp_knee")->value());
+    ui->compCurve->setMakeup(ch->parameter("comp_gain")->value());
+    ui->compCurve->setActive(compActive);
+    m_compConnections << connect(ch->parameter("comp_threshold"), &AudioParameter::valueChanged, this,
+        [this](double v) { ui->compCurve->setThreshold(v); });
+    m_compConnections << connect(ch->parameter("comp_ratio"), &AudioParameter::valueChanged, this,
+        [this](double v) { ui->compCurve->setRatio(v); });
+    m_compConnections << connect(ch->parameter("comp_knee"), &AudioParameter::valueChanged, this,
+        [this](double v) { ui->compCurve->setKnee(v); });
+    m_compConnections << connect(ch->parameter("comp_gain"), &AudioParameter::valueChanged, this,
+        [this](double v) { ui->compCurve->setMakeup(v); });
+
+    // Envelope widget reflects attack / release / hold / active
+    ui->compEnvelope->setAttack(ch->parameter("comp_attack")->value());
+    ui->compEnvelope->setRelease(ch->parameter("comp_release")->value());
+    ui->compEnvelope->setHold(ch->parameter("comp_hold")->value());
+    ui->compEnvelope->setActive(compActive);
+    m_compConnections << connect(ch->parameter("comp_attack"), &AudioParameter::valueChanged, this,
+        [this](double v) { ui->compEnvelope->setAttack(v); });
+    m_compConnections << connect(ch->parameter("comp_release"), &AudioParameter::valueChanged, this,
+        [this](double v) { ui->compEnvelope->setRelease(v); });
+    m_compConnections << connect(ch->parameter("comp_hold"), &AudioParameter::valueChanged, this,
+        [this](double v) { ui->compEnvelope->setHold(v); });
+
+    m_compConnections << connect(ch->parameter("comp_active"), &AudioParameter::valueChanged, this,
+        [this](double v) { bool a = v > 0.5; ui->compCurve->setActive(a); ui->compEnvelope->setActive(a); });
+
+
+
+
 
     // 5. Bind Main mixing output widgets
     m_bindScreenFader.bind(ui->ChannelFaderLarge, ch->parameter("level"));
@@ -728,12 +825,12 @@ void MainWindow::updateBottomEncodersLayout()
         activeParams[4] = ch->parameter("gate_release");
         activeParams[5] = ch->parameter("gate_depth");
     } else if (pageIdx == 3) { // Compressor
-        activeParams[0] = ch->parameter("comp_active");
-        activeParams[1] = ch->parameter("comp_threshold");
-        activeParams[2] = ch->parameter("comp_ratio");
-        activeParams[3] = ch->parameter("comp_attack");
+        activeParams[0] = ch->parameter("comp_threshold");
+        activeParams[1] = ch->parameter("comp_ratio");
+        activeParams[2] = ch->parameter("comp_attack");
+        activeParams[3] = ch->parameter("comp_hold");
         activeParams[4] = ch->parameter("comp_release");
-        activeParams[5] = ch->parameter("comp_sc_locut");
+        activeParams[5] = ch->parameter("comp_gain");
     } else if (pageIdx == 4) { // EQ
         QString eqPrefix = QString("eq%1_").arg(m_activeEqBandIndex + 1);
         activeParams[0] = ch->parameter(eqPrefix + "freq");
