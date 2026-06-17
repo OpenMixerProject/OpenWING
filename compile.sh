@@ -661,7 +661,7 @@ if ! grep -q "imx6dl-wing-usb-console.dtb" arch/arm/boot/dts/nxp/imx/Makefile; t
 fi
 
 cp "${ROOT_DIR}/configs/config_linux" .config
-scripts/config --set-str INITRAMFS_SOURCE "${BUILD_DIR}/initramfs.cpio.gz"
+scripts/config --set-str INITRAMFS_SOURCE ""
 scripts/config --enable INPUT
 scripts/config --enable INPUT_EVDEV
 scripts/config --enable INPUT_UINPUT

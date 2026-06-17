@@ -6,6 +6,8 @@
 
 class LevelMeter : public QWidget {
     Q_OBJECT
+    Q_PROPERTY(bool stereo READ isStereo WRITE setStereo)
+    Q_PROPERTY(bool simulated READ isSimulated WRITE setSimulated)
 
 public:
     explicit LevelMeter(QWidget *parent = nullptr);

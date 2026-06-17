@@ -7,6 +7,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_CURRENT_SOURCE_DIR}/forms)
+# Make the source dir (promoted-widget headers) and binary dir (generated ui_*.h)
+# visible to the uic-generated headers.
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Try to find Qt6 first, fallback to Qt5
 find_package(Qt6 COMPONENTS Core Gui Widgets QUIET)
@@ -35,6 +39,10 @@ add_executable(wing-qt-demo
     mixerchannel.h
     parameterbinder.h
     oscclient.h
+    forms/mainwindow.ui
+    forms/channelstrip.ui
+    forms/encoderstrip.ui
+    resources/resources.qrc
 )
 
 target_link_libraries(wing-qt-demo PRIVATE ${QT_LIBRARIES})

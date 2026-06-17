@@ -1,0 +1,406 @@
+/* Global Styles */
+QMainWindow {
+    background-color: #0c0c0f;
+}
+
+/* Top Screen Panel Simulator */
+#ScreenBezel {
+    background-color: #1a1a20;
+    border-bottom: 4px solid #0f0f13;
+}
+
+#ScreenContent {
+    background-color: #121217;
+    border: 2px solid #282834;
+    border-radius: 6px;
+}
+
+#ScreenTopBar {
+    background-color: #191922;
+    border-bottom: 1px solid #232330;
+    max-height: 48px;
+}
+
+#ScreenHomeBtn {
+    background-color: #10b981;
+    color: #000000;
+    font-weight: bold;
+    font-size: 11px;
+    border-radius: 3px;
+    padding: 4px 10px;
+    border: none;
+}
+
+#ScreenHomeBtn:hover {
+    background-color: #34d399;
+}
+
+#ScreenChannelIndicator {
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 14px;
+    border-radius: 4px;
+    padding: 4px 12px;
+}
+
+#ScreenClock {
+    color: #f3f4f6;
+    font-family: "Courier New", monospace;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 0 5px;
+}
+
+#ScreenClrSoloBtn {
+    background-color: #2d2d3c;
+    color: #6b7280;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 5px 8px;
+    border: 1px solid #1e1e28;
+    border-radius: 3px;
+}
+
+#ScreenMainMeter {
+    max-width: 45px;
+    max-height: 38px;
+}
+
+/* Screen Middle Pages & Left Menu */
+#ScreenLeftMenu {
+    background-color: #15151e;
+    border-right: 1px solid #232330;
+    width: 80px;
+    padding: 4px;
+}
+
+#ScreenLeftMenu QPushButton {
+    color: #9ca3af;
+    background-color: #1e1e28;
+    border: 1px solid #272737;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 10px;
+    padding: 10px 2px;
+    min-width: 72px;
+}
+
+#ScreenLeftMenu QPushButton:hover {
+    background-color: #272737;
+    color: #ffffff;
+}
+
+#ScreenLeftMenu QPushButton:checked {
+    color: #ffffff;
+}
+
+#ScreenLeftMenu QPushButton:nth-of-type(1):checked { background-color: #3b82f6; border-color: #2563eb; } /* Overview */
+#ScreenLeftMenu QPushButton:nth-of-type(2):checked { background-color: #06b6d4; border-color: #0891b2; } /* Input */
+#ScreenLeftMenu QPushButton:nth-of-type(3):checked { background-color: #f97316; border-color: #ea580c; } /* Gate */
+#ScreenLeftMenu QPushButton:nth-of-type(4):checked { background-color: #2563eb; border-color: #1d4ed8; } /* Comp */
+#ScreenLeftMenu QPushButton:nth-of-type(5):checked { background-color: #fbbf24; border-color: #d97706; color: #000; } /* EQ */
+#ScreenLeftMenu QPushButton:nth-of-type(6):checked { background-color: #10b981; border-color: #059669; } /* Main */
+#ScreenLeftMenu QPushButton:nth-of-type(7):checked { background-color: #a855f7; border-color: #8b5cf6; } /* Inserts */
+
+#ScreenStack {
+    background-color: #101015;
+}
+
+/* Detail Boxes & Cards
+   NOTE: these styles are shared by many widgets, so they are selected by the
+   dynamic "cls" property (set in the .ui forms) instead of objectName, which
+   must be unique per widget for uic-generated members. */
+*[cls="OverviewCard"] {
+    background-color: #181822;
+    border: 1px solid #272737;
+    border-radius: 6px;
+}
+
+*[cls="OverviewCard"]:hover {
+    border-color: #3b82f6;
+    background-color: #1d1d2b;
+}
+
+*[cls="CardTitle"] {
+    font-size: 14px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+*[cls="CardDesc"] {
+    font-size: 11px;
+    color: #71717a;
+}
+
+*[cls="CardOpenBtn"] {
+    background-color: #2d2d3d;
+    border: 1px solid #3f3f54;
+    color: #d1d5db;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+*[cls="CardOpenBtn"]:hover {
+    background-color: #3b82f6;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+*[cls="DetailSectionBox"] {
+    background-color: #161620;
+    border: 1px solid #252535;
+    border-radius: 6px;
+}
+
+*[cls="DetailSectionBox"] QLabel {
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 12px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #232332;
+}
+
+/* LEDs / Option Switches */
+QPushButton[cls="RedLedBtn"], QPushButton[cls="OrangeLedBtn"], QPushButton[cls="TealLedBtn"], QPushButton[cls="YellowLedBtn"], QPushButton[cls="BlueLedBtn"] {
+    background-color: #1e1e28;
+    color: #9ca3af;
+    border: 1px solid #2b2b3b;
+    border-radius: 3px;
+    padding: 5px 8px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+QPushButton[cls="RedLedBtn"]:checked { background-color: #7f1d1d; color: #fecaca; border-color: #ef4444; }
+QPushButton[cls="OrangeLedBtn"]:checked { background-color: #7c2d12; color: #ffedd5; border-color: #ea580c; }
+QPushButton[cls="TealLedBtn"]:checked { background-color: #134e5e; color: #cffafe; border-color: #06b6d4; }
+QPushButton[cls="YellowLedBtn"]:checked { background-color: #713f12; color: #fef9c3; border-color: #eab308; }
+QPushButton[cls="BlueLedBtn"]:checked { background-color: #1e3a8a; color: #dbeafe; border-color: #3b82f6; }
+
+/* On screen Fader */
+QSlider::groove:vertical#ChannelFaderLarge {
+    background: #252532;
+    width: 10px;
+    border-radius: 5px;
+}
+
+QSlider::add-page:vertical#ChannelFaderLarge {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #10b981, stop:1 #059669);
+    border-radius: 5px;
+}
+
+QSlider::handle:vertical#ChannelFaderLarge {
+    background: #ffffff;
+    border: 2px solid #10b981;
+    height: 22px;
+    width: 32px;
+    margin: 0 -11px;
+    border-radius: 3px;
+}
+
+#ScreenChannelMeter {
+    min-width: 45px;
+    max-width: 60px;
+}
+
+/* EQ selectors */
+QPushButton[cls="EqBandSelectBtn"] {
+    background-color: #1e1e28;
+    color: #9ca3af;
+    border: 1px solid #282839;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+QPushButton[cls="EqBandSelectBtn"]:checked {
+    background-color: #fbbf24;
+    color: #000;
+    border-color: #d97706;
+}
+
+/* Bottom Encoder Strip */
+#BottomEncodersPanel {
+    background-color: #15151d;
+    border-top: 1px solid #232330;
+    max-height: 105px;
+}
+
+#EncoderStrip {
+    background-color: #121217;
+    border: 1px solid #1f1f2c;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+#BottomEncoderKnob {
+    min-height: 90px;
+}
+
+/* Inserts page config controls (moved from inline styles) */
+#InsCountSpin {
+    background-color: #1a1a24;
+    color: #ffffff;
+    border: 1px solid #a855f7;
+    border-radius: 4px;
+    padding: 4px;
+    font-weight: bold;
+    min-width: 50px;
+}
+
+#InsTypeCombo {
+    background-color: #1e1e28;
+    color: #ffffff;
+    border: 1px solid #2b2b3b;
+    border-radius: 4px;
+    padding: 8px;
+    font-weight: bold;
+    min-width: 150px;
+}
+
+#InsTypeCombo QAbstractItemView {
+    background-color: #181822;
+    color: #ffffff;
+    selection-background-color: #a855f7;
+    selection-color: #ffffff;
+}
+
+#InsSlotTabBtn {
+    background-color: #1e1e28;
+    color: #a1a1aa;
+    border: 1px solid #2b2b3b;
+    padding: 8px 16px;
+    font-weight: bold;
+    border-radius: 4px;
+}
+
+#InsSlotTabBtn:hover {
+    background-color: #2a2a38;
+    color: #ffffff;
+}
+
+#InsSlotTabBtn:checked {
+    background-color: #a855f7;
+    color: #ffffff;
+    border-color: #8b5cf6;
+}
+
+/* =========================================================================
+   PHYSICAL CONSOLE SIMULATOR
+   ========================================================================= */
+#ConsoleBezel {
+    background-color: #0f0f14;
+    border-top: 3px solid #1f1f28;
+}
+
+#ConsoleDesk {
+    background-color: #141419;
+    border: 1.5px solid #2b2b3b;
+    border-radius: 8px;
+}
+
+#PhysicalChannelStrip {
+    background-color: #0e0e12;
+    border: 1px solid #1e1e28;
+    border-radius: 6px;
+}
+
+#ChannelSelectBtn {
+    background-color: #242431;
+    color: #d1d5db;
+    font-size: 9px;
+    font-weight: bold;
+    border: 1px solid #313143;
+    padding: 4px 0;
+    border-radius: 3px;
+}
+
+#ChannelSelectBtn:hover {
+    background-color: #3b82f6;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+#PhysicalSoloBtn, #PhysicalMuteBtn {
+    font-size: 10px;
+    font-weight: bold;
+    border-radius: 3px;
+    padding: 5px 0;
+    color: #9ca3af;
+    border: 1px solid #1e1e2a;
+    background-color: #181822;
+}
+
+#PhysicalSoloBtn:checked {
+    background-color: #713f12;
+    color: #fef9c3;
+    border-color: #fbbf24;
+}
+
+#PhysicalMuteBtn:checked {
+    background-color: #7f1d1d;
+    color: #fecaca;
+    border-color: #ef4444;
+}
+
+/* Physical Faders */
+QSlider::groove:vertical#PhysicalFaderSlider {
+    background: #1d1d26;
+    width: 8px;
+    border-radius: 4px;
+}
+
+QSlider::handle:vertical#PhysicalFaderSlider {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                stop:0 #e5e7eb, stop:0.4 #9ca3af,
+                                stop:0.5 #374151, stop:0.6 #9ca3af,
+                                stop:1 #e5e7eb);
+    border: 1px solid #1f2937;
+    height: 28px;
+    width: 22px;
+    margin: 0 -7px;
+    border-radius: 2px;
+}
+
+QSlider::handle:vertical#PhysicalFaderSlider:hover {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                stop:0 #ffffff, stop:0.4 #d1d5db,
+                                stop:0.5 #4b5563, stop:0.6 #d1d5db,
+                                stop:1 #ffffff);
+    border-color: #3b82f6;
+}
+
+#PhysicalLevelMeter {
+    max-width: 10px;
+}
+
+#PhysicalDbLabel {
+    color: #10b981;
+    font-family: "Courier New", monospace;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 0;
+}
+
+#ConsoleCollapseBtn {
+    background-color: #181822;
+    color: #a1a1aa;
+    border: 1px solid #2d2d3d;
+    border-radius: 4px;
+    padding: 4px 15px;
+    font-size: 10px;
+    font-weight: bold;
+}
+#ConsoleCollapseBtn:hover {
+    background-color: #272737;
+    color: #ffffff;
+    border-color: #3b82f6;
+}
+#ConsoleCollapseBtn:checked {
+    background-color: #111116;
+    border-color: #10b981;
+    color: #10b981;
+}

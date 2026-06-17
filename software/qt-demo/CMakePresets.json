@@ -1,0 +1,31 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "macos-homebrew",
+      "displayName": "macOS (Homebrew Qt 6)",
+      "description": "Apple Silicon host build using Homebrew Qt 6 (/opt/homebrew) and the system clang toolchain. Read automatically by Qt Creator.",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/../../build-qtcreator",
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "/opt/homebrew",
+        "CMAKE_C_COMPILER": "/usr/bin/clang",
+        "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "macos-homebrew",
+      "displayName": "macOS (Homebrew Qt 6)",
+      "configurePreset": "macos-homebrew"
+    }
+  ]
+}

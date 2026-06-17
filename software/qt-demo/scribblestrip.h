@@ -7,6 +7,7 @@
 
 class ScribbleStrip : public QWidget {
     Q_OBJECT
+    Q_PROPERTY(bool selected READ isSelected WRITE setSelected)
 
 public:
     explicit ScribbleStrip(QWidget *parent = nullptr);

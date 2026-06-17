@@ -185,3 +185,9 @@ __pycache__/
 scratch
 core
 build-macos/
+build-qtcreator/
+
+# Qt Creator per-user project settings (machine-specific; CMakePresets.json is shared instead)
+*.user
+*.user.*
+CMakeLists.txt.user

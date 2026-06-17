@@ -1,0 +1,2326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1280</width>
+    <height>850</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>OpenWING Control Console (MVVM Bindings &amp; OSC Demo)</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QVBoxLayout" name="rootLayout" stretch="3,0">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QFrame" name="ScreenBezel">
+      <layout class="QVBoxLayout" name="screenLayout">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>8</number>
+       </property>
+       <property name="topMargin">
+        <number>8</number>
+       </property>
+       <property name="rightMargin">
+        <number>8</number>
+       </property>
+       <property name="bottomMargin">
+        <number>8</number>
+       </property>
+       <item>
+        <widget class="QFrame" name="ScreenContent">
+         <layout class="QVBoxLayout" name="screenContentLayout" stretch="0,1,0">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QFrame" name="ScreenTopBar">
+            <layout class="QHBoxLayout" name="topBarLayout">
+             <property name="spacing">
+              <number>10</number>
+             </property>
+             <property name="leftMargin">
+              <number>10</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>10</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="ScreenHomeBtn">
+               <property name="text">
+                <string>HOME</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="ScreenChannelIndicator">
+               <property name="text">
+                <string>01 KICK IN</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="topBarSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>0</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="ScreenClock">
+               <property name="text">
+                <string>12:00:00</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="ScreenClrSoloBtn">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>CLR SOLO</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="LevelMeter" name="ScreenMainMeter" native="true">
+               <property name="stereo" stdset="0">
+                <bool>true</bool>
+               </property>
+               <property name="simulated" stdset="0">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="ScreenMiddle">
+            <layout class="QHBoxLayout" name="screenMiddleLayout" stretch="0,1">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QFrame" name="ScreenLeftMenu">
+               <layout class="QVBoxLayout" name="leftMenuLayout">
+                <property name="spacing">
+                 <number>4</number>
+                </property>
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QPushButton" name="menuBtnOverview">
+                  <property name="text">
+                   <string>OVERVIEW</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="menuBtnInput">
+                  <property name="text">
+                   <string>INPUT</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="menuBtnGate">
+                  <property name="text">
+                   <string>GATE</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="menuBtnComp">
+                  <property name="text">
+                   <string>COMP</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="menuBtnEq">
+                  <property name="text">
+                   <string>EQ</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="menuBtnMain">
+                  <property name="text">
+                   <string>MAIN</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="menuBtnInserts">
+                  <property name="text">
+                   <string>INSERTS</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="leftMenuSpacer">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QStackedWidget" name="ScreenStack">
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <widget class="QWidget" name="pageOverview">
+                <layout class="QGridLayout" name="ovLayout">
+                 <property name="leftMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="spacing">
+                  <number>12</number>
+                 </property>
+                 <item row="0" column="0">
+                  <widget class="QFrame" name="ovCardInput">
+                   <property name="cls" stdset="0">
+                    <string>OverviewCard</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="ovCardInputLayout">
+                    <property name="spacing">
+                     <number>4</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>12</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>12</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>10</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="ovTitleInput">
+                      <property name="cls" stdset="0">
+                       <string>CardTitle</string>
+                      </property>
+                      <property name="text">
+                       <string>INPUT &amp; FILTERS</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovInputGain">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovInputFilters">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovInputTilt">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="ovCardInputSpacer">
+                      <property name="orientation">
+                       <enum>Qt::Vertical</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>0</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="ovOpenInput">
+                      <property name="cls" stdset="0">
+                       <string>CardOpenBtn</string>
+                      </property>
+                      <property name="text">
+                       <string>OPEN PANEL</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QFrame" name="ovCardGate">
+                   <property name="cls" stdset="0">
+                    <string>OverviewCard</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="ovCardGateLayout">
+                    <property name="spacing">
+                     <number>4</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>12</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>12</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>10</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="ovTitleGate">
+                      <property name="cls" stdset="0">
+                       <string>CardTitle</string>
+                      </property>
+                      <property name="text">
+                       <string>NOISE GATE</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovGateState">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovGateParams">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="ovCardGateSpacer">
+                      <property name="orientation">
+                       <enum>Qt::Vertical</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>0</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="ovOpenGate">
+                      <property name="cls" stdset="0">
+                       <string>CardOpenBtn</string>
+                      </property>
+                      <property name="text">
+                       <string>OPEN PANEL</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item row="0" column="2">
+                  <widget class="QFrame" name="ovCardComp">
+                   <property name="cls" stdset="0">
+                    <string>OverviewCard</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="ovCardCompLayout">
+                    <property name="spacing">
+                     <number>4</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>12</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>12</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>10</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="ovTitleComp">
+                      <property name="cls" stdset="0">
+                       <string>CardTitle</string>
+                      </property>
+                      <property name="text">
+                       <string>COMPRESSOR</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovCompState">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovCompParams">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="ovCardCompSpacer">
+                      <property name="orientation">
+                       <enum>Qt::Vertical</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>0</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="ovOpenComp">
+                      <property name="cls" stdset="0">
+                       <string>CardOpenBtn</string>
+                      </property>
+                      <property name="text">
+                       <string>OPEN PANEL</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QFrame" name="ovCardEq">
+                   <property name="cls" stdset="0">
+                    <string>OverviewCard</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="ovCardEqLayout">
+                    <property name="spacing">
+                     <number>4</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>12</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>12</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>10</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="ovTitleEq">
+                      <property name="cls" stdset="0">
+                       <string>CardTitle</string>
+                      </property>
+                      <property name="text">
+                       <string>PARAMETRIC EQ</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovEqBand0">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovEqBand1">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovEqBand2">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovEqBand3">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="ovCardEqSpacer">
+                      <property name="orientation">
+                       <enum>Qt::Vertical</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>0</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="ovOpenEq">
+                      <property name="cls" stdset="0">
+                       <string>CardOpenBtn</string>
+                      </property>
+                      <property name="text">
+                       <string>OPEN PANEL</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QFrame" name="ovCardMix">
+                   <property name="cls" stdset="0">
+                    <string>OverviewCard</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="ovCardMixLayout">
+                    <property name="spacing">
+                     <number>4</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>12</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>12</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>10</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="ovTitleMix">
+                      <property name="cls" stdset="0">
+                       <string>CardTitle</string>
+                      </property>
+                      <property name="text">
+                       <string>MIX &amp; OUTPUT</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovMixLevel">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovMixPan">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovMixMuteSolo">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="ovCardMixSpacer">
+                      <property name="orientation">
+                       <enum>Qt::Vertical</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>0</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="ovOpenMix">
+                      <property name="cls" stdset="0">
+                       <string>CardOpenBtn</string>
+                      </property>
+                      <property name="text">
+                       <string>OPEN PANEL</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item row="1" column="2">
+                  <widget class="QFrame" name="ovCardInserts">
+                   <property name="cls" stdset="0">
+                    <string>OverviewCard</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="ovCardInsertsLayout">
+                    <property name="spacing">
+                     <number>4</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>12</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>12</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>10</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="ovTitleInserts">
+                      <property name="cls" stdset="0">
+                       <string>CardTitle</string>
+                      </property>
+                      <property name="text">
+                       <string>CHANNEL INSERTS</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovInsertsCount">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovInsertSlot0">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovInsertSlot1">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovInsertSlot2">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="m_ovInsertSlot3">
+                      <property name="cls" stdset="0">
+                       <string>CardDesc</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="ovCardInsertsSpacer">
+                      <property name="orientation">
+                       <enum>Qt::Vertical</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>0</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="ovOpenInserts">
+                      <property name="cls" stdset="0">
+                       <string>CardOpenBtn</string>
+                      </property>
+                      <property name="text">
+                       <string>OPEN PANEL</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="pageInput">
+                <layout class="QHBoxLayout" name="inpLayout" stretch="10,12,8">
+                 <property name="spacing">
+                  <number>15</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>15</number>
+                 </property>
+                 <item>
+                  <widget class="QFrame" name="preampBox">
+                   <property name="cls" stdset="0">
+                    <string>DetailSectionBox</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="preLayout" stretch="0,1,1,0">
+                    <property name="leftMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>10</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="preampTitle">
+                      <property name="text">
+                       <string>PREAMP</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="RotaryKnob" name="inpGainKnob">
+                      <property name="minimum">
+                       <number>0</number>
+                      </property>
+                      <property name="maximum">
+                       <number>120</number>
+                      </property>
+                      <property name="value">
+                       <number>0</number>
+                      </property>
+                      <property name="defaultValue" stdset="0">
+                       <double>0.000000000000000</double>
+                      </property>
+                      <property name="label" stdset="0">
+                       <string>GAIN</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="RotaryKnob" name="inpTrimKnob">
+                      <property name="minimum">
+                       <number>-24</number>
+                      </property>
+                      <property name="maximum">
+                       <number>24</number>
+                      </property>
+                      <property name="value">
+                       <number>0</number>
+                      </property>
+                      <property name="defaultValue" stdset="0">
+                       <double>0.000000000000000</double>
+                      </property>
+                      <property name="label" stdset="0">
+                       <string>TRIM</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="preBtns">
+                      <item>
+                       <widget class="QPushButton" name="inpPhantomBtn">
+                        <property name="text">
+                         <string>+48V</string>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="cls" stdset="0">
+                         <string>RedLedBtn</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="inpPhaseBtn">
+                        <property name="text">
+                         <string>ø</string>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="cls" stdset="0">
+                         <string>OrangeLedBtn</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QFrame" name="filterBox">
+                   <property name="cls" stdset="0">
+                    <string>DetailSectionBox</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="filtLayout" stretch="0,0,1,0,1">
+                    <property name="leftMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>10</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="filterTitle">
+                      <property name="text">
+                       <string>LO / HI CUT FILTER</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="inpLoCutBtn">
+                      <property name="text">
+                       <string>LO CUT ON</string>
+                      </property>
+                      <property name="checkable">
+                       <bool>true</bool>
+                      </property>
+                      <property name="cls" stdset="0">
+                       <string>TealLedBtn</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="RotaryKnob" name="inpLoCutFreqKnob">
+                      <property name="minimum">
+                       <number>20</number>
+                      </property>
+                      <property name="maximum">
+                       <number>400</number>
+                      </property>
+                      <property name="value">
+                       <number>80</number>
+                      </property>
+                      <property name="defaultValue" stdset="0">
+                       <double>80.000000000000000</double>
+                      </property>
+                      <property name="label" stdset="0">
+                       <string>LO FREQ</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="inpHiCutBtn">
+                      <property name="text">
+                       <string>HI CUT ON</string>
+                      </property>
+                      <property name="checkable">
+                       <bool>true</bool>
+                      </property>
+                      <property name="cls" stdset="0">
+                       <string>TealLedBtn</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="RotaryKnob" name="inpHiCutFreqKnob">
+                      <property name="minimum">
+                       <number>2000</number>
+                      </property>
+                      <property name="maximum">
+                       <number>20000</number>
+                      </property>
+                      <property name="value">
+                       <number>12000</number>
+                      </property>
+                      <property name="defaultValue" stdset="0">
+                       <double>12000.000000000000000</double>
+                      </property>
+                      <property name="label" stdset="0">
+                       <string>HI FREQ</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QFrame" name="tiltBox">
+                   <property name="cls" stdset="0">
+                    <string>DetailSectionBox</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="tiltLayout" stretch="0,1,1">
+                    <property name="leftMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>10</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="tiltTitle">
+                      <property name="text">
+                       <string>TILT EQ</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="RotaryKnob" name="inpTiltKnob">
+                      <property name="minimum">
+                       <number>-60</number>
+                      </property>
+                      <property name="maximum">
+                       <number>60</number>
+                      </property>
+                      <property name="value">
+                       <number>0</number>
+                      </property>
+                      <property name="defaultValue" stdset="0">
+                       <double>0.000000000000000</double>
+                      </property>
+                      <property name="label" stdset="0">
+                       <string>TILT</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="tiltSpacer">
+                      <property name="orientation">
+                       <enum>Qt::Vertical</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>0</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="pageGate">
+                <layout class="QHBoxLayout" name="gateLayout" stretch="2,1">
+                 <property name="spacing">
+                  <number>15</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>15</number>
+                 </property>
+                 <item>
+                  <widget class="QFrame" name="gateCtrlBox">
+                   <property name="cls" stdset="0">
+                    <string>DetailSectionBox</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="gateCtrlLayout" stretch="0,0,1">
+                    <property name="spacing">
+                     <number>12</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>15</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="gateCtrlTitle">
+                      <property name="text">
+                       <string>GATE CONTROLS</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="gateActiveBtn">
+                      <property name="text">
+                       <string>GATE ON</string>
+                      </property>
+                      <property name="checkable">
+                       <bool>true</bool>
+                      </property>
+                      <property name="cls" stdset="0">
+                       <string>OrangeLedBtn</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="gateKnobsLayout">
+                      <item>
+                       <widget class="RotaryKnob" name="gateThresholdKnob">
+                        <property name="minimum">
+                         <number>-80</number>
+                        </property>
+                        <property name="maximum">
+                         <number>0</number>
+                        </property>
+                        <property name="value">
+                         <number>-55</number>
+                        </property>
+                        <property name="defaultValue" stdset="0">
+                         <double>-55.000000000000000</double>
+                        </property>
+                        <property name="label" stdset="0">
+                         <string>THRESHOLD</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="RotaryKnob" name="gateAttackKnob">
+                        <property name="minimum">
+                         <number>1</number>
+                        </property>
+                        <property name="maximum">
+                         <number>5000</number>
+                        </property>
+                        <property name="value">
+                         <number>10</number>
+                        </property>
+                        <property name="defaultValue" stdset="0">
+                         <double>10.000000000000000</double>
+                        </property>
+                        <property name="label" stdset="0">
+                         <string>ATTACK</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="RotaryKnob" name="gateHoldKnob">
+                        <property name="minimum">
+                         <number>10</number>
+                        </property>
+                        <property name="maximum">
+                         <number>2000</number>
+                        </property>
+                        <property name="value">
+                         <number>50</number>
+                        </property>
+                        <property name="defaultValue" stdset="0">
+                         <double>50.000000000000000</double>
+                        </property>
+                        <property name="label" stdset="0">
+                         <string>HOLD</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="RotaryKnob" name="gateReleaseKnob">
+                        <property name="minimum">
+                         <number>10</number>
+                        </property>
+                        <property name="maximum">
+                         <number>4000</number>
+                        </property>
+                        <property name="value">
+                         <number>250</number>
+                        </property>
+                        <property name="defaultValue" stdset="0">
+                         <double>250.000000000000000</double>
+                        </property>
+                        <property name="label" stdset="0">
+                         <string>RELEASE</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="RotaryKnob" name="gateDepthKnob">
+                        <property name="minimum">
+                         <number>0</number>
+                        </property>
+                        <property name="maximum">
+                         <number>60</number>
+                        </property>
+                        <property name="value">
+                         <number>40</number>
+                        </property>
+                        <property name="defaultValue" stdset="0">
+                         <double>40.000000000000000</double>
+                        </property>
+                        <property name="label" stdset="0">
+                         <string>DEPTH</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QFrame" name="gateVisualBox">
+                   <property name="cls" stdset="0">
+                    <string>DetailSectionBox</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="gateVisualLayout" stretch="0,1">
+                    <property name="leftMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>15</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="gateVisualTitle">
+                      <property name="text">
+                       <string>GATE GRAPH &amp; DYNAMICS STATE</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="gateGraphPlaceholder">
+                      <property name="styleSheet">
+                       <string notr="true">color: #71717a; font-size: 12px; background-color: #0c0c10; border: 1px dashed #272737; border-radius: 4px;</string>
+                      </property>
+                      <property name="text">
+                       <string>[ Gate Transfer Curve / Gain Reduction Display ]</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="pageComp">
+                <layout class="QHBoxLayout" name="compLayout" stretch="3,1">
+                 <property name="spacing">
+                  <number>15</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>15</number>
+                 </property>
+                 <item>
+                  <widget class="QFrame" name="compCtrlBox">
+                   <property name="cls" stdset="0">
+                    <string>DetailSectionBox</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="compCtrlLayout" stretch="0,0,1">
+                    <property name="spacing">
+                     <number>12</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>15</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="compCtrlTitle">
+                      <property name="text">
+                       <string>COMPRESSOR CONTROLS</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="compActiveBtn">
+                      <property name="text">
+                       <string>COMP ON</string>
+                      </property>
+                      <property name="checkable">
+                       <bool>true</bool>
+                      </property>
+                      <property name="cls" stdset="0">
+                       <string>BlueLedBtn</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="compKnobsLayout">
+                      <item>
+                       <widget class="RotaryKnob" name="compThresholdKnob">
+                        <property name="minimum">
+                         <number>-60</number>
+                        </property>
+                        <property name="maximum">
+                         <number>0</number>
+                        </property>
+                        <property name="value">
+                         <number>-18</number>
+                        </property>
+                        <property name="defaultValue" stdset="0">
+                         <double>-18.000000000000000</double>
+                        </property>
+                        <property name="label" stdset="0">
+                         <string>THRESHOLD</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="RotaryKnob" name="compRatioKnob">
+                        <property name="minimum">
+                         <number>10</number>
+                        </property>
+                        <property name="maximum">
+                         <number>200</number>
+                        </property>
+                        <property name="value">
+                         <number>35</number>
+                        </property>
+                        <property name="defaultValue" stdset="0">
+                         <double>35.000000000000000</double>
+                        </property>
+                        <property name="label" stdset="0">
+                         <string>RATIO</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="RotaryKnob" name="compAttackKnob">
+                        <property name="minimum">
+                         <number>1</number>
+                        </property>
+                        <property name="maximum">
+                         <number>2000</number>
+                        </property>
+                        <property name="value">
+                         <number>100</number>
+                        </property>
+                        <property name="defaultValue" stdset="0">
+                         <double>100.000000000000000</double>
+                        </property>
+                        <property name="label" stdset="0">
+                         <string>ATTACK</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="RotaryKnob" name="compHoldKnob">
+                        <property name="minimum">
+                         <number>0</number>
+                        </property>
+                        <property name="maximum">
+                         <number>1000</number>
+                        </property>
+                        <property name="value">
+                         <number>0</number>
+                        </property>
+                        <property name="defaultValue" stdset="0">
+                         <double>0.000000000000000</double>
+                        </property>
+                        <property name="label" stdset="0">
+                         <string>HOLD</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="RotaryKnob" name="compReleaseKnob">
+                        <property name="minimum">
+                         <number>10</number>
+                        </property>
+                        <property name="maximum">
+                         <number>3000</number>
+                        </property>
+                        <property name="value">
+                         <number>150</number>
+                        </property>
+                        <property name="defaultValue" stdset="0">
+                         <double>150.000000000000000</double>
+                        </property>
+                        <property name="label" stdset="0">
+                         <string>RELEASE</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QFrame" name="compScBox">
+                   <property name="cls" stdset="0">
+                    <string>DetailSectionBox</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="compScLayout" stretch="0,1">
+                    <property name="spacing">
+                     <number>12</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>15</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="compScTitle">
+                      <property name="text">
+                       <string>SIDECHAIN FILTER</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="scKnobsLayout">
+                      <item>
+                       <widget class="RotaryKnob" name="compScLoCutKnob">
+                        <property name="minimum">
+                         <number>20</number>
+                        </property>
+                        <property name="maximum">
+                         <number>1000</number>
+                        </property>
+                        <property name="value">
+                         <number>20</number>
+                        </property>
+                        <property name="defaultValue" stdset="0">
+                         <double>20.000000000000000</double>
+                        </property>
+                        <property name="label" stdset="0">
+                         <string>SC LO CUT</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="RotaryKnob" name="compScHiCutKnob">
+                        <property name="minimum">
+                         <number>200</number>
+                        </property>
+                        <property name="maximum">
+                         <number>20000</number>
+                        </property>
+                        <property name="value">
+                         <number>20000</number>
+                        </property>
+                        <property name="defaultValue" stdset="0">
+                         <double>20000.000000000000000</double>
+                        </property>
+                        <property name="label" stdset="0">
+                         <string>SC HI CUT</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="pageEq">
+                <layout class="QHBoxLayout" name="eqLayout" stretch="3,1">
+                 <property name="spacing">
+                  <number>15</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>15</number>
+                 </property>
+                 <item>
+                  <widget class="EqGraphWidget" name="EqGraph" native="true"/>
+                 </item>
+                 <item>
+                  <widget class="QFrame" name="eqParamsBox">
+                   <property name="cls" stdset="0">
+                    <string>DetailSectionBox</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="eqParamsLayout" stretch="0,0,0,1,1,1">
+                    <property name="spacing">
+                     <number>8</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>10</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="eqTitle">
+                      <property name="text">
+                       <string>PARAMETRIC EQ</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="bandSelLayout">
+                      <item>
+                       <widget class="QPushButton" name="eqBandBtn0">
+                        <property name="text">
+                         <string>1</string>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="checked">
+                         <bool>true</bool>
+                        </property>
+                        <property name="cls" stdset="0">
+                         <string>EqBandSelectBtn</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="eqBandBtn1">
+                        <property name="text">
+                         <string>2</string>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="cls" stdset="0">
+                         <string>EqBandSelectBtn</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="eqBandBtn2">
+                        <property name="text">
+                         <string>3</string>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="cls" stdset="0">
+                         <string>EqBandSelectBtn</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="eqBandBtn3">
+                        <property name="text">
+                         <string>4</string>
+                        </property>
+                        <property name="checkable">
+                         <bool>true</bool>
+                        </property>
+                        <property name="cls" stdset="0">
+                         <string>EqBandSelectBtn</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="eqBandActiveBtn">
+                      <property name="text">
+                       <string>BAND ON</string>
+                      </property>
+                      <property name="checkable">
+                       <bool>true</bool>
+                      </property>
+                      <property name="cls" stdset="0">
+                       <string>YellowLedBtn</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="RotaryKnob" name="eqGainKnob">
+                      <property name="minimum">
+                       <number>-150</number>
+                      </property>
+                      <property name="maximum">
+                       <number>150</number>
+                      </property>
+                      <property name="value">
+                       <number>0</number>
+                      </property>
+                      <property name="defaultValue" stdset="0">
+                       <double>0.000000000000000</double>
+                      </property>
+                      <property name="label" stdset="0">
+                       <string>GAIN</string>
+                      </property>
+                      <property name="small" stdset="0">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="RotaryKnob" name="eqFreqKnob">
+                      <property name="minimum">
+                       <number>20</number>
+                      </property>
+                      <property name="maximum">
+                       <number>20000</number>
+                      </property>
+                      <property name="value">
+                       <number>1000</number>
+                      </property>
+                      <property name="defaultValue" stdset="0">
+                       <double>1000.000000000000000</double>
+                      </property>
+                      <property name="label" stdset="0">
+                       <string>FREQ</string>
+                      </property>
+                      <property name="small" stdset="0">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="RotaryKnob" name="eqQKnob">
+                      <property name="minimum">
+                       <number>5</number>
+                      </property>
+                      <property name="maximum">
+                       <number>100</number>
+                      </property>
+                      <property name="value">
+                       <number>10</number>
+                      </property>
+                      <property name="defaultValue" stdset="0">
+                       <double>10.000000000000000</double>
+                      </property>
+                      <property name="label" stdset="0">
+                       <string>Q</string>
+                      </property>
+                      <property name="small" stdset="0">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="pageMain">
+                <layout class="QHBoxLayout" name="mainPageLayout" stretch="10,15">
+                 <property name="spacing">
+                  <number>30</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>15</number>
+                 </property>
+                 <item>
+                  <widget class="QFrame" name="mainControlsBox">
+                   <property name="cls" stdset="0">
+                    <string>DetailSectionBox</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="mCtrlLayout" stretch="0,1,0,0,0">
+                    <property name="leftMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>10</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>10</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="mainCtrlTitle">
+                      <property name="text">
+                       <string>PAN &amp; MIX OPTIONS</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="RotaryKnob" name="screenPanKnob">
+                      <property name="minimum">
+                       <number>-50</number>
+                      </property>
+                      <property name="maximum">
+                       <number>50</number>
+                      </property>
+                      <property name="value">
+                       <number>0</number>
+                      </property>
+                      <property name="defaultValue" stdset="0">
+                       <double>0.000000000000000</double>
+                      </property>
+                      <property name="label" stdset="0">
+                       <string>PAN</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="mainCtrlSpacer">
+                      <property name="orientation">
+                       <enum>Qt::Vertical</enum>
+                      </property>
+                      <property name="sizeType">
+                       <enum>QSizePolicy::Fixed</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>0</width>
+                        <height>10</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="screenSoloBtn">
+                      <property name="text">
+                       <string>SOLO</string>
+                      </property>
+                      <property name="checkable">
+                       <bool>true</bool>
+                      </property>
+                      <property name="cls" stdset="0">
+                       <string>YellowLedBtn</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="screenMuteBtn">
+                      <property name="text">
+                       <string>MUTE</string>
+                      </property>
+                      <property name="checkable">
+                       <bool>true</bool>
+                      </property>
+                      <property name="cls" stdset="0">
+                       <string>RedLedBtn</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QFrame" name="mainLevelBox">
+                   <property name="cls" stdset="0">
+                    <string>DetailSectionBox</string>
+                   </property>
+                   <layout class="QHBoxLayout" name="mLevelLayout" stretch="1,1">
+                    <property name="spacing">
+                     <number>15</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>15</number>
+                    </property>
+                    <item>
+                     <widget class="QSlider" name="ChannelFaderLarge">
+                      <property name="orientation">
+                       <enum>Qt::Vertical</enum>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="LevelMeter" name="ScreenChannelMeter" native="true">
+                      <property name="stereo" stdset="0">
+                       <bool>true</bool>
+                      </property>
+                      <property name="simulated" stdset="0">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="pageInserts">
+                <layout class="QVBoxLayout" name="insLayout" stretch="0,0,1">
+                 <property name="spacing">
+                  <number>12</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>15</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>15</number>
+                 </property>
+                 <item>
+                  <widget class="QFrame" name="insConfigBox">
+                   <property name="cls" stdset="0">
+                    <string>DetailSectionBox</string>
+                   </property>
+                   <layout class="QHBoxLayout" name="insConfigLayout" stretch="0,0,1">
+                    <property name="leftMargin">
+                     <number>12</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>8</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>12</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>8</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="insConfigLabel">
+                      <property name="styleSheet">
+                       <string notr="true">color: #ffffff; font-weight: bold; font-size: 12px; border: none; padding-bottom: 0px;</string>
+                      </property>
+                      <property name="text">
+                       <string>ACTIVE INSERTS FOR THIS CHANNEL:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QSpinBox" name="InsCountSpin">
+                      <property name="minimum">
+                       <number>1</number>
+                      </property>
+                      <property name="maximum">
+                       <number>8</number>
+                      </property>
+                      <property name="value">
+                       <number>3</number>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="insConfigSpacer">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>40</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QFrame" name="InsTabsContainer">
+                   <layout class="QHBoxLayout" name="insTabsLayout">
+                    <property name="spacing">
+                     <number>4</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QFrame" name="insDetailBox">
+                   <property name="cls" stdset="0">
+                    <string>DetailSectionBox</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="insDetailLayout" stretch="0,1">
+                    <property name="spacing">
+                     <number>15</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>15</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>15</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="insDetailTitle">
+                      <property name="text">
+                       <string>INSERT EFFECT SLOT CONFIGURATION</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="insParamsRow" stretch="1,1,1,1">
+                      <property name="spacing">
+                       <number>20</number>
+                      </property>
+                      <item>
+                       <layout class="QVBoxLayout" name="insLeftCol" stretch="0,0,0,0,1">
+                        <property name="spacing">
+                         <number>15</number>
+                        </property>
+                        <item>
+                         <widget class="QLabel" name="insTypeLabel">
+                          <property name="styleSheet">
+                           <string notr="true">color: #a1a1aa; font-size: 10px; font-weight: bold; border: none; padding: 0;</string>
+                          </property>
+                          <property name="text">
+                           <string>EFFECT TYPE</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QComboBox" name="InsTypeCombo">
+                          <item>
+                           <property name="text">
+                            <string>None / Bypass</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>Parametric EQ</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>Compressor</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>Stereo Delay</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>Plate Reverb</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>Chorus</string>
+                           </property>
+                          </item>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="insLeftColSpacer1">
+                          <property name="orientation">
+                           <enum>Qt::Vertical</enum>
+                          </property>
+                          <property name="sizeType">
+                           <enum>QSizePolicy::Fixed</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>0</width>
+                            <height>10</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                        <item>
+                         <widget class="QPushButton" name="insBypassBtn">
+                          <property name="text">
+                           <string>BYPASS EFFECT</string>
+                          </property>
+                          <property name="checkable">
+                           <bool>true</bool>
+                          </property>
+                          <property name="cls" stdset="0">
+                           <string>RedLedBtn</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="insLeftColSpacer2">
+                          <property name="orientation">
+                           <enum>Qt::Vertical</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>0</width>
+                            <height>0</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <widget class="RotaryKnob" name="insMixKnob">
+                        <property name="minimum">
+                         <number>0</number>
+                        </property>
+                        <property name="maximum">
+                         <number>100</number>
+                        </property>
+                        <property name="value">
+                         <number>100</number>
+                        </property>
+                        <property name="defaultValue" stdset="0">
+                         <double>100.000000000000000</double>
+                        </property>
+                        <property name="label" stdset="0">
+                         <string>WET/DRY MIX</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="RotaryKnob" name="insParam1Knob">
+                        <property name="minimum">
+                         <number>0</number>
+                        </property>
+                        <property name="maximum">
+                         <number>100</number>
+                        </property>
+                        <property name="value">
+                         <number>50</number>
+                        </property>
+                        <property name="defaultValue" stdset="0">
+                         <double>50.000000000000000</double>
+                        </property>
+                        <property name="label" stdset="0">
+                         <string>PARAM 1</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="RotaryKnob" name="insParam2Knob">
+                        <property name="minimum">
+                         <number>0</number>
+                        </property>
+                        <property name="maximum">
+                         <number>100</number>
+                        </property>
+                        <property name="value">
+                         <number>50</number>
+                        </property>
+                        <property name="defaultValue" stdset="0">
+                         <double>50.000000000000000</double>
+                        </property>
+                        <property name="label" stdset="0">
+                         <string>PARAM 2</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="BottomEncodersPanel">
+            <layout class="QHBoxLayout" name="bottomEncLayout">
+             <property name="spacing">
+              <number>15</number>
+             </property>
+             <property name="leftMargin">
+              <number>10</number>
+             </property>
+             <property name="topMargin">
+              <number>4</number>
+             </property>
+             <property name="rightMargin">
+              <number>10</number>
+             </property>
+             <property name="bottomMargin">
+              <number>4</number>
+             </property>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QFrame" name="ConsoleBezel">
+      <layout class="QVBoxLayout" name="consoleLayout" stretch="0,1">
+       <property name="spacing">
+        <number>5</number>
+       </property>
+       <property name="leftMargin">
+        <number>15</number>
+       </property>
+       <property name="topMargin">
+        <number>5</number>
+       </property>
+       <property name="rightMargin">
+        <number>15</number>
+       </property>
+       <property name="bottomMargin">
+        <number>10</number>
+       </property>
+       <item>
+        <layout class="QHBoxLayout" name="collapseBtnRow">
+         <item>
+          <spacer name="collapseSpacerLeft">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="ConsoleCollapseBtn">
+           <property name="text">
+            <string>▲ SHOW PHYSICAL CONTROLS</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="collapseSpacerRight">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QFrame" name="ConsoleDesk">
+         <property name="visible">
+          <bool>false</bool>
+         </property>
+         <layout class="QHBoxLayout" name="deskLayout">
+          <property name="spacing">
+           <number>8</number>
+          </property>
+          <property name="leftMargin">
+           <number>10</number>
+          </property>
+          <property name="topMargin">
+           <number>12</number>
+          </property>
+          <property name="rightMargin">
+           <number>10</number>
+          </property>
+          <property name="bottomMargin">
+           <number>12</number>
+          </property>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>RotaryKnob</class>
+   <extends>QSlider</extends>
+   <header>rotaryknob.h</header>
+  </customwidget>
+  <customwidget>
+   <class>LevelMeter</class>
+   <extends>QWidget</extends>
+   <header>levelmeter.h</header>
+   <container>0</container>
+  </customwidget>
+  <customwidget>
+   <class>EqGraphWidget</class>
+   <extends>QWidget</extends>
+   <header>eqgraphwidget.h</header>
+   <container>0</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

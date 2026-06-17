@@ -9,10 +9,12 @@
 class RotaryKnob : public QAbstractSlider {
     Q_OBJECT
     Q_PROPERTY(QColor themeColor READ themeColor WRITE setThemeColor)
+    Q_PROPERTY(QString label READ label WRITE setLabel)
     Q_PROPERTY(QString unit READ unit WRITE setUnit)
     Q_PROPERTY(double scaleFactor READ scaleFactor WRITE setScaleFactor)
     Q_PROPERTY(double offset READ offset WRITE setOffset)
     Q_PROPERTY(double defaultValue READ defaultValue WRITE setDefaultValue)
+    Q_PROPERTY(bool small READ isSmall WRITE setSmall)
 
 public:
     explicit RotaryKnob(QWidget *parent = nullptr);
