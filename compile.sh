@@ -79,7 +79,7 @@ build_omc_if_needed() {
     fi
 
     echo "[build] omc (wing target)"
-    "${OMC_DIR}/compile-wing-docker.sh"
+    "${OMC_DIR}/compile-wing-docker.sh TARGET_WING"
 
     if [[ ! -f "${OMC_BIN}" ]]; then
         echo "[error] omc build did not produce ${OMC_BIN}" >&2
