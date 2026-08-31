@@ -164,20 +164,17 @@ cd "${BUILD_DIR}/dropbear-${DROPBEAR_VER}"
 cat > localoptions.h.tmp <<'EOF'
 /* OpenWING initramfs SSH settings.
  *
- * Keep Dropbear's Linux re-exec path enabled: current Dropbear passes the
- * pre-auth childpipe fd through re-exec, so authenticated sessions are removed
- * from the unauthenticated-client accounting correctly. Older cached builds
- * without that fix can stop accepting connections after MAX_UNAUTH_CLIENTS
- * sequential logins.
- *
- * The WING image is an experimental root/blank-password initramfs used on a
- * trusted development network. VSCode/build deploys can open bursts of SSH
- * connections, so use less aggressive unauthenticated-connection limits than
- * Dropbear's default 5-per-IP / 30-global values.
+ * Disable REEXEC: static BusyBox/musl/glibc binaries can deadlock or lose
+ * the childpipe fd across re-exec under rapid connection bursts.
+ * Increase unauthenticated connection limits and enable aggressive keepalive.
  */
-#define DROPBEAR_REEXEC 1
-#define MAX_UNAUTH_PER_IP 16
-#define MAX_UNAUTH_CLIENTS 64
+#define DROPBEAR_REEXEC 0
+#define MAX_UNAUTH_PER_IP 128
+#define MAX_UNAUTH_CLIENTS 256
+#define MAX_AUTH_TRIES 20
+#define DROPBEAR_MAX_CLI_PASS 20
+#define DEFAULT_KEEPALIVE 10
+#define DEFAULT_IDLE_TIMEOUT 120
 EOF
 if ! cmp -s localoptions.h.tmp localoptions.h; then
     mv localoptions.h.tmp localoptions.h
@@ -399,6 +396,15 @@ mkdir -p "${ROOTFS_DIR}/usr/bin"
     "${ROOT_DIR}/linux-tools/wing_draw.c"
 "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/pnlc_raw_dump" \
     "${ROOT_DIR}/linux-tools/pnlc_raw_dump.c"
+"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing_fpga_dsp_tool" \
+    "${ROOT_DIR}/linux-tools/wing_fpga_dsp_tool.c"
+"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing_dsp_demo" \
+    "${ROOT_DIR}/linux-tools/demo_welcome.c"
+"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-syscfg" \
+    "${ROOT_DIR}/linux-tools/wing_syscfg.c"
+
+mkdir -p "${ROOTFS_DIR}/usr/share/fpga"
+cp -a "${ROOT_DIR}/fpga/"*.bin "${ROOTFS_DIR}/usr/share/fpga/" 2>/dev/null || true
 
 ###################################################################################
 #
@@ -513,6 +519,17 @@ scripts/config --enable USB_EHCI_TT_NEWSCHED
 scripts/config --enable USB_EHCI_HCD_PLATFORM
 scripts/config --enable USB_CHIPIDEA_HOST
 scripts/config --enable USB_HID
+scripts/config --enable MMC
+scripts/config --enable MMC_BLOCK
+scripts/config --enable MMC_SDHCI
+scripts/config --enable MMC_SDHCI_PLTFM
+scripts/config --enable MMC_SDHCI_ESDHC_IMX
+scripts/config --enable FAT_FS
+scripts/config --enable VFAT_FS
+scripts/config --enable MSDOS_FS
+scripts/config --enable NLS_CODEPAGE_437
+scripts/config --enable NLS_ISO8859_1
+scripts/config --enable NLS_UTF8
 
 make ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" olddefconfig
 make ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" -j"$(nproc)" zImage nxp/imx/imx6dl-wing-usb-console.dtb

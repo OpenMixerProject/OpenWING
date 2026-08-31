@@ -52,8 +52,8 @@ omc_input_signature() {
     (
         cd "${OMC_DIR}"
         {
-            printf '%s\n' "Makefile_wing"
-            printf '%s\n' "compile-wing-docker.sh"
+            printf '%s\n' "Makefile"
+            printf '%s\n' "compile-docker.sh"
             find src lib files -type f -print
         } | LC_ALL=C sort | while IFS= read -r input_path; do
             if [[ -f "${input_path}" ]]; then
@@ -79,7 +79,7 @@ build_omc_if_needed() {
     fi
 
     echo "[build] omc (wing target)"
-    "${OMC_DIR}/compile-wing-docker.sh TARGET_WING"
+    "${OMC_DIR}/compile-docker.sh" TARGET_WING
 
     if [[ ! -f "${OMC_BIN}" ]]; then
         echo "[error] omc build did not produce ${OMC_BIN}" >&2
@@ -129,19 +129,20 @@ DOCKER_CONFIG="${DOCKER_CONFIG_DIR}" DOCKER_HOST="${DOCKER_HOST_URI}" \
 docker run --rm \
   -i \
   -u "$(id -u):$(id -g)" \
-  -v "${ROOT_DIR}:${ROOT_DIR}" \
-  -w "${ROOT_DIR}" \
-  -e ROOT_DIR="${ROOT_DIR}" \
-  -e BUILD_DIR="${BUILD_DIR}" \
-  -e OUT_DIR="${OUT_DIR}" \
+  -v "${ROOT_DIR}:/openwing" \
+  -w "/openwing" \
+  -e ROOT_DIR="/openwing" \
+  -e BUILD_DIR="/openwing/build/linux-usb-console" \
+  -e OUT_DIR="/openwing/build/output" \
   -e LINUX_VER="${LINUX_VER}" \
   -e BUSYBOX_VER="${BUSYBOX_VER}" \
   -e DROPBEAR_VER="${DROPBEAR_VER}" \
   -e DOOMGENERIC_REF="${DOOMGENERIC_REF}" \
   -e INCLUDE_DOOM="${INCLUDE_DOOM}" \
   -e HTOP_VER="${HTOP_VER}" \
-  -e UBOOT_IMX="${UBOOT_IMX}" \
-  -e OUTPUT_WINGFW="${OUTPUT_WINGFW}" \
+  -e UBOOT_IMX="/openwing/build/output/u-boot-linux.imx" \
+  -e OUTPUT_WINGFW="/openwing/build/output/wing-compact-usb-console-linux.wingfw" \
   "${DOCKER_IMAGE}" \
   ./compile_step2.sh
+
 

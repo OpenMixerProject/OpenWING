@@ -184,3 +184,16 @@ __pycache__/
 *.imx
 scratch
 core
+
+# Compiled binaries
+linux-tools/pnlc_raw_dump
+linux-tools/test_spi_raw
+linux-tools/wing-surface-console
+linux-tools/wing-draw
+linux-tools/wing_panel_init
+linux-tools/wing_fpga_dsp_tool
+linux-tools/wing_dsp_demo
+linux-tools/wing_syscfg
+linux-tools/wing-syscfg
+software/fpgaconfig_trion/fpgaconfig_trion
+software/fpgaconfig_trion/wing_fpga_dsp_tool

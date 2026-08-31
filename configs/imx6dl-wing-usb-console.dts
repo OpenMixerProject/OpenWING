@@ -107,13 +107,6 @@
 };
 
 &gpio3 {
-	unused-cs-19 {
-		gpio-hog;
-		gpios = <19 GPIO_ACTIVE_HIGH>;
-		output-high;
-		line-name = "unused-spi-cs-gpio3-19";
-	};
-	
 	unused-cs-25 {
 		gpio-hog;
 		gpios = <25 GPIO_ACTIVE_HIGH>;
@@ -204,7 +197,15 @@
 };
 
 &usdhc3 {
-	status = "disabled";
+	pinctrl-names = "default", "state_100mhz", "state_200mhz";
+	pinctrl-0 = <&pinctrl_usdhc3>;
+	pinctrl-1 = <&pinctrl_usdhc3_100mhz>;
+	pinctrl-2 = <&pinctrl_usdhc3_200mhz>;
+	bus-width = <4>;
+	non-removable;
+	no-1-8-v;
+	keep-power-in-suspend;
+	status = "okay";
 };
 
 &usdhc4 {
@@ -221,15 +222,37 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_ecspi1>;
 
-	cs-gpios = <&gpio2 30 GPIO_ACTIVE_LOW>,
+	cs-gpios = <&gpio3 19 GPIO_ACTIVE_LOW>,
 		   <&gpio3 24 GPIO_ACTIVE_LOW>;
 
 	status = "okay";
 
 	flash: flash@0 {
-		compatible = "spansion,s25fl064k", "jedec,spi-nor";
+		compatible = "jedec,spi-nor";
 		reg = <0>;
-		spi-max-frequency = <10000000>;
+		spi-max-frequency = <20000000>; /* 20 MHz SPI Clock */
+		m25p,fast-read;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "bootloader";
+				reg = <0x00000000 0x00100000>; /* 1MB Bootloader & DCD Header */
+			};
+
+			partition@100000 {
+				label = "env";
+				reg = <0x00100000 0x00080000>; /* 512KB Environment Config */
+			};
+
+			partition@180000 {
+				label = "data";
+				reg = <0x00180000 0x00e80000>; /* Verbleibender NOR Flash Speicher */
+			};
+		};
 	};
 
 	fpga: fpga@1 {
@@ -240,7 +263,24 @@
 };
 
 &ecspi2 {
-	status = "disabled";
+	/delete-property/ dmas;
+	/delete-property/ dma-names;
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ecspi2>;
+
+	cs-gpios = <&gpio2 26 GPIO_ACTIVE_LOW>;
+
+	status = "okay";
+
+	fpga_spi: fpga@0 {
+		compatible = "rohm,dh2228fv";
+		reg = <0>;
+		spi-max-frequency = <10000000>;
+	};
 };
 
 &ecspi3 {
@@ -281,18 +321,31 @@
 	};
 };
 
+&snvs_rtc {
+	status = "okay";
+};
+
 &iomuxc {
 	pinctrl_ecspi1: ecspi1grp {
 		fsl,pins = <
-			MX6QDL_PAD_EIM_D16__ECSPI1_SCLK		0x1b0b0
-			MX6QDL_PAD_EIM_D17__ECSPI1_MISO		0x1b0b0
-			MX6QDL_PAD_EIM_D18__ECSPI1_MOSI		0x1b0b0
+			MX6QDL_PAD_EIM_D16__ECSPI1_SCLK		0x100b0
+			MX6QDL_PAD_EIM_D17__ECSPI1_MISO		0x100b0
+			MX6QDL_PAD_EIM_D18__ECSPI1_MOSI		0x100b0
 
 			/* CS0: SPI Flash */
-			MX6QDL_PAD_EIM_EB2__GPIO2_IO30		0x1b008
+			MX6QDL_PAD_EIM_D19__GPIO3_IO19		0x100b0
 
 			/* CS1: FPGA */
 			MX6QDL_PAD_EIM_D24__GPIO3_IO24		0x1b0b0
+		>;
+	};
+
+	pinctrl_ecspi2: ecspi2grp {
+		fsl,pins = <
+			MX6QDL_PAD_EIM_CS0__ECSPI2_SCLK		0x1b0b0
+			MX6QDL_PAD_EIM_CS1__ECSPI2_MOSI		0x1b0b0
+			MX6QDL_PAD_EIM_OE__ECSPI2_MISO		0x1b0b0
+			MX6QDL_PAD_EIM_RW__GPIO2_IO26		0x1b0b0
 		>;
 	};
 
@@ -314,6 +367,42 @@
 		fsl,pins = <
 			MX6QDL_PAD_EIM_D30__USB_H1_OC  0xb000
 			MX6QDL_PAD_EIM_D31__USB_H1_PWR 0x0008
+		>;
+	};
+
+	pinctrl_usdhc3: usdhc3grp {
+		fsl,pins = <
+			MX6QDL_PAD_SD3_CLK__SD3_CLK    0x10059
+			MX6QDL_PAD_SD3_CMD__SD3_CMD    0x17059
+			MX6QDL_PAD_SD3_DAT0__SD3_DATA0 0x17059
+			MX6QDL_PAD_SD3_DAT1__SD3_DATA1 0x17059
+			MX6QDL_PAD_SD3_DAT2__SD3_DATA2 0x17059
+			MX6QDL_PAD_SD3_DAT3__SD3_DATA3 0x17059
+			MX6QDL_PAD_SD3_RST__SD3_RESET  0x17059
+		>;
+	};
+
+	pinctrl_usdhc3_100mhz: usdhc3grp_100mhz {
+		fsl,pins = <
+			MX6QDL_PAD_SD3_CLK__SD3_CLK    0x100b9
+			MX6QDL_PAD_SD3_CMD__SD3_CMD    0x170b9
+			MX6QDL_PAD_SD3_DAT0__SD3_DATA0 0x170b9
+			MX6QDL_PAD_SD3_DAT1__SD3_DATA1 0x170b9
+			MX6QDL_PAD_SD3_DAT2__SD3_DATA2 0x170b9
+			MX6QDL_PAD_SD3_DAT3__SD3_DATA3 0x170b9
+			MX6QDL_PAD_SD3_RST__SD3_RESET  0x170b9
+		>;
+	};
+
+	pinctrl_usdhc3_200mhz: usdhc3grp_200mhz {
+		fsl,pins = <
+			MX6QDL_PAD_SD3_CLK__SD3_CLK    0x100f9
+			MX6QDL_PAD_SD3_CMD__SD3_CMD    0x170f9
+			MX6QDL_PAD_SD3_DAT0__SD3_DATA0 0x170f9
+			MX6QDL_PAD_SD3_DAT1__SD3_DATA1 0x170f9
+			MX6QDL_PAD_SD3_DAT2__SD3_DATA2 0x170f9
+			MX6QDL_PAD_SD3_DAT3__SD3_DATA3 0x170f9
+			MX6QDL_PAD_SD3_RST__SD3_RESET  0x170f9
 		>;
 	};
 

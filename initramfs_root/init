@@ -18,6 +18,12 @@ elif [ -c /dev/ttymxc1 ]; then
 fi
 
 echo "Wing USB console Linux booted"
+
+# Synchronize system clock from hardware RTC (SNVS LP)
+if [ -e /dev/rtc0 ] || [ -e /dev/rtc ]; then
+    hwclock -s -u 2>/dev/null || hwclock -s 2>/dev/null || true
+fi
+
 echo "Bringing up PNLC before starting the USB console..."
 /usr/bin/wing_panel_init
 
@@ -64,6 +70,11 @@ for i in 1 2 3 4 5; do
     sleep 1
 done
 
+# Read system config and apply factory MAC address to ethernet interfaces
+if [ -x /usr/bin/wing-syscfg ]; then
+    /usr/bin/wing-syscfg --apply-mac || true
+fi
+
 if [ -d /sys/class/net/lan1 ] || [ -d /sys/class/net/lan2 ]; then
     for iface in lan1 lan2; do
         if [ -d "/sys/class/net/$iface" ]; then
@@ -79,10 +90,15 @@ elif [ -d /sys/class/net/eth0 ]; then
 fi
 
 if [ -x /usr/sbin/dropbear ]; then
-    echo "Starting Dropbear SSH on port 22..."
+    echo "Starting Dropbear SSH on port 22 (supervisor managed)..."
     echo "WARNING: root SSH permits blank-password login in this experimental initramfs."
     chmod 600 /etc/dropbear/dropbear_ed25519_host_key 2>/dev/null || true
-    /usr/sbin/dropbear -r /etc/dropbear/dropbear_ed25519_host_key -B -E -p 22 || true
+    (
+        while true; do
+            /usr/sbin/dropbear -F -R -B -p 22 -K 10 -I 120 2>/dev/null
+            sleep 1
+        done
+    ) &
 fi
 
 # Wait for background services (gettys, udhcpc, panel init) so PID 1 doesn't exit
