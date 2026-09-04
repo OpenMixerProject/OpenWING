@@ -329,13 +329,13 @@ install -D -m 0755 htop "${ROOTFS_DIR}/usr/bin/htop"
 ########################################################################################################################################################
 
 echo "[install] omc (wing target)"
-OMC_BIN="${ROOT_DIR}/software/omc/build/wing/wing-omc"
+OMC_BIN="${ROOT_DIR}/software/omc/build/wing/omc"
 if [ ! -f "${OMC_BIN}" ]; then
     echo "[error] omc build did not produce ${OMC_BIN}" >&2
      exit 1
 fi
 "${CROSS_COMPILE}strip" "${OMC_BIN}" || true
-install -D -m 0755 "${OMC_BIN}" "${ROOTFS_DIR}/usr/bin/wing-omc"
+install -D -m 0755 "${OMC_BIN}" "${ROOTFS_DIR}/usr/bin/omc"
 
 #########################################################################
 #

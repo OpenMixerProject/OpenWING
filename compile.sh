@@ -25,7 +25,7 @@ INCLUDE_DOOM="${INCLUDE_DOOM:-}"
 UBOOT_IMX="${OUT_DIR}/u-boot-linux.imx"
 OUTPUT_WINGFW="${OUT_DIR}/wing-compact-usb-console-linux.wingfw"
 OMC_DIR="${ROOT_DIR}/software/omc"
-OMC_BIN="${OMC_DIR}/build/wing/wing-omc"
+OMC_BIN="${OMC_DIR}/build/wing/omc"
 OMC_STAMP="${OMC_DIR}/build/wing/.wing-omc.inputs.sha256"
 
 hash_file() {

@@ -598,14 +598,20 @@ static void configure_pnlc_pinmux(uint8_t *iomuxc)
 {
     writel_ptr(iomuxc, PAD_CSI0_DAT12, PAD_UART_TX_STOCK_PNLC);
     writel_ptr(iomuxc, MUX_CSI0_DAT12, UART4_STOCK_MUX_MODE);
+
     writel_ptr(iomuxc, PAD_CSI0_DAT13, PAD_UART_RX_STOCK_PNLC);
     writel_ptr(iomuxc, MUX_CSI0_DAT13, UART4_STOCK_MUX_MODE);
+
     writel_ptr(iomuxc, SEL_UART4_RX, UART4_RX_DAISY_STOCK);
+
     writel_ptr(iomuxc, MUX_CSI0_VSYNC, GPIO_MUX_MODE);
     writel_ptr(iomuxc, MUX_CSI0_DAT4, GPIO_MUX_MODE);
+    
     writel_ptr(iomuxc, MUX_PNLC_STOCK_GPIO, GPIO_MUX_MODE);
+    
     writel_ptr(iomuxc, PAD_CSI0_VSYNC, PAD_GPIO_STOCK_PNLC);
     writel_ptr(iomuxc, PAD_CSI0_DAT4, PAD_GPIO_STOCK_PNLC);
+    
     writel_ptr(iomuxc, PAD_PNLC_STOCK_GPIO, PAD_UART_RX_STOCK_PNLC);
 }
 
@@ -1092,10 +1098,17 @@ static void append_raw_frame(char *out, size_t out_len, uint8_t cmd, const uint8
 static int payload_is_printable(const uint8_t *payload, size_t len)
 {
     if (len == 0)
+    {
         return 0;
-    for (size_t i = 0; i < len; ++i) {
-        if (payload[i] < 0x20 || payload[i] >= 0x7f)
+    }
+
+    // Check for printable chars
+    for (size_t i = 0; i < len; ++i)
+    {
+        if (payload[i] < 0x20 /* SPACE */ || payload[i] >= 0x7f /* DEL */)
+        {
             return 0;
+        }
     }
     return 1;
 }
@@ -1152,13 +1165,17 @@ void wing_describe_frame(char *out, size_t out_len, const char *source, uint8_t 
         unsigned int raw_y = (unsigned int)payload[3] | ((unsigned int)payload[4] << 8);
         snprintf(out, out_len, "%s touchscreen slot=%u phase=0x%02x x=%u y=%u",
                  source, payload[0] & 0x0fu, payload[0] & 0xf0u, raw_x, raw_y);
-    } else if (cmd == 'h' && payload_is_printable(payload, len)) {
+    }
+    else if (cmd == 'h' && payload_is_printable(payload, len))
+    {
         size_t copy_len = len < 96 ? len : 95;
         char text[96];
         memcpy(text, payload, copy_len);
         text[copy_len] = '\0';
         snprintf(out, out_len, "%s heartbeat version=\"%s\"", source, text);
-    } else if (cmd == 't' && len == 2) {
+    } 
+    else if (cmd == 't' && len == 2)
+    {
         snprintf(out, out_len, "%s touch id=0x%02x state=%u %s",
                  source, payload[0], payload[1], payload[1] ? "pressed" : "released");
     } else if (cmd == 'h' && len == 2) {
