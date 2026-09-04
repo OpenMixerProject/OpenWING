@@ -190,8 +190,21 @@ int upload_bitstream(wing_hw_ctx_t *ctx, const char *filepath, uint32_t speed_hz
         fflush(stdout);
     }
 
+    // some null bytes as pad to get the FPGA starting
     memset(buffer, 0, 100);
     hw_xfer(ctx, buffer, NULL, 100, speed_hz);
+
+
+    // Test if FPGA responds with magic "WING"
+    uint8_t rx_buffer[FIFO_CHUNK_SIZE];
+    memset(buffer, 0, 100);
+    memset(rx_buffer, 0, 100);
+    hw_xfer(ctx, buffer, rx_buffer, 10, speed_hz);
+
+    rx_buffer[10] = 0; // null-terminate string
+    printf("\n--> FPGA MAGIC (10): %s", rx_buffer);
+
+
 
     printf("\n[+] FPGA Bitstream successfully uploaded! (%zu bytes transmitted)\n", total_sent);
     fclose(f);
@@ -271,7 +284,6 @@ int main(int argc, char *argv[]) {
     if (upload_file) {
         int ret = upload_bitstream(&ctx, upload_file, speed_hz);
         hw_close(&ctx);
-        return ret;
     }
     if (boot_file) {
         uint8_t target = 0x0F;
