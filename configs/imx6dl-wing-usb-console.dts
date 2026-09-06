@@ -98,20 +98,20 @@
 		line-name = "unused-spi-cs-gpio2-27";
 	};
 	
-	unused-cs-26 {
+	flash-wp {
 		gpio-hog;
-		gpios = <26 GPIO_ACTIVE_HIGH>;
+		gpios = <30 GPIO_ACTIVE_HIGH>;
 		output-high;
-		line-name = "unused-spi-cs-gpio2-26";
+		line-name = "flash-wp-gpio2-30";
 	};
 };
 
 &gpio3 {
-	unused-cs-25 {
+	flash-hold {
 		gpio-hog;
 		gpios = <25 GPIO_ACTIVE_HIGH>;
 		output-high;
-		line-name = "unused-spi-cs-gpio3-25";
+		line-name = "flash-hold-gpio3-25";
 	};
 };
 
@@ -328,15 +328,19 @@
 &iomuxc {
 	pinctrl_ecspi1: ecspi1grp {
 		fsl,pins = <
-			MX6QDL_PAD_EIM_D16__ECSPI1_SCLK		0x100b0
-			MX6QDL_PAD_EIM_D17__ECSPI1_MISO		0x100b0
-			MX6QDL_PAD_EIM_D18__ECSPI1_MOSI		0x100b0
+			MX6QDL_PAD_EIM_D16__ECSPI1_SCLK		0x100b1
+			MX6QDL_PAD_EIM_D17__ECSPI1_MISO		0x1b0b0
+			MX6QDL_PAD_EIM_D18__ECSPI1_MOSI		0x100b1
 
 			/* CS0: SPI Flash */
-			MX6QDL_PAD_EIM_D19__GPIO3_IO19		0x100b0
+			MX6QDL_PAD_EIM_D19__GPIO3_IO19		0x1b0b0
 
 			/* CS1: FPGA */
 			MX6QDL_PAD_EIM_D24__GPIO3_IO24		0x1b0b0
+
+			/* SPI Flash /WP & /HOLD lines */
+			MX6QDL_PAD_EIM_EB2__GPIO2_IO30		0x1b0b0
+			MX6QDL_PAD_EIM_D25__GPIO3_IO25		0x1b0b0
 		>;
 	};
 
