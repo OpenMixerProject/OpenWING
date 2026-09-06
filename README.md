@@ -10,7 +10,7 @@ The main logic of our custom firmware lives in its own repository at [OpenMixerC
 
 <img width="931" height="969" alt="Screenshot_2026-06-06-01-28-27-64_92460851df6f172a4592fca41cc2d2e6" src="https://github.com/user-attachments/assets/1299e5a3-b6a4-4dac-8973-80b8576476b5" />
 
-i.MX 6 series 32-bit MPU, ARM Cortex-A9 core, 1GHz, MAPBGA 624
+i.MX 6 series 32-bit MPU, single ARM Cortex-A9 core, 1GHz, MAPBGA 624 (With VPU, GPU, MLB, EPDC)
 
 - Product Page: https://www.nxp.com/part/MCIMX6S8DVM10AC
 - Datasheet: https://www.nxp.com/docs/en/data-sheet/IMX6SDLCEC.pdf
