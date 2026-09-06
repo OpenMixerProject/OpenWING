@@ -7,7 +7,7 @@
 	model = "Behringer Wing Compact (Console & Display)";
 	compatible = "behringer,wing-compact", "fsl,imx6dl";
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_pnlc_boot>;
+	pinctrl-0 = <&pinctrl_pnlc_boot &pinctrl_fpga_ctrl>;
 	
 	/*
 	* WING Compact uses i.MX6 Solo-class silicon: the kernel still uses the
@@ -90,28 +90,12 @@
 	status = "okay";
 };
 
-&gpio2 {
-	unused-cs-27 {
-		gpio-hog;
-		gpios = <27 GPIO_ACTIVE_HIGH>;
-		output-high;
-		line-name = "unused-spi-cs-gpio2-27";
-	};
-	
+&gpio3 {
 	flash-wp {
 		gpio-hog;
-		gpios = <30 GPIO_ACTIVE_HIGH>;
+		gpios = <19 GPIO_ACTIVE_HIGH>;
 		output-high;
-		line-name = "flash-wp-gpio2-30";
-	};
-};
-
-&gpio3 {
-	flash-hold {
-		gpio-hog;
-		gpios = <25 GPIO_ACTIVE_HIGH>;
-		output-high;
-		line-name = "flash-hold-gpio3-25";
+		line-name = "flash-wp-gpio3-19";
 	};
 };
 
@@ -222,8 +206,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_ecspi1>;
 
-	cs-gpios = <&gpio3 19 GPIO_ACTIVE_LOW>,
-		   <&gpio3 24 GPIO_ACTIVE_LOW>;
+	cs-gpios = <&gpio2 30 GPIO_ACTIVE_LOW>;
 
 	status = "okay";
 
@@ -254,12 +237,6 @@
 			};
 		};
 	};
-
-	fpga: fpga@1 {
-		compatible = "rohm,dh2228fv";
-		reg = <1>;
-		spi-max-frequency = <1000000>;
-	};
 };
 
 &ecspi2 {
@@ -272,14 +249,35 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_ecspi2>;
 
-	cs-gpios = <&gpio2 26 GPIO_ACTIVE_LOW>;
+	cs-gpios = <&gpio2 26 GPIO_ACTIVE_LOW>,
+		   <&gpio2 27 GPIO_ACTIVE_LOW>,
+		   <&gpio3 24 GPIO_ACTIVE_LOW>,
+		   <&gpio3 25 GPIO_ACTIVE_LOW>;
 
 	status = "okay";
 
-	fpga_spi: fpga@0 {
+	fpga_spi0: fpga@0 {
 		compatible = "rohm,dh2228fv";
 		reg = <0>;
-		spi-max-frequency = <10000000>;
+		spi-max-frequency = <20000000>;
+	};
+
+	fpga_spi1: fpga@1 {
+		compatible = "rohm,dh2228fv";
+		reg = <1>;
+		spi-max-frequency = <20000000>;
+	};
+
+	fpga_spi2: fpga@2 {
+		compatible = "rohm,dh2228fv";
+		reg = <2>;
+		spi-max-frequency = <20000000>;
+	};
+
+	fpga_spi3: fpga@3 {
+		compatible = "rohm,dh2228fv";
+		reg = <3>;
+		spi-max-frequency = <20000000>;
 	};
 };
 
@@ -328,19 +326,15 @@
 &iomuxc {
 	pinctrl_ecspi1: ecspi1grp {
 		fsl,pins = <
-			MX6QDL_PAD_EIM_D16__ECSPI1_SCLK		0x100b1
+			MX6QDL_PAD_EIM_D16__ECSPI1_SCLK		0x1b0b0
 			MX6QDL_PAD_EIM_D17__ECSPI1_MISO		0x1b0b0
-			MX6QDL_PAD_EIM_D18__ECSPI1_MOSI		0x100b1
+			MX6QDL_PAD_EIM_D18__ECSPI1_MOSI		0x1b0b0
 
-			/* CS0: SPI Flash */
-			MX6QDL_PAD_EIM_D19__GPIO3_IO19		0x1b0b0
-
-			/* CS1: FPGA */
-			MX6QDL_PAD_EIM_D24__GPIO3_IO24		0x1b0b0
-
-			/* SPI Flash /WP & /HOLD lines */
+			/* CS0: SPI Flash (/CS) */
 			MX6QDL_PAD_EIM_EB2__GPIO2_IO30		0x1b0b0
-			MX6QDL_PAD_EIM_D25__GPIO3_IO25		0x1b0b0
+
+			/* Flash /WP (Write Protect) line */
+			MX6QDL_PAD_EIM_D19__GPIO3_IO19		0x1b0b0
 		>;
 	};
 
@@ -349,7 +343,20 @@
 			MX6QDL_PAD_EIM_CS0__ECSPI2_SCLK		0x1b0b0
 			MX6QDL_PAD_EIM_CS1__ECSPI2_MOSI		0x1b0b0
 			MX6QDL_PAD_EIM_OE__ECSPI2_MISO		0x1b0b0
+
+			/* 4 Chip Select Channels for ECSPI2 */
 			MX6QDL_PAD_EIM_RW__GPIO2_IO26		0x1b0b0
+			MX6QDL_PAD_EIM_LBA__GPIO2_IO27		0x1b0b0
+			MX6QDL_PAD_EIM_D24__GPIO3_IO24		0x1b0b0
+			MX6QDL_PAD_EIM_D25__GPIO3_IO25		0x1b0b0
+		>;
+	};
+
+	pinctrl_fpga_ctrl: fpgactrlgrp {
+		fsl,pins = <
+			MX6QDL_PAD_EIM_A21__GPIO2_IO17		0x1b0b0	/* CRESET_N: 100k Pull-Up, Slow SRE */
+			MX6QDL_PAD_DISP0_DAT5__GPIO4_IO26	0x4001b008 /* CDONE: SION=1, 100k Pull-Up, DSE=260R */
+			MX6QDL_PAD_EIM_A20__GPIO2_IO18		0x13008	/* FPGA STATUS: 100k Pull-Down, DSE=260R */
 		>;
 	};
 

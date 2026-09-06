@@ -19,7 +19,7 @@
 #include <sys/ioctl.h>
 #include <linux/spi/spidev.h>
 
-#define DEFAULT_SPI_DEV       "/dev/spidev0.1"
+#define DEFAULT_SPI_DEV       "/dev/spidev1.0"
 #define DEFAULT_SPI_SPEED_HZ  2000000 // 2 MHz
 #define FIFO_CHUNK_SIZE       1024
 
@@ -37,8 +37,8 @@
 #define ECSPI_CONREG_OFF      0x08
 #define ECSPI_CONFIGREG_OFF   0x0C
 #define ECSPI_INTREG_OFF      0x10
-#define ECSPI_PERIODREG_OFF   0x18
-#define ECSPI_STATREG_OFF     0x1C
+#define ECSPI_STATREG_OFF     0x18
+#define ECSPI_PERIODREG_OFF   0x1C
 
 #define ECSPI_XCH_BIT         (1u << 2)
 #define ECSPI_TC_BIT          (1u << 7)
@@ -91,6 +91,9 @@ static int hw_init_mmio(wing_hw_ctx_t *ctx) {
         { 0x050c, 0x0001b0b0 }, { 0x013c, 0x00000002 }, { 0x07f4, 0x00000002 },
         { 0x05a8, 0x0001b0b0 }, { 0x01d8, 0x00000002 }, { 0x07f8, 0x00000002 },
         { 0x0510, 0x0001b0b0 }, { 0x0140, 0x00000002 }, { 0x07fc, 0x00000002 },
+        { 0x04f4, 0x0001b0b0 }, { 0x0124, 0x00000005 }, /* CRESET_N: GPIO2_17 */
+        { 0x0410, 0x0001b008 }, { 0x00fc, 0x00000015 }, /* CDONE: GPIO4_26 with SION */
+        { 0x04f0, 0x00013008 }, { 0x0120, 0x00000005 }, /* FPGA STATUS: GPIO2_18 (Pull-Down) */
     };
     for (size_t i = 0; i < sizeof(pads)/sizeof(pads[0]); i++) {
         writel(ctx->iomuxc, pads[i].off, pads[i].val);

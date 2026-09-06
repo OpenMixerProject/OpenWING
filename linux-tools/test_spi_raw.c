@@ -21,8 +21,8 @@
 #define ECSPI_CONREG_OFF      0x08
 #define ECSPI_CONFIGREG_OFF   0x0C
 #define ECSPI_INTREG_OFF      0x10
-#define ECSPI_PERIODREG_OFF   0x18
-#define ECSPI_STATREG_OFF     0x1C
+#define ECSPI_STATREG_OFF     0x18
+#define ECSPI_PERIODREG_OFF   0x1C
 
 #define ECSPI_XCH_BIT         (1u << 2)
 #define ECSPI_TC_BIT          (1u << 7)
