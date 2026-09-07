@@ -1,54 +1,58 @@
 # Open Source Operating System for the Behringer WING Audio Mixing Console
 
-This repository contains software to load and start the Linux-Kernel on the Behringer WING and some userland tools. Currently (June 2026) it is Work in Progress.
-
+This repository contains software to load and start the Linux-Kernel on the Behringer WING and some userland tools.
 The main logic of our custom firmware lives in its own repository at [OpenMixerControl](https://github.com/OpenMixerProject/OpenMixerControl)
+
+# Progress-O-Meter
+
+Description | State
+-----|-------
+Linux boots | ✔️ May 2026
+Scribble Strip LCDs | ✔️ June 2026
+Surface Input and Output (Buttons, Encoders, Faders, LCDs, LEDs, Touchscreen) | ✔️ June 2026
+OpenMixerControl ported to iMX6 | ✔️ June 2026
+Trion FPGA Firmware Upload | ✔️ September 2026
+Implement FPGA Firmware (TDM Audio Routing) | 
+DSP Firmware Upload | 👀 In Progress
+Implement DSP1 Firmware (Input) |
+Implement DSP2 Firmware (Bus) |
+Implement DSP3 Firmware (FX1) |
+Implement DSP4 Firmware (FX2) |
+ADDA-Chips |
+StageConnect |
+AES/EBU | 
+AES50 |
+
+# OS and Devices
+
+- Linux boots 🐧
+- USB works
+- Screen, Touch and Network is working
+- Buttons, Encoders and Faders are basically working, needs more mapping
+- LCDs are understood 
+
+<img width="300" height="400" alt="IMG_20260601_073527" src="https://github.com/user-attachments/assets/17ea719a-ec58-4a85-a6ef-fc72c6bbbfd8" />
+<img width="300" height="400" alt="IMG_20260605_050305" src="https://github.com/user-attachments/assets/dab998ef-cbfc-46bb-8f70-65311aed5435" />
+
+# Software
+
+- OpenMixerControl starts and can be "used", but without the WING audio hardware
+
+<img width="300" height="400" alt="IMG_20260607_182549" src="https://github.com/user-attachments/assets/a6c39231-d984-4066-8214-f5afbd509c15" />
+<img width="400" height="300" alt="IMG_20260607_174217" src="https://github.com/user-attachments/assets/50e9e0c2-e282-453f-a69b-497ceb20157a" />
+<img width="300" height="400" alt="IMG_20260607_182642" src="https://github.com/user-attachments/assets/13924386-fbdd-4a5d-8371-0ff2e37143da" />
 
 # Hardware
 
 ## CPU
 
-<img width="931" height="969" alt="Screenshot_2026-06-06-01-28-27-64_92460851df6f172a4592fca41cc2d2e6" src="https://github.com/user-attachments/assets/1299e5a3-b6a4-4dac-8973-80b8576476b5" />
+<img width="93" height="96" alt="Screenshot_2026-06-06-01-28-27-64_92460851df6f172a4592fca41cc2d2e6" src="https://github.com/user-attachments/assets/1299e5a3-b6a4-4dac-8973-80b8576476b5" />
 
 i.MX 6 series 32-bit MPU, single ARM Cortex-A9 core, 1GHz, MAPBGA 624 (With VPU, GPU, MLB, EPDC)
 
 - Product Page: https://www.nxp.com/part/MCIMX6S8DVM10AC
 - Datasheet: https://www.nxp.com/docs/en/data-sheet/IMX6SDLCEC.pdf
 
-
-## Current State (June 2026)
-
-### OS and Devices
-
-<img width="3000" height="4000" alt="IMG_20260601_073527" src="https://github.com/user-attachments/assets/17ea719a-ec58-4a85-a6ef-fc72c6bbbfd8" />
-
-- Linux boots 🐧
-- Screen, Touch and Network is working
-- Buttons, Encoders and Faders are basically working, needs more mapping
-- LCDs are understood
-<img width="3000" height="4000" alt="IMG_20260605_050305" src="https://github.com/user-attachments/assets/dab998ef-cbfc-46bb-8f70-65311aed5435" />
-
-- USB works
-
-### Software
-
-- OpenMixerControl starts and can be "used", but the WING audio hardware is currently not (yet) ready
-
-<img width="3000" height="4000" alt="IMG_20260607_182642" src="https://github.com/user-attachments/assets/13924386-fbdd-4a5d-8371-0ff2e37143da" />
-<img width="4000" height="3000" alt="IMG_20260607_174217" src="https://github.com/user-attachments/assets/50e9e0c2-e282-453f-a69b-497ceb20157a" />
-<img width="3000" height="4000" alt="IMG_20260607_182549" src="https://github.com/user-attachments/assets/a6c39231-d984-4066-8214-f5afbd509c15" />
-
-
-## TODOs
-
-- [x] understand the Scribble Strip LCDs
-- [x] finish groundworks on surface input and output (Buttons, Encoders, Faders, LCDs, LEDs)
-- [ ] get the Trion FPGA working
-- [ ] get the four DSPs working
-- [ ] get the Audiosystem working (ADDA-Chips, digital audio interfaces like StageConnect, AES/EBU, AES50)
-- [ ] optimize the build chain and dial in the build parameter for max performance
-- [ ] add usefull tools to the OS
-- [ ] fully port OpenMixerControl to use the hardware of the WING (Touch, Non-Pushbutton-Encoder, FPGA, DSPs, ...)
 
 # Social, Web, Community
 
