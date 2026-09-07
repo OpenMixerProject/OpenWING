@@ -193,10 +193,12 @@ int upload_bitstream(wing_hw_ctx_t *ctx, const char *filepath, uint32_t speed_hz
         fflush(stdout);
     }
 
-    // some null bytes as pad to get the FPGA starting
-    memset(buffer, 0, 100);
-    hw_xfer(ctx, buffer, NULL, 100, speed_hz);
-
+    /* 
+        Trion T55 doc said to send min. 100 clock cycles after the
+        bitstream to get the FPGA startet. We send 1000 as in one of their examples to be safe.
+    */
+    memset(buffer, 0, 1000);
+    hw_xfer(ctx, buffer, NULL, 1000, speed_hz);
 
     // Test if FPGA responds with magic "WING"
     uint8_t rx_buffer[FIFO_CHUNK_SIZE];
