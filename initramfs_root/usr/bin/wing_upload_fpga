@@ -1,0 +1,3 @@
+#!/bin/sh
+# Wrapper script to upload FPGA bitstream with auto-detection of T55 vs T85 via CDONE pin
+exec /usr/bin/wing_fpga_uploader "$@"

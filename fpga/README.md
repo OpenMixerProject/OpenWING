@@ -1,6 +1,6 @@
 # OpenWING FPGA & SHARC DSP Tools & Hardware Interface
 
-This directory contains FPGA bitstreams and DSP microcode images for the **Efinix Trion T55F484** FPGA and the **4× Analog Devices SHARC ADSP-21489** audio DSPs on the Behringer WING.
+This directory contains FPGA bitstreams, HDL sources, and DSP microcode images for the **Efinix Trion T55F484 / T85F484** FPGA and the **4× Analog Devices SHARC ADSP-21489** audio DSPs on the Behringer WING.
 
 ---
 
@@ -8,8 +8,15 @@ This directory contains FPGA bitstreams and DSP microcode images for the **Efini
 
 | File | Size | Description |
 | :--- | :--- | :--- |
+| `wing_hello_spi_t55.bit.bin` | 3,458,517 B | Efinix Trion T55 bitstream: responds to `0x1337` with `"Hello from Wing!"`. |
+| `wing_hello_spi_t85.bit.bin` | 3,504,437 B | Efinix Trion T85 bitstream: responds to `0x1337` with `"Hello from Wing!"`. |
+| `dummy_spi_responder_t55.bit.bin` | 3,458,517 B | Efinix Trion T55 bitstream: responds to `PING` with `"TRION READY\n"`. |
+| `dummy_spi_responder_t85.bit.bin` | 3,504,437 B | Efinix Trion T85 bitstream: responds to `PING` with `"TRION READY\n"`. |
+| `wing_debug_spi_bridge.bit.bin` | 3,458,517 B | Raw Efinity passive SPI bitstream for 4x SHARC DSP routing. |
 | `wing_debug_spi_bridge_firmware.bin` | 3,458,589 B | FPGA SPI Router bitstream with Behringer 260-byte packaging header. |
-| `wing_debug_spi_bridge.bit.bin` | 3,458,517 B | Raw Efinity passive SPI bitstream. |
+| `wing_hello_spi.v` | 3,664 B | Verilog source for `wing_hello_spi` responder. |
+| `wing_hello_spi.vhd` | 3,510 B | VHDL source for `wing_hello_spi` responder. |
+| `dummy_spi_responder.v` | 4,256 B | Verilog source for `dummy_spi_responder`. |
 | `sharc_dsp1_welcome.bin` | 1,536 B | 256-word bootloader kernel for SHARC DSP #1. |
 | `sharc_dsp2_welcome.bin` | 1,536 B | 256-word bootloader kernel for SHARC DSP #2. |
 | `sharc_dsp3_welcome.bin` | 1,536 B | 256-word bootloader kernel for SHARC DSP #3. |
@@ -22,7 +29,35 @@ All files in this directory are automatically bundled into `/usr/share/fpga/` in
 
 ## 2. Command Line Tools
 
-### A. `wing_fpga_dsp_tool` (`/usr/bin/wing_fpga_dsp_tool`)
+### A. `wing_fpga_uploader` (`/usr/bin/wing_fpga_uploader` & `/usr/bin/wing_upload_fpga`)
+
+Direct MMIO hardware uploader for configuring the Efinix Trion FPGA via i.MX6 `ECSPI2` (`0x0200C000`).
+Supports automatic T55 vs T85 hardware detection via `CDONE` (`GPIO4_26`):
+
+```bash
+# Auto-detect T55 / T85 and load default hello bitstream:
+wing_upload_fpga
+
+# Or run directly with explicit path:
+wing_fpga_uploader /usr/share/fpga/wing_hello_spi_t55.bit.bin
+```
+
+### B. `test_wing_hello` (`/usr/bin/test_wing_hello`)
+
+SPI verification test client communicating over `/dev/spidev1.0`:
+Sends `0x1337` and reads back 16 ASCII bytes (`"Hello from Wing!"`).
+
+```bash
+test_wing_hello
+# Output:
+# === Wing Hello FPGA SPI Test ===
+# Sending CMD 0x1337 and reading 16 bytes...
+# Received raw: 00 00 48 65 6c 6c 6f 20 66 72 6f 6d 20 57 69 6e 67 21
+# Response text: "Hello from Wing!"
+# SUCCESS: FPGA responded with expected 'Hello from Wing!' banner!
+```
+
+### C. `wing_fpga_dsp_tool` (`/usr/bin/wing_fpga_dsp_tool`)
 
 Low-level CLI utility for direct hardware SPI communication with the FPGA and DSPs over i.MX6 `ECSPI2` (`0x0200C000`).
 
@@ -40,53 +75,23 @@ Options:
   -h, --help             Show this help message
 ```
 
-#### Examples:
-```bash
-# 1. Upload bitstream to FPGA
-wing_fpga_dsp_tool --upload /usr/share/fpga/wing_debug_spi_bridge_firmware.bin
-
-# 2. Bootload DSP #1 with microcode
-wing_fpga_dsp_tool --boot 1 /usr/share/fpga/sharc_dsp1_welcome.bin
-
-# 3. Broadcast bootloader to all 4 DSPs simultaneously
-wing_fpga_dsp_tool --boot all /usr/share/fpga/sharc_min_boot.bin
-
-# 4. Send 8 raw SPI bytes to DSP #3 and read returned MISO bytes
-wing_fpga_dsp_tool --dsp 3 --send 0000000000000000
-```
-
 ---
 
-### B. `wing_dsp_demo` (`/usr/bin/wing_dsp_demo`)
+## 3. Hardware Pin Mapping Reference
 
-End-to-end multi-DSP verification demo that automates:
-1. FPGA bitstream configuration.
-2. Individual DSP microcode bootloader upload.
-3. Live SPI querying of all 4 DSPs with raw MISO hex output.
+### Efinix Trion Bank 1A (Host CPU ECSPI2 & Config Interface)
 
-```bash
-# Run the demo
-wing_dsp_demo
-```
+| Signal | FPGA Ball | i.MX6 Net / GPIO | Description |
+| :--- | :--- | :--- | :--- |
+| `CCK` | `W1` | `ECSPI2_SCLK` (`EIM_CS0`) | Passive SPI Clock |
+| `CDI0` | `V2` | `ECSPI2_MOSI` (`EIM_CS1`) | Serial Data In (Host MOSI) |
+| `CDI1` | `V1` | `ECSPI2_MISO` (`EIM_OE`) | Serial Data Out (Host MISO) |
+| `SS_N` | `V3` | `ECSPI2_SS0` (`GPIO2_26` / `EIM_RW`) | Slave Select (Active Low) |
+| `CRESET_N`| `V4` | `GPIO2_17` (`EIM_A21`) | FPGA Hardware Reset (Active Low) |
+| `CDONE` | `V5` | `GPIO4_26` (`DISP0_DAT5`) | Configuration Done (Active High) |
+| `NSTATUS` | `F5` | `GPIO2_18` (`EIM_A20`) | Config Status (Active High) |
 
----
-
-## 3. FPGA SPI Framing Protocol
-
-When the SPI Bridge bitstream is active in the Efinix Trion T55, the Linux host transmits 1-byte framed SPI commands:
-
-| Byte 0 (Header) | Destination | Hardware Action |
-| :--- | :--- | :--- |
-| `0x00` | **FPGA Core Registers** | Reads/writes internal FPGA control registers (Magic `'WING'`, DSP resets). |
-| `0x01` | **DSP #1 (ADSP-21489 #1)** | Asserts `/SPISS1` (`J5`), routes `SCK`/`MOSI` to `J2`/`J3`, routes `MISO` (`J4`) to Host. |
-| `0x02` | **DSP #2 (ADSP-21489 #2)** | Asserts `/SPISS2` (`L7`), routes `SCK`/`MOSI` to `J2`/`J3`, routes `MISO` (`J4`) to Host. |
-| `0x03` | **DSP #3 (ADSP-21489 #3)** | Asserts `/SPISS3` (`N2`), routes `SCK`/`MOSI` to `J2`/`J3`, routes `MISO` (`J4`) to Host. |
-| `0x04` | **DSP #4 (ADSP-21489 #4)** | Asserts `/SPISS4` (`P4`), routes `SCK`/`MOSI` to `J2`/`J3`, routes `MISO` (`J4`) to Host. |
-| `0x0F` | **Broadcast (All DSPs)** | Asserts all 4 chip selects simultaneously for parallel microcode streaming. |
-
----
-
-## 4. Hardware Pin Mapping Reference
+### Efinix Trion to Analog Devices ADSP-21489 SHARC DSPs
 
 | Function | FPGA Ball / Net | Connected Target |
 | :--- | :--- | :--- |

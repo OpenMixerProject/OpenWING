@@ -15,10 +15,10 @@ entity fpga_spi_bridge is
         rst_n_i         : in  std_logic;
 
         -- Linux Host SPI Interface (FPGA ist SPI Slave)
-        HOST_SCK        : in  std_logic;
-        HOST_MOSI       : in  std_logic;
-        HOST_MISO       : out std_logic;
-        HOST_CS_N       : in  std_logic;
+        HOST_SCK        : in  std_logic; -- Pin W1 (GPIOL_01_CCK / ECSPI2 SCLK)
+        HOST_MOSI       : in  std_logic; -- Pin V2 (GPIOL_08_CDI0 / ECSPI2 MOSI)
+        HOST_MISO       : out std_logic; -- Pin V1 (GPIOL_09_CDI1 / ECSPI2 MISO)
+        HOST_CS_N       : in  std_logic; -- Pin V3 (GPIOL_00_SS_N / ECSPI2 CS0)
 
         -- Shared DSP SPI Interface (FPGA ist Master zum DSP)
         DSP_CLK         : out std_logic; -- Pin J2

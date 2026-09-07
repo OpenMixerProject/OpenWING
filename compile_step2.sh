@@ -402,6 +402,12 @@ mkdir -p "${ROOTFS_DIR}/usr/bin"
     "${ROOT_DIR}/linux-tools/demo_welcome.c"
 "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-syscfg" \
     "${ROOT_DIR}/linux-tools/wing_syscfg.c"
+"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing_fpga_uploader" \
+    "${ROOT_DIR}/linux-tools/wing_fpga_uploader.c"
+"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/test_wing_hello" \
+    "${ROOT_DIR}/linux-tools/test_wing_hello.c"
+"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing_t55_upload_test" \
+    "${ROOT_DIR}/linux-tools/wing_t55_upload_test.c"
 
 mkdir -p "${ROOTFS_DIR}/usr/share/fpga"
 cp -a "${ROOT_DIR}/fpga/"*.bin "${ROOTFS_DIR}/usr/share/fpga/" 2>/dev/null || true

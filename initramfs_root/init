@@ -27,6 +27,11 @@ fi
 echo "Bringing up PNLC before starting the USB console..."
 /usr/bin/wing_panel_init
 
+if [ -x /usr/bin/wing_fpga_uploader ]; then
+    echo "Configuring FPGA (auto-detecting T55/T85 via CDONE)..."
+    /usr/bin/wing_fpga_uploader || true
+fi
+
 # Start a getty on the framebuffer console (tty1) if it exists.
 if [ -c /dev/tty1 ]; then
     (

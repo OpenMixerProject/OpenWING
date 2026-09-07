@@ -1,5 +1,7 @@
 # binaries and C-files
 *.bin
+!fpga/*.bin
+!fpga/*.bit.bin
 *.elf
 *.map
 *.o
@@ -195,5 +197,8 @@ linux-tools/wing_fpga_dsp_tool
 linux-tools/wing_dsp_demo
 linux-tools/wing_syscfg
 linux-tools/wing-syscfg
+linux-tools/test_wing_hello
+linux-tools/wing_fpga_uploader
+linux-tools/wing_t55_upload_test
 software/fpgaconfig_trion/fpgaconfig_trion
 software/fpgaconfig_trion/wing_fpga_dsp_tool
