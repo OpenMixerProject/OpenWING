@@ -72,9 +72,9 @@
         <efx:param name="print_critical_path" value="10" value_type="e_integer"/>
     </efx:place_and_route>
     <efx:bitstream_generation tool_name="efx_pgm">
-        <efx:param name="mode" value="active" value_type="e_option"/>
+        <efx:param name="mode" value="passive" value_type="e_option"/>
         <efx:param name="width" value="1" value_type="e_option"/>
-        <efx:param name="enable_roms" value="off" value_type="e_option"/>
+        <efx:param name="enable_roms" value="smart" value_type="e_option"/>
         <efx:param name="spi_low_power_mode" value="on" value_type="e_bool"/>
         <efx:param name="io_weak_pullup" value="on" value_type="e_bool"/>
         <efx:param name="oscillator_clock_divider" value="DIV8" value_type="e_option"/>
@@ -87,7 +87,7 @@
         <efx:param name="generate_bit" value="on" value_type="e_bool"/>
         <efx:param name="generate_bitbin" value="off" value_type="e_bool"/>
         <efx:param name="generate_hex" value="on" value_type="e_bool"/>
-        <efx:param name="generate_hexbin" value="off" value_type="e_bool"/>
+        <efx:param name="generate_hexbin" value="on" value_type="e_bool"/>
         <efx:param name="cold_boot" value="off" value_type="e_bool"/>
         <efx:param name="cascade" value="off" value_type="e_option"/>
     </efx:bitstream_generation>
