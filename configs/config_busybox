@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Busybox version: 1.38.0
-# Wed Sep  9 17:17:25 2026
+# Wed Sep  9 17:24:58 2026
 #
 CONFIG_HAVE_DOT_CONFIG=y
 
@@ -833,12 +833,12 @@ CONFIG_FEATURE_LESS_ENV=y
 # CONFIG_FEATURE_MAKEDEVS_LEAF is not set
 # CONFIG_FEATURE_MAKEDEVS_TABLE is not set
 # CONFIG_MAN is not set
-# CONFIG_MICROCOM is not set
+CONFIG_MICROCOM=y
 # CONFIG_MIM is not set
 # CONFIG_MT is not set
 # CONFIG_NANDWRITE is not set
 # CONFIG_NANDDUMP is not set
-# CONFIG_PARTPROBE is not set
+CONFIG_PARTPROBE=y
 # CONFIG_RAIDAUTORUN is not set
 # CONFIG_READAHEAD is not set
 # CONFIG_RFKILL is not set
