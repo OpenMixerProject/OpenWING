@@ -16,7 +16,7 @@ else
 fi
 
 LINUX_VER="6.6.30"
-BUSYBOX_VER="1.36.1"
+BUSYBOX_VER="1.38.0"
 DROPBEAR_VER="2026.91"
 DOOMGENERIC_REF="master"
 HTOP_VER="3.3.0"
@@ -114,6 +114,8 @@ RUN dpkg --add-architecture armhf \
     libcrypt-dev:armhf \
     libncurses-dev:armhf \
     libncurses-dev \
+    ncurses-dev:armhf \
+    ncurses-dev \
     libssl-dev \
     make \
     patch \
