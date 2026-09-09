@@ -144,6 +144,16 @@ mkdir -p "${ROOTFS_DIR}"
 echo "[build] BusyBox static rootfs"
 cd "${BUILD_DIR}/busybox-${BUSYBOX_VER}"
 cp "${ROOT_DIR}/configs/config_busybox" .config
+
+if [ $# -ge 1 ] && [ "$1" == "busybox_menuconfig" ]; then
+
+    make ARCH="${ARCH}" menuconfig
+
+    # copy config back
+    cp .config "${ROOT_DIR}/configs/config_busybox"
+
+fi
+
 make ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" -j"$(nproc)"
 make ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" CONFIG_PREFIX="${ROOTFS_DIR}" install
 
@@ -383,28 +393,9 @@ fi
 #
 ###################################################
 
-echo "[build] diagnostic UART tools"
-mkdir -p "${ROOTFS_DIR}/usr/bin"
-"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing_panel_init" \
-    "${ROOT_DIR}/linux-tools/wing_panel_init.c"
-"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-surface-console" \
-    "${ROOT_DIR}/linux-tools/wing_surface_console.c" \
-    "${ROOT_DIR}/linux-tools/wing_surface_common.c" \
-    "${ROOT_DIR}/linux-tools/wing_control_names.c" \
-    -lncurses -ltinfo
-"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-draw" \
-    "${ROOT_DIR}/linux-tools/wing_draw.c"
-"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/pnlc_raw_dump" \
-    "${ROOT_DIR}/linux-tools/pnlc_raw_dump.c"
-"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing_fpga_dsp_tool" \
-    "${ROOT_DIR}/linux-tools/wing_fpga_dsp_tool.c"
-"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing_dsp_demo" \
-    "${ROOT_DIR}/linux-tools/demo_welcome.c"
+echo "[build] Tools"
 "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-syscfg" \
     "${ROOT_DIR}/linux-tools/wing_syscfg.c"
-
-mkdir -p "${ROOTFS_DIR}/usr/share/fpga"
-cp -a "${ROOT_DIR}/fpga/"*.bin "${ROOTFS_DIR}/usr/share/fpga/" 2>/dev/null || true
 
 ###################################################################################
 #
@@ -506,30 +497,21 @@ if ! grep -q "imx6dl-wing-usb-console.dtb" arch/arm/boot/dts/nxp/imx/Makefile; t
     echo 'dtb-$(CONFIG_SOC_IMX6Q) += imx6dl-wing-usb-console.dtb' >> arch/arm/boot/dts/nxp/imx/Makefile
 fi
 
+if [ $# -ge 1 ] && [ "$1" == "kernel_menuconfig" ]; then
+
+    # get config
+    cp "${ROOT_DIR}/configs/config_linux" .config
+    
+    # start menuconfig
+    make ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" olddefconfig
+    make ARCH="${ARCH}" menuconfig
+
+    # store config back, so we can commit it (you need to save the config in menuconfig to make this work!)
+    cp .config "${ROOT_DIR}/configs/config_linux"
+
+fi
+    
 cp "${ROOT_DIR}/configs/config_linux" .config
-scripts/config --set-str INITRAMFS_SOURCE "${BUILD_DIR}/initramfs.cpio.gz"
-scripts/config --enable INPUT
-scripts/config --enable INPUT_EVDEV
-scripts/config --enable HID_SUPPORT
-scripts/config --enable HID
-scripts/config --enable HID_GENERIC
-scripts/config --enable USB_EHCI_HCD
-scripts/config --enable USB_EHCI_ROOT_HUB_TT
-scripts/config --enable USB_EHCI_TT_NEWSCHED
-scripts/config --enable USB_EHCI_HCD_PLATFORM
-scripts/config --enable USB_CHIPIDEA_HOST
-scripts/config --enable USB_HID
-scripts/config --enable MMC
-scripts/config --enable MMC_BLOCK
-scripts/config --enable MMC_SDHCI
-scripts/config --enable MMC_SDHCI_PLTFM
-scripts/config --enable MMC_SDHCI_ESDHC_IMX
-scripts/config --enable FAT_FS
-scripts/config --enable VFAT_FS
-scripts/config --enable MSDOS_FS
-scripts/config --enable NLS_CODEPAGE_437
-scripts/config --enable NLS_ISO8859_1
-scripts/config --enable NLS_UTF8
 
 make ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" olddefconfig
 make ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" -j"$(nproc)" zImage nxp/imx/imx6dl-wing-usb-console.dtb

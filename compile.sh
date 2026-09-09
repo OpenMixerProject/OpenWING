@@ -113,6 +113,7 @@ RUN dpkg --add-architecture armhf \
     libc6-dev-armhf-cross \
     libcrypt-dev:armhf \
     libncurses-dev:armhf \
+    libncurses-dev \
     libssl-dev \
     make \
     patch \
@@ -127,7 +128,7 @@ build_omc_if_needed
 
 DOCKER_CONFIG="${DOCKER_CONFIG_DIR}" DOCKER_HOST="${DOCKER_HOST_URI}" \
 docker run --rm \
-  -i \
+  -it \
   -u "$(id -u):$(id -g)" \
   -v "${ROOT_DIR}:/openwing" \
   -w "/openwing" \
@@ -143,6 +144,6 @@ docker run --rm \
   -e UBOOT_IMX="/openwing/build/output/u-boot-linux.imx" \
   -e OUTPUT_WINGFW="/openwing/build/output/wing-compact-usb-console-linux.wingfw" \
   "${DOCKER_IMAGE}" \
-  ./compile_step2.sh
+  ./compile_step2.sh $@     #  $@ -> pass all commandlinearguments to compile step 2
 
 
