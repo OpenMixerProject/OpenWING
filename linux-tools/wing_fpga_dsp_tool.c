@@ -291,12 +291,12 @@ int upload_bitstream(wing_hardware_context_t *hw_context, const char *filepath, 
     bool fpga_done = hardware_gpio_get_pin(hw_context, 4, 26);
     bool fpga_status = hardware_gpio_get_pin(hw_context, 2, 18);
         
-    printf("\n[+] ## FPGA status: %d", fpga_status);
-    printf("\n[+] ## FPGA done: %d", fpga_done);
+    printf("[+] ## FPGA status: %d\n", fpga_status);
+    printf("[+] ## FPGA done: %d\n", fpga_done);
 
     // CRESET_N low setzen
     hardware_gpio_set_pin(hw_context, 2, 17, false);
-    printf("\n[+] FPGA reset LOW");
+    printf("[+] FPGA reset LOW\n");
 
     // 2ms warten
     
@@ -304,7 +304,7 @@ int upload_bitstream(wing_hardware_context_t *hw_context, const char *filepath, 
 
     // CRESET_N high setzen
     hardware_gpio_set_pin(hw_context, 2, 17, true);
-    printf("\n[+] FPGA reset HIGH");
+    printf("[+] FPGA reset HIGH\n");
 
     // 5ms warten
     
