@@ -184,7 +184,6 @@ cat > localoptions.h.tmp <<'EOF'
 #define MAX_AUTH_TRIES 20
 #define DROPBEAR_MAX_CLI_PASS 20
 #define DEFAULT_KEEPALIVE 10
-#define DEFAULT_IDLE_TIMEOUT 120
 EOF
 if ! cmp -s localoptions.h.tmp localoptions.h; then
     mv localoptions.h.tmp localoptions.h
@@ -394,8 +393,9 @@ fi
 ###################################################
 
 echo "[build] Tools"
-"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-syscfg" \
-    "${ROOT_DIR}/linux-tools/wing_syscfg.c"
+
+"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-syscfg" "${ROOT_DIR}/linux-tools/wing_syscfg.c"
+"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing_fpga_dsp_tool" "${ROOT_DIR}/linux-tools/wing_fpga_dsp_tool.c"
 
 ###################################################################################
 #
