@@ -43,6 +43,8 @@
  * ============================================================================
  */
 
+#define VERSION "v1.2"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -576,9 +578,13 @@ static void run_diff(int duration_sec)
     printf("IDX   BALL   RESOURCE         BANK     LIVE  PULSES   DUTY%%  MIN_PW  WAVEFORM (32-SAMPLE)   CLASSIFICATION\n");
     printf("----------------------------------------------------------------------------------------\n");
 
+
     while(true)
     {
-        /* Baseline measurement */
+
+        /* 1 Second Baseline measurement */
+        printf("B");
+        fflush(stdout);
         clear_counters();
 
         struct timeval start, now;
@@ -586,7 +592,7 @@ static void run_diff(int duration_sec)
         while (1) {
             gettimeofday(&now, NULL);
             double elapsed = (now.tv_sec - start.tv_sec) + (now.tv_usec - start.tv_usec) / 1000000.0;
-            if (elapsed >= (double)duration_sec) break;
+            if (elapsed >= 1.0) break;
             read_reg(0x00);
             usleep(50);
         }
@@ -599,8 +605,10 @@ static void run_diff(int duration_sec)
             if ((base_masks[i / 32] >> (i % 32)) & 1) base_active++;
         }
 
-        /* Sample active state */
+        /* x Seconds Sample active state */
         clear_counters();
+        printf("S");
+        fflush(stdout);
 
         gettimeofday(&start, NULL);
         int sample_clocks = 0;
@@ -618,11 +626,13 @@ static void run_diff(int duration_sec)
 
         /* Print changed Signals */
         int new_signals = 0;
-        for (int i = 0; i < NUM_PINS; i++) {
+        for (int i = 0; i < NUM_PINS; i++)
+        {
             int was_active = (base_masks[i / 32] >> (i % 32)) & 1;
             int is_active = (new_masks[i / 32] >> (i % 32)) & 1;
 
-            if (is_active && !was_active) {
+            if (is_active && !was_active)
+            {
                 struct pin_telemetry t;
                 read_pin_telemetry(i, &t);
                 char wave[33];
@@ -632,12 +642,13 @@ static void run_diff(int duration_sec)
                     duty = (float)t.high_cnt / (float)(sample_clocks > 65535 ? 65535 : sample_clocks) * 100.0f;
                 }
                 const char *sig_class = classify_signal(&t, sample_clocks);
-                printf("%3d   %-6s %-16s %-8s %d     %5u   %5.1f%%   %3u   %s  %s\n",
+                printf("\n%3d   %-6s %-16s %-8s %d     %5u   %5.1f%%   %3u   %s  %s\n",
                     i, PINS[i].ball, PINS[i].resource, PINS[i].bank,
                     t.live, t.edge_cnt, duty, t.min_pulse, wave, sig_class);
                 new_signals++;
             }
         }
+        fflush(stdout);
     }
 }
 
@@ -665,6 +676,10 @@ static void run_dump_all(void) {
 
 int main(int argc, char **argv)
 {
+    printf("\n========================================================================================\n");
+    printf("\n  Behringer WING FPGA PIN Detector - %s\n", VERSION);
+    printf("\n========================================================================================\n");
+
     const char *dev = SPI_DEV;
     int duration = 2;
     bool dump_all = false;
