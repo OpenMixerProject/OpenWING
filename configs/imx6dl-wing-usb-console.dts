@@ -181,10 +181,8 @@
 };
 
 &usdhc3 {
-	pinctrl-names = "default", "state_100mhz", "state_200mhz";
+	pinctrl-names = "default"; 
 	pinctrl-0 = <&pinctrl_usdhc3>;
-	pinctrl-1 = <&pinctrl_usdhc3_100mhz>;
-	pinctrl-2 = <&pinctrl_usdhc3_200mhz>;
 	bus-width = <4>;
 	non-removable;
 	no-1-8-v;
@@ -309,105 +307,81 @@
 &iomuxc {
 	pinctrl_ecspi1: ecspi1grp {
 		fsl,pins = <
-			MX6QDL_PAD_EIM_D16__ECSPI1_SCLK		0x1b0b0
-			MX6QDL_PAD_EIM_D17__ECSPI1_MISO		0x1b0b0
-			MX6QDL_PAD_EIM_D18__ECSPI1_MOSI		0x1b0b0
+			MX6QDL_PAD_EIM_D16__ECSPI1_SCLK		0x1b0b0  /* value from original WING Firmware*/
+			MX6QDL_PAD_EIM_D17__ECSPI1_MISO		0x1b0b0  /* value from original WING Firmware*/
+			MX6QDL_PAD_EIM_D18__ECSPI1_MOSI		0x1b0b0  /* value from original WING Firmware*/
 
 			/* CS0: SPI Flash (/CS) */
-			MX6QDL_PAD_EIM_EB2__GPIO2_IO30		0x1b0b0
+			MX6QDL_PAD_EIM_EB2__GPIO2_IO30		0x1b0b0  /* value from original WING Firmware*/
 
 			/* Flash /WP (Write Protect) line */
-			MX6QDL_PAD_EIM_D19__GPIO3_IO19		0x1b0b0
+			MX6QDL_PAD_EIM_D19__GPIO3_IO19		0x1b0b0  /* value from original WING Firmware*/
 		>;
 	};
 
 	pinctrl_ecspi2: ecspi2grp {
 		fsl,pins = <
-			MX6QDL_PAD_EIM_CS0__ECSPI2_SCLK		0x1b0b0
-			MX6QDL_PAD_EIM_CS1__ECSPI2_MOSI		0x1b0b0
-			MX6QDL_PAD_EIM_OE__ECSPI2_MISO		0x1b0b0
+			MX6QDL_PAD_EIM_CS0__ECSPI2_SCLK		0x1b0b0  /* value from original WING Firmware*/
+			MX6QDL_PAD_EIM_CS1__ECSPI2_MOSI		0x1b0b0  /* value from original WING Firmware*/
+			MX6QDL_PAD_EIM_OE__ECSPI2_MISO		0x1b0b0  /* value from original WING Firmware*/
 		>;
 	};
 
 	pinctrl_fpga_ctrl: fpgactrlgrp {
 		fsl,pins = <
-			MX6QDL_PAD_EIM_A21__GPIO2_IO17		0x1b0b0	/* CRESET_N: 100k Pull-Up, Slow SRE */
-			MX6QDL_PAD_DISP0_DAT5__GPIO4_IO26	0x1b008 /* CDONE: SION=1, 100k Pull-Up, DSE=260R */
-			MX6QDL_PAD_EIM_A20__GPIO2_IO18		0x13008	/* FPGA STATUS: 100k Pull-Down, DSE=260R */
+			MX6QDL_PAD_EIM_A21__GPIO2_IO17		0x1b0b0  /* value from original WING Firmware -> CRESET_N: 100k Pull-Up, Slow SRE */
+			MX6QDL_PAD_DISP0_DAT5__GPIO4_IO26	0x1b008  /* value from original WING Firmware -> CDONE: SION=1, 100k Pull-Up, DSE=260R */
+			MX6QDL_PAD_EIM_A20__GPIO2_IO18		0x13008  /* value from original WING Firmware -> FPGA STATUS: 100k Pull-Down, DSE=260R */
 		>;
 	};
 
 	pinctrl_pnlc_boot: pnlcbootgrp {
 		fsl,pins = <
-			MX6QDL_PAD_CSI0_VSYNC__GPIO5_IO21 0x1b0b0
-			MX6QDL_PAD_CSI0_DAT4__GPIO5_IO22 0x1b0b0
+			MX6QDL_PAD_CSI0_VSYNC__GPIO5_IO21 0x18  /* value from original WING Firmware*/
+			MX6QDL_PAD_CSI0_DAT4__GPIO5_IO22 0x18   /* value from original WING Firmware*/
 		>;
 	};
 
 	pinctrl_uart2: uart2grp {
 		fsl,pins = <
-			MX6QDL_PAD_EIM_D26__UART2_TX_DATA 0x1b0b0
-			MX6QDL_PAD_EIM_D27__UART2_RX_DATA 0x1b0b0
+			MX6QDL_PAD_EIM_D26__UART2_TX_DATA 0x10    /* value from original WING Firmware*/
+			MX6QDL_PAD_EIM_D27__UART2_RX_DATA 0xb000  /* value from original WING Firmware*/
 		>;
 	};
 
 	pinctrl_usbh1: usbh1grp {
 		fsl,pins = <
-			MX6QDL_PAD_EIM_D30__USB_H1_OC  0xb000
-			MX6QDL_PAD_EIM_D31__USB_H1_PWR 0x0008
+			MX6QDL_PAD_EIM_D30__USB_H1_OC  0xb000  /* value from original WING Firmware*/
+			MX6QDL_PAD_EIM_D31__USB_H1_PWR 0x0008  /* value from original WING Firmware*/
 		>;
 	};
 
 	pinctrl_usdhc3: usdhc3grp {
 		fsl,pins = <
-			MX6QDL_PAD_SD3_CLK__SD3_CLK    0x10059
-			MX6QDL_PAD_SD3_CMD__SD3_CMD    0x17059
-			MX6QDL_PAD_SD3_DAT0__SD3_DATA0 0x17059
-			MX6QDL_PAD_SD3_DAT1__SD3_DATA1 0x17059
-			MX6QDL_PAD_SD3_DAT2__SD3_DATA2 0x17059
-			MX6QDL_PAD_SD3_DAT3__SD3_DATA3 0x17059
-			MX6QDL_PAD_SD3_RST__SD3_RESET  0x17059
-		>;
-	};
-
-	pinctrl_usdhc3_100mhz: usdhc3grp_100mhz {
-		fsl,pins = <
-			MX6QDL_PAD_SD3_CLK__SD3_CLK    0x100b9
-			MX6QDL_PAD_SD3_CMD__SD3_CMD    0x170b9
-			MX6QDL_PAD_SD3_DAT0__SD3_DATA0 0x170b9
-			MX6QDL_PAD_SD3_DAT1__SD3_DATA1 0x170b9
-			MX6QDL_PAD_SD3_DAT2__SD3_DATA2 0x170b9
-			MX6QDL_PAD_SD3_DAT3__SD3_DATA3 0x170b9
-			MX6QDL_PAD_SD3_RST__SD3_RESET  0x170b9
-		>;
-	};
-
-	pinctrl_usdhc3_200mhz: usdhc3grp_200mhz {
-		fsl,pins = <
-			MX6QDL_PAD_SD3_CLK__SD3_CLK    0x100f9
-			MX6QDL_PAD_SD3_CMD__SD3_CMD    0x170f9
-			MX6QDL_PAD_SD3_DAT0__SD3_DATA0 0x170f9
-			MX6QDL_PAD_SD3_DAT1__SD3_DATA1 0x170f9
-			MX6QDL_PAD_SD3_DAT2__SD3_DATA2 0x170f9
-			MX6QDL_PAD_SD3_DAT3__SD3_DATA3 0x170f9
-			MX6QDL_PAD_SD3_RST__SD3_RESET  0x170f9
+			MX6QDL_PAD_SD3_CLK__SD3_CLK    0x170b0  /* value from original WING Firmware*/
+			MX6QDL_PAD_SD3_CMD__SD3_CMD    0x170b0  /* value from original WING Firmware*/
+			MX6QDL_PAD_SD3_DAT0__SD3_DATA0 0x170b0  /* value from original WING Firmware*/
+			MX6QDL_PAD_SD3_DAT1__SD3_DATA1 0x170b0  /* value from original WING Firmware*/
+			MX6QDL_PAD_SD3_DAT2__SD3_DATA2 0x170b0  /* value from original WING Firmware*/
+			MX6QDL_PAD_SD3_DAT3__SD3_DATA3 0x170b0  /* value from original WING Firmware*/
+			MX6QDL_PAD_SD3_RST__SD3_RESET  0x17030  /* value from original WING Firmware*/
 		>;
 	};
 
 	pinctrl_enet_rmii: enetrmiigrp {
 		fsl,pins = <
-			MX6QDL_PAD_ENET_MDIO__ENET_MDIO       0x1b0b0
-			MX6QDL_PAD_ENET_MDC__ENET_MDC         0x1b0b0
-			MX6QDL_PAD_ENET_CRS_DV__ENET_RX_EN    0x10000
-			MX6QDL_PAD_ENET_REF_CLK__ENET_TX_CLK  0x10000
-			MX6QDL_PAD_ENET_RX_ER__ENET_RX_ER     0x10000
-			MX6QDL_PAD_ENET_RXD0__ENET_RX_DATA0   0x10000
-			MX6QDL_PAD_ENET_RXD1__ENET_RX_DATA1   0x10000
-			MX6QDL_PAD_ENET_TX_EN__ENET_TX_EN     0x1b0b0
-			MX6QDL_PAD_ENET_TXD0__ENET_TX_DATA0   0x1b0b0
-			MX6QDL_PAD_ENET_TXD1__ENET_TX_DATA1   0x1b0b0
-			MX6QDL_PAD_GPIO_18__ENET_RX_CLK       0x10000
-			MX6QDL_PAD_GPIO_16__ENET_REF_CLK      0x10000
+			MX6QDL_PAD_ENET_MDIO__ENET_MDIO       0x1b0b0  /* value from original WING Firmware*/
+			MX6QDL_PAD_ENET_MDC__ENET_MDC         0x1b0b0  /* value from original WING Firmware*/
+			MX6QDL_PAD_ENET_CRS_DV__ENET_RX_EN    0x10000  /* value from original WING Firmware*/
+			MX6QDL_PAD_ENET_REF_CLK__ENET_TX_CLK  0x10000  /* value from original WING Firmware*/
+			MX6QDL_PAD_ENET_RX_ER__ENET_RX_ER     0x10000  /* value from original WING Firmware*/
+			MX6QDL_PAD_ENET_RXD0__ENET_RX_DATA0   0x10000  /* value from original WING Firmware*/
+			MX6QDL_PAD_ENET_RXD1__ENET_RX_DATA1   0x10000  /* value from original WING Firmware*/
+			MX6QDL_PAD_ENET_TX_EN__ENET_TX_EN     0x1b0b0  /* value from original WING Firmware*/
+			MX6QDL_PAD_ENET_TXD0__ENET_TX_DATA0   0x1b0b0  /* value from original WING Firmware*/
+			MX6QDL_PAD_ENET_TXD1__ENET_TX_DATA1   0x1b0b0  /* value from original WING Firmware*/
+			MX6QDL_PAD_GPIO_18__ENET_RX_CLK       0x10000  /* value from original WING Firmware*/
+			MX6QDL_PAD_GPIO_16__ENET_REF_CLK      0x10000  /* value from original WING Firmware*/
 		>;
 	};
 };
