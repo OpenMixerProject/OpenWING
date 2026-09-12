@@ -396,6 +396,7 @@ echo "[build] Tools"
 
 "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-syscfg" "${ROOT_DIR}/linux-tools/wing_syscfg.c"
 "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing_fpga_dsp_tool" "${ROOT_DIR}/linux-tools/wing_fpga_dsp_tool.c"
+"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/test_all_pins" "${ROOT_DIR}/tools/fpga-pin-monitor/test_all_pins.c"
 
 ###################################################################################
 #
