@@ -84,10 +84,10 @@ fi
 echo "[build] U-Boot bootloader"
 cd "${BUILD_DIR}/u-boot-${UBOOT_VER}"
 if [[ ! -f .patched ]]; then
-    patch -p1 < "${ROOT_DIR}/u-boot/patches/behringer-wing-imx6s.patch"
+    patch -p1 < "${ROOT_DIR}/patches/uboot/behringer-wing-imx6s.patch"
     touch .patched
 fi
-cp "${ROOT_DIR}/u-boot/configs/"* configs/
+cp "${ROOT_DIR}/configs/uboot/"* configs/
 mkdir -p "$(dirname "${UBOOT_IMX}")"
 
 UBOOT_NEED_BUILD=0
@@ -95,7 +95,7 @@ if [[ ! -f "${UBOOT_IMX}" ]]; then
     UBOOT_NEED_BUILD=1
 else
     # Check if config or patch is newer than the output
-    for f in "${ROOT_DIR}/u-boot/patches/behringer-wing-imx6s.patch" "${ROOT_DIR}/u-boot/configs/"*; do
+    for f in "${ROOT_DIR}/patches/uboot/behringer-wing-imx6s.patch" "${ROOT_DIR}/u-boot/configs/"*; do
         if [[ "$f" -nt "${UBOOT_IMX}" ]]; then
             UBOOT_NEED_BUILD=1
             break
@@ -392,10 +392,13 @@ fi
 #
 ###################################################
 
-echo "[build] Tools"
+echo "[build] System Tools"
 
-"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-syscfg" "${ROOT_DIR}/linux-tools/wing_syscfg.c"
-"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing_fpga_dsp_tool" "${ROOT_DIR}/linux-tools/wing_fpga_dsp_tool.c"
+"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-sysconfig" "${ROOT_DIR}/software/wing-system-tools/wing-sysconfig.c"
+"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-panel-init" "${ROOT_DIR}/software/wing-system-tools/wing-panel-init.c"
+"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-fpga-dsp-tool" "${ROOT_DIR}/software/wing-system-tools/wing-fpga-dsp-tool.c"
+
+echo "[build] Delevopment Tools"
 "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/test_all_pins" "${ROOT_DIR}/tools/fpga-pin-monitor/test_all_pins.c"
 
 ###################################################################################

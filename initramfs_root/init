@@ -25,7 +25,7 @@ if [ -e /dev/rtc0 ] || [ -e /dev/rtc ]; then
 fi
 
 echo "Bringing up PNLC before starting the USB console..."
-/usr/bin/wing_panel_init
+/usr/bin/wing-panel-init
 
 # Start a getty on the framebuffer console (tty1) if it exists.
 if [ -c /dev/tty1 ]; then
@@ -71,8 +71,8 @@ for i in 1 2 3 4 5; do
 done
 
 # Read system config and apply factory MAC address to ethernet interfaces
-if [ -x /usr/bin/wing-syscfg ]; then
-    /usr/bin/wing-syscfg --apply-mac || true
+if [ -x /usr/bin/wing-sysconfig ]; then
+    /usr/bin/wing-sysconfig --apply-mac || true
 fi
 
 if [ -d /sys/class/net/lan1 ] || [ -d /sys/class/net/lan2 ]; then
