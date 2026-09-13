@@ -75,7 +75,16 @@ if [ -x /usr/bin/wing-sysconfig ]; then
     /usr/bin/wing-sysconfig --apply-mac || true
 fi
 
+# Configure Network Ports
 if [ -d /sys/class/net/lan1 ] || [ -d /sys/class/net/lan2 ]; then
+    # 1. Master-Interface zwingend zuerst aktivieren
+    # !kein DHCP auf diesem Interface ausführen!
+    if [ -d /sys/class/net/eth0 ]; then
+        echo "Bringing up master interface eth0..."
+        ifconfig eth0 up
+    fi
+
+    # 2. DSA-Slave-Interfaces aktivieren
     for iface in lan1 lan2; do
         if [ -d "/sys/class/net/$iface" ]; then
             echo "Enabling DHCP on $iface..."
@@ -83,10 +92,6 @@ if [ -d /sys/class/net/lan1 ] || [ -d /sys/class/net/lan2 ]; then
             udhcpc -b -i "$iface"
         fi
     done
-elif [ -d /sys/class/net/eth0 ]; then
-    echo "Enabling DHCP on eth0..."
-    ifconfig eth0 up
-    udhcpc -b -i eth0
 fi
 
 if [ -x /usr/sbin/dropbear ]; then

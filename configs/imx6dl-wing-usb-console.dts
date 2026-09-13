@@ -7,7 +7,7 @@
 	model = "Behringer Wing Compact (Console & Display)";
 	compatible = "behringer,wing-compact", "fsl,imx6dl";
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_pnlc_boot &pinctrl_fpga_ctrl>;
+	pinctrl-0 = <&pinctrl_pnlc_boot &pinctrl_csc &pinctrl_fpga_ctrl>;
 	
 	/*
 	* WING Compact uses i.MX6 Solo-class silicon: the kernel still uses the
@@ -123,11 +123,18 @@
 
 &fec {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_enet_rmii>;
+	pinctrl-0 = <&pinctrl_enet_rmii &pinctrl_enet_reset>;
 	phy-mode = "rmii";
+
+	/* Explicitly define clock routing for i.MX6 RMII */
+    clocks = <&clks IMX6QDL_CLK_ENET>,
+             <&clks IMX6QDL_CLK_ENET>,
+             <&clks IMX6QDL_CLK_ENET_REF>;
+    clock-names = "ipg", "ahb", "ptp";
+
 	local-mac-address = [ fa e1 25 be 5b 47 ];
 	status = "okay";
-	
+
 	fixed-link {
 		speed = <100>;
 		full-duplex;
@@ -138,8 +145,13 @@
 		#size-cells = <0>;
 		
 		switch@0 {
-			compatible = "marvell,mv88e6085";
+			compatible = "marvell,mv88e6320", "marvell,mv88e6085";
 			reg = <0>;
+
+            reset-gpios = <&gpio5 5 GPIO_ACTIVE_LOW>;
+            reset-delay-ms = <2>;
+
+			/*vdd-supply = <&reg_switch_enable>;*/
 			
 			ports {
 				#address-cells = <1>;
@@ -305,6 +317,7 @@
 };
 
 &iomuxc {
+
 	pinctrl_ecspi1: ecspi1grp {
 		fsl,pins = <
 			MX6QDL_PAD_EIM_D16__ECSPI1_SCLK		0x1b0b0  /* value from original WING Firmware*/
@@ -332,6 +345,13 @@
 			MX6QDL_PAD_EIM_A21__GPIO2_IO17		0x1b0b0  /* value from original WING Firmware -> CRESET_N: 100k Pull-Up, Slow SRE */
 			MX6QDL_PAD_DISP0_DAT5__GPIO4_IO26	0x1b008  /* value from original WING Firmware -> CDONE: SION=1, 100k Pull-Up, DSE=260R */
 			MX6QDL_PAD_EIM_A20__GPIO2_IO18		0x13008  /* value from original WING Firmware -> FPGA STATUS: 100k Pull-Down, DSE=260R */
+		>;
+	};
+
+	pinctrl_csc: cscgrp {
+		fsl,pins = <
+			MX6QDL_PAD_CSI0_DATA_EN__GPIO5_IO20 0x18  /* value from original WING Firmware*/
+			MX6QDL_PAD_CSI0_DAT5__GPIO5_IO23 0x18   /* value from original WING Firmware*/
 		>;
 	};
 
@@ -381,7 +401,20 @@
 			MX6QDL_PAD_ENET_TXD0__ENET_TX_DATA0   0x1b0b0  /* value from original WING Firmware*/
 			MX6QDL_PAD_ENET_TXD1__ENET_TX_DATA1   0x1b0b0  /* value from original WING Firmware*/
 			MX6QDL_PAD_GPIO_18__ENET_RX_CLK       0x10000  /* value from original WING Firmware*/
-			MX6QDL_PAD_GPIO_16__ENET_REF_CLK      0x10000  /* value from original WING Firmware*/
+			MX6QDL_PAD_GPIO_16__ENET_REF_CLK      0x40010000  /* value from original WING Firmware + SION-Bit (0x40000000) */
 		>;
 	};
+
+	pinctrl_enet_reset: enetresetgrp {
+		fsl,pins = <
+            MX6QDL_PAD_DISP0_DAT11__GPIO5_IO05    0x130b0  /* value from original WING Firmware, FEC_RESET_N */
+		>;
+	};
+
+	pinctrl_enet_status: enetstatusgrp {
+        fsl,pins = <
+			MX6QDL_PAD_DISP0_DAT12__GPIO5_IO06    0x130b0  /* value from original WING Firmware, FEC_CS_N? */
+            MX6QDL_PAD_DISP0_DAT15__GPIO5_IO09    0x10000  /* value from original WING Firmware, FEC Status? */
+        >;
+    };
 };
