@@ -8,6 +8,7 @@ The main logic of our custom firmware lives in its own repository at [OpenMixerC
 Description | State
 -----|-------
 Linux boots | ✔️ May 2026
+Stable Networking | 👀 In Progress
 Scribble Strip LCDs | ✔️ June 2026
 Surface Input and Output (Buttons, Encoders, Faders, LCDs, LEDs, Touchscreen) | ✔️ June 2026
 OpenMixerControl ported to iMX6 | ✔️ June 2026
