@@ -22,7 +22,7 @@ CONFIG_DEFAULT_DEVICE_TREE="imx6dl-nitrogen6x"
 # image immediately after at APPADDR + 0xC5000 = 0x100C9000.
 CONFIG_BOOTDELAY=5
 CONFIG_USE_BOOTCOMMAND=y
-CONFIG_BOOTCOMMAND="echo WING_DIAG: autobooting Linux in diagnostic mode; setenv bootargs console=tty1 console=ttyGS0,115200 console=ttymxc1,115200 earlycon ignore_loglevel loglevel=8 initcall_debug g_serial.use_acm=1 root=/dev/ram0 rdinit=/init rw; printenv bootargs; iminfo 0x100C9000; bootm 0x100C9000"
+CONFIG_BOOTCOMMAND="echo WING_DIAG: autobooting Linux in diagnostic mode; setenv bootargs console=tty1 console=ttyGS0,115200 console=ttymxc1,115200 earlycon ignore_loglevel loglevel=8 g_serial.use_acm=1 root=/dev/ram0 rdinit=/init rw; printenv bootargs; iminfo 0x100C9000; bootm 0x100C9000"
 CONFIG_AUTOBOOT_KEYED=n
 
 CONFIG_CONSOLE_MUX=y
