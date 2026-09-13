@@ -95,7 +95,7 @@ if [[ ! -f "${UBOOT_IMX}" ]]; then
     UBOOT_NEED_BUILD=1
 else
     # Check if config or patch is newer than the output
-    for f in "${ROOT_DIR}/patches/uboot/behringer-wing-imx6s.patch" "${ROOT_DIR}/u-boot/configs/"*; do
+    for f in "${ROOT_DIR}/patches/uboot/behringer-wing-imx6s.patch" "${ROOT_DIR}/configs/uboot/"*; do
         if [[ "$f" -nt "${UBOOT_IMX}" ]]; then
             UBOOT_NEED_BUILD=1
             break
