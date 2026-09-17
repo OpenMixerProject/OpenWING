@@ -398,6 +398,10 @@ echo "[build] System Tools"
 "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-panel-init" "${ROOT_DIR}/software/wing-system-tools/wing-panel-init.c"
 "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-fpga-dsp-tool" "${ROOT_DIR}/software/wing-system-tools/wing-fpga-dsp-tool.c"
 
+echo "[build] Audio Tools"
+
+"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-audio-clock" "${ROOT_DIR}/software/wing-audio-clock/wing-audio-clock.c"
+
 echo "[build] Delevopment Tools"
 "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/test_all_pins" "${ROOT_DIR}/tools/fpga-pin-monitor/test_all_pins.c"
 
