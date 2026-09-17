@@ -123,36 +123,32 @@
 
 &fec {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_enet_rmii &pinctrl_enet_reset>;
+	pinctrl-0 = <&pinctrl_enet_rmii>;
+	
 	phy-mode = "rmii";
-
-	/* Explicitly define clock routing for i.MX6 RMII */
-    clocks = <&clks IMX6QDL_CLK_ENET>,
-             <&clks IMX6QDL_CLK_ENET>,
-             <&clks IMX6QDL_CLK_ENET_REF>;
-    clock-names = "ipg", "ahb", "ptp";
 
 	local-mac-address = [ fa e1 25 be 5b 47 ];
 	status = "okay";
-
+	
 	fixed-link {
 		speed = <100>;
 		full-duplex;
 	};
-	
+
 	mdio {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		
+
 		switch@0 {
 			compatible = "marvell,mv88e6320", "marvell,mv88e6085";
 			reg = <0>;
 
-            reset-gpios = <&gpio5 5 GPIO_ACTIVE_LOW>;
-            reset-delay-ms = <2>;
+			reset-gpios = <&gpio5 5 GPIO_ACTIVE_LOW>;
+			reset-delay-ms = <20>;
 
-			/*vdd-supply = <&reg_switch_enable>;*/
-			
+			pinctrl-names = "default";
+            pinctrl-0 = <&pinctrl_enet_reset>;
+
 			ports {
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -160,11 +156,13 @@
 				port@3 {
 					reg = <3>;
 					label = "lan1";
+					phy-mode = "internal";
 				};
 				
 				port@4 {
 					reg = <4>;
 					label = "lan2";
+					phy-mode = "internal";
 				};
 				
 				port@6 {
@@ -178,9 +176,9 @@
 						full-duplex;
 					};
 				};
-			};
+			};	
 		};
-	};
+	};	
 };
 
 /* Disable all USDHC controllers to stop SDHCI/esdhc probing and register dumps */
@@ -343,7 +341,7 @@
 	pinctrl_fpga_ctrl: fpgactrlgrp {
 		fsl,pins = <
 			MX6QDL_PAD_EIM_A21__GPIO2_IO17		0x1b0b0  /* value from original WING Firmware -> CRESET_N: 100k Pull-Up, Slow SRE */
-			MX6QDL_PAD_DISP0_DAT5__GPIO4_IO26	0x1b008  /* value from original WING Firmware -> CDONE: SION=1, 100k Pull-Up, DSE=260R */
+			MX6QDL_PAD_DISP0_DAT5__GPIO4_IO26	0x4001b008  /* value from original WING Firmware -> CDONE: SION=1, 100k Pull-Up, DSE=260R */
 			MX6QDL_PAD_EIM_A20__GPIO2_IO18		0x13008  /* value from original WING Firmware -> FPGA STATUS: 100k Pull-Down, DSE=260R */
 		>;
 	};
