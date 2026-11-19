@@ -43,6 +43,12 @@ AES50 |
 <img width="400" height="300" alt="IMG_20260607_174217" src="https://github.com/user-attachments/assets/50e9e0c2-e282-453f-a69b-497ceb20157a" />
 <img width="300" height="400" alt="IMG_20260607_182642" src="https://github.com/user-attachments/assets/13924386-fbdd-4a5d-8371-0ff2e37143da" />
 
+# Sponsors
+
+[Analog Devices](https://www.analog.com) sponsored us a licence for CrossCore Embedded Studio - many thanks!
+
+<img width="200" alt="grafik" src="https://github.com/user-attachments/assets/5e1ba20c-b4e0-454a-b10e-205d58897fa8" />
+
 # Hardware
 
 ## CPU
