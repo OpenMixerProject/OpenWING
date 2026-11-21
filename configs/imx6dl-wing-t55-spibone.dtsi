@@ -1,0 +1,14 @@
+/* Override only the SS1 child of the manual bring-up DTS. SS0 remains spidev
+ * for DSP passthrough and no-select passive FPGA configuration. */
+&ecspi2 {
+	/delete-node/ fpga@1;
+
+	fpga@1 {
+		compatible = "openmixer,wing-spibone";
+		reg = <1>;
+		spi-max-frequency = <2000000>;
+		spi-cs-setup-delay-ns = <300>;
+		spi-cs-hold-delay-ns = <300>;
+		spi-cs-inactive-delay-ns = <300>;
+	};
+};

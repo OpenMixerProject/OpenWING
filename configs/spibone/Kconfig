@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+config SPIBONE
+	bool "LiteX SPIBone (SPI to Wishbone) bus"
+	depends on SPI && OF && GPIOLIB
+	help
+	  Expose the WING FPGA's control bus at /dev/spibone0.

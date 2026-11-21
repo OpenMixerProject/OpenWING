@@ -73,6 +73,43 @@ new pins; regenerating `SHA256SUMS` does not make a different set match.
 The output is a staging directory only. It does not install or boot anything,
 and neither DSP firmware nor vendor loader binaries are distributed here.
 
+## Manual T55 DSP bring-up
+
+Build with `WING_PROFILE=t55-spibone ./compile.sh`. Set `WING_T55_FPGA_DIR`
+to the matching schema-2 T55 FPGA image, manifest, three generated CSR files
+and board profile; `WING_T55_DSP_DIR` to the loader build above;
+`WING_T55_OMC_DIR` to the matched static ARM hard-float OMC artifact with
+checksums and provenance; and `OPENAUDIOFPGA_DIR` to the reviewed WING
+SPIBone source checkout. The default Linux build is unchanged.
+
+The T55 image does not load the FPGA, boot a DSP, or start OMC at startup.
+On a muted bench only, with external FPGA clocks independently verified,
+`wing-t55 load --bench-muted --clocks-verified` loads the volatile fabric.
+Then `wing-t55 boot-dsp {1|2|4} --bench-muted` boots one explicitly selected
+core (substitute its number). DSP3 is blocked: its reset is not qualified
+and A9 must remain an input. The tool uses SS0 (`/dev/spidev1.0`) for the
+target-prefixed loader and WDSP v1 IDENTIFY, and SS1 (`/dev/spibone0`) for
+identity, reset and safety register checks. It never enables FS, VALID or
+unmutes the mixer. The reset/loader delays and electrical behavior still
+need bench validation; an armed identity reply is not audio readiness.
+
+OMC and the loader coordinate through `/run/wing-t55.lock` (shared for OMC's
+session, exclusive for load/boot). The root-only atomic receipt is
+`/run/omc-wing-fpga.json` on boot-local tmpfs. It binds the packaged manifest
+path and SHA-256, bitstream SHA-256, build ID, and SS1 endpoint and chip
+select. `dsp_runtime_mask` starts at zero. Bit `n − 1` is added only after
+DSP `n` returns an armed, CRC- and nonce-verified WDSP v1 IDENTIFY reply
+and the live reset state matches the new mask. A failed mutating operation
+leaves no receipt; reload the fabric before retrying. The packaged manifest
+records SS0 as the WDSP v1 runtime endpoint.
+
+The build stages SPIBone from the selected OpenAudioFPGA commit, based on
+Mala's [OpenAudioFPGA history](https://github.com/malarisch/OpenAudioFPGA/commit/c56ef3ecdd7b2c2c0b7844788cd40c45964d87c4)
+and [SPIBone/Wishbone implementation](https://github.com/malarisch/OpenAudioFPGA/commit/7d2869acdcff4a0a1952b74bf9b5fe45e37ff7dd).
+Driver source and notices are copied byte-for-byte. The UAPI adds the WING
+opt-in ioctl to Mala's baseline and retains `GPL-2.0-or-later WITH
+Linux-syscall-note`; the rest of the driver retains its original notices.
+
 # Social, Web, Community
 
 - [OpenMixerProject on Github](https://github.com/OpenMixerProject)

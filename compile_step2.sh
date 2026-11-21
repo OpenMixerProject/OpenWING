@@ -13,6 +13,38 @@ HTOP_URL="https://github.com/htop-dev/htop/releases/download/${HTOP_VER}/htop-${
 UBOOT_VER="2024.01"
 UBOOT_URL="https://ftp.denx.de/pub/u-boot/u-boot-${UBOOT_VER}.tar.bz2"
 
+case "${WING_PROFILE:-legacy}" in
+    legacy) OMC_BIN="${PAYLOAD_DIR:?run compile.sh}/omc" ;;
+    t55-spibone) OMC_BIN="${PAYLOAD_DIR:?run compile.sh}/wing-t55/omc" ;;
+    *) echo "[error] unknown WING_PROFILE: ${WING_PROFILE}" >&2; exit 1 ;;
+esac
+if [[ ! -s "${OMC_BIN}" ]]; then
+    echo "[error] missing staged ARM OMC: ${OMC_BIN}" >&2
+    exit 1
+fi
+if [[ "${WING_PROFILE:-legacy}" == t55-spibone ]]; then
+    (
+        cd "${PAYLOAD_DIR}/wing-t55"
+        sha256sum --strict -c SHA256SUMS
+    )
+    omc_elf="$(LC_ALL=C "${CROSS_COMPILE}readelf" -h -l "${OMC_BIN}")"
+    if [[ "${omc_elf}" != *ELF32* || "${omc_elf}" != *'hard-float ABI'* || \
+          "${omc_elf}" == *INTERP* || "${omc_elf}" == *DYNAMIC* ]] || \
+        ! grep -Eq 'Machine:[[:blank:]]+ARM$' <<<"${omc_elf}" || \
+        ! grep -Eq 'Type:[[:blank:]]+EXEC ' <<<"${omc_elf}"; then
+        echo "[error] expected a static ARM hard-float OMC executable" >&2
+        exit 1
+    fi
+fi
+
+if [[ "${WING_PROFILE:-legacy}" == t55-spibone ]]; then
+    # Keep the build host, user, time and incrementing kernel build number out of the image.
+    umask 022
+    export LC_ALL=C TZ=UTC SOURCE_DATE_EPOCH=1767225600
+    export KBUILD_BUILD_TIMESTAMP="$(date -u -d "@${SOURCE_DATE_EPOCH}")"
+    export KBUILD_BUILD_USER=openwing KBUILD_BUILD_HOST=builder KBUILD_BUILD_VERSION=1
+fi
+
 #######################################################################
 #
 #  ########  ########  ######## ########     ###    ########  ######## 
@@ -28,26 +60,41 @@ UBOOT_URL="https://ftp.denx.de/pub/u-boot/u-boot-${UBOOT_VER}.tar.bz2"
 mkdir -p "${BUILD_DIR}" "${OUT_DIR}" "${ROOTFS_DIR}"
 cd "${BUILD_DIR}"
 
+download() {
+    if [[ "${WING_PROFILE:-legacy}" != t55-spibone ]]; then
+        curl -L -o "$1" "$2"
+    elif curl --fail --location --connect-timeout 15 --max-time 300 -o "$1.part" "$2"; then
+        mv "$1.part" "$1"
+    else
+        rm -f "$1.part"
+        return 1
+    fi
+}
+
 if [[ ! -f "linux-${LINUX_VER}.tar.xz" ]]; then
-    curl -L -o "linux-${LINUX_VER}.tar.xz" "${LINUX_URL}"
+    download "linux-${LINUX_VER}.tar.xz" "${LINUX_URL}"
 fi
 if [[ ! -f "busybox-${BUSYBOX_VER}.tar.bz2" ]]; then
-    curl -L -o "busybox-${BUSYBOX_VER}.tar.bz2" "${BUSYBOX_URL}"
+    download "busybox-${BUSYBOX_VER}.tar.bz2" "${BUSYBOX_URL}"
 fi
 if [[ ! -f "dropbear-${DROPBEAR_VER}.tar.bz2" ]]; then
-    curl -L -o "dropbear-${DROPBEAR_VER}.tar.bz2" "${DROPBEAR_URL}"
+    download "dropbear-${DROPBEAR_VER}.tar.bz2" "${DROPBEAR_URL}"
 fi
 if [[ -n "${INCLUDE_DOOM}" && ! -f "doomgeneric-${DOOMGENERIC_REF}.tar.gz" ]]; then
-    curl -L -o "doomgeneric-${DOOMGENERIC_REF}.tar.gz" "${DOOMGENERIC_URL}"
+    download "doomgeneric-${DOOMGENERIC_REF}.tar.gz" "${DOOMGENERIC_URL}"
 fi
 if [[ -n "${INCLUDE_DOOM}" && ! -f "doom_dos.zip" ]]; then
-    curl -L -o "doom_dos.zip" "${DOOM_SHAREWARE_URL}"
+    download "doom_dos.zip" "${DOOM_SHAREWARE_URL}"
 fi
 if [[ ! -f "htop-${HTOP_VER}.tar.xz" ]]; then
-    curl -L -o "htop-${HTOP_VER}.tar.xz" "${HTOP_URL}"
+    download "htop-${HTOP_VER}.tar.xz" "${HTOP_URL}"
 fi
 if [[ ! -f "u-boot-${UBOOT_VER}.tar.bz2" ]]; then
-    curl -L -o "u-boot-${UBOOT_VER}.tar.bz2" "${UBOOT_URL}"
+    download "u-boot-${UBOOT_VER}.tar.bz2" "${UBOOT_URL}"
+fi
+
+if [[ "${WING_PROFILE:-legacy}" == t55-spibone ]]; then
+    sha256sum --strict -c "${ROOT_DIR}/configs/t55-build.SHA256SUMS"
 fi
 
 if [[ ! -d "linux-${LINUX_VER}" ]]; then
@@ -338,13 +385,18 @@ install -D -m 0755 htop "${ROOTFS_DIR}/usr/bin/htop"
 ########################################################################################################################################################
 
 echo "[install] omc (wing target)"
-OMC_BIN="${ROOT_DIR}/software/omc/build/wing/omc"
-if [ ! -f "${OMC_BIN}" ]; then
-    echo "[error] omc build did not produce ${OMC_BIN}" >&2
-     exit 1
+if [[ "${WING_PROFILE:-legacy}" == t55-spibone ]]; then
+    bundle="${ROOTFS_DIR}/usr/share/wing-t55"
+    mkdir -p "${bundle}"
+    cp -R "${PAYLOAD_DIR}/wing-t55/." "${bundle}/"
+    find "${bundle}" -type f -exec chmod 0444 {} +
+    chmod 0555 "${bundle}/omc"
+    mkdir -p "${ROOTFS_DIR}/etc"
+    touch "${ROOTFS_DIR}/etc/wing-t55-bringup"
+else
+    install -D -m 0755 "${OMC_BIN}" "${ROOTFS_DIR}/usr/bin/omc"
+    "${CROSS_COMPILE}strip" "${ROOTFS_DIR}/usr/bin/omc" || true
 fi
-"${CROSS_COMPILE}strip" "${OMC_BIN}" || true
-install -D -m 0755 "${OMC_BIN}" "${ROOTFS_DIR}/usr/bin/omc"
 
 #########################################################################
 #
@@ -396,14 +448,23 @@ echo "[build] System Tools"
 
 "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-sysconfig" "${ROOT_DIR}/software/wing-system-tools/wing-sysconfig.c"
 "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-panel-init" "${ROOT_DIR}/software/wing-system-tools/wing-panel-init.c"
-"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-fpga-dsp-tool" "${ROOT_DIR}/software/wing-system-tools/wing-fpga-dsp-tool.c"
+if [[ "${WING_PROFILE:-legacy}" == legacy ]]; then
+    "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-fpga-dsp-tool" "${ROOT_DIR}/software/wing-system-tools/wing-fpga-dsp-tool.c"
+fi
 
 echo "[build] Audio Tools"
 
-"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-audio-clock" "${ROOT_DIR}/software/wing-audio-clock/wing-audio-clock.c"
+if [[ "${WING_PROFILE:-legacy}" == t55-spibone ]]; then
+    "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -I"${PAYLOAD_DIR}" -I"${PAYLOAD_DIR}/spibone" \
+        -o "${ROOTFS_DIR}/usr/bin/wing-t55" "${ROOT_DIR}/software/wing-system-tools/wing-t55.c"
+else
+    "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/wing-audio-clock" "${ROOT_DIR}/software/wing-audio-clock/wing-audio-clock.c"
+fi
 
 echo "[build] Delevopment Tools"
-"${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/test_all_pins" "${ROOT_DIR}/tools/fpga-pin-monitor/test_all_pins.c"
+if [[ "${WING_PROFILE:-legacy}" == legacy ]]; then
+    "${CROSS_COMPILE}gcc" -Os -static -Wall -Wextra -o "${ROOTFS_DIR}/usr/bin/test_all_pins" "${ROOT_DIR}/tools/fpga-pin-monitor/test_all_pins.c"
+fi
 
 ###################################################################################
 #
@@ -420,8 +481,19 @@ echo "[build] Delevopment Tools"
 cd "${ROOTFS_DIR}"
 cp -a "${ROOT_DIR}/initramfs_root/"* .
 mkdir -p dev proc root sys tmp
-find . -print0 | cpio --null -o -H newc > "${BUILD_DIR}/initramfs.rootfs.cpio"
+cpio_owner=()
+if [[ "${WING_PROFILE:-legacy}" != legacy ]]; then
+    (cd usr/share/wing-t55 && sha256sum --strict -c SHA256SUMS)
+    cpio_owner=(--owner=0:0)
+fi
+if [[ "${WING_PROFILE:-legacy}" == t55-spibone ]]; then
+    find . -exec touch -h -d "@${SOURCE_DATE_EPOCH}" {} +
+    find . -print0 | sort -z | cpio --null -o -H newc --reproducible "${cpio_owner[@]}" > "${BUILD_DIR}/initramfs.rootfs.cpio"
+else
+    find . -print0 | cpio --null -o -H newc "${cpio_owner[@]}" > "${BUILD_DIR}/initramfs.rootfs.cpio"
+fi
 python3 - "${BUILD_DIR}/initramfs.rootfs.cpio" "${BUILD_DIR}/initramfs.cpio" <<'PY'
+import os
 import stat
 import sys
 import time
@@ -461,7 +533,7 @@ def newc_entry(name, mode, rdevmajor=0, rdevminor=0, inode=0):
         b"00000000",
         b"00000000",
         b"00000001",
-        f"{int(time.time()):08x}".encode(),
+        f"{int(os.environ.get('SOURCE_DATE_EPOCH') or time.time()):08x}".encode(),
         b"00000000",
         b"00000000",
         b"00000000",
@@ -483,7 +555,9 @@ out += b"\0" * ((512 - len(out) % 512) % 512)
 open(dst, "wb").write(out)
 PY
 
-gzip -9 -f "${BUILD_DIR}/initramfs.cpio"
+gzip_options=()
+if [[ "${WING_PROFILE:-legacy}" == t55-spibone ]]; then gzip_options=(-n); fi
+gzip -9 -f "${gzip_options[@]}" "${BUILD_DIR}/initramfs.cpio"
 
 #############################################################
 #
@@ -500,6 +574,20 @@ gzip -9 -f "${BUILD_DIR}/initramfs.cpio"
 echo "[build] Linux kernel + unified console/display DTS"
 cd "${BUILD_DIR}/linux-${LINUX_VER}"
 cp "${ROOT_DIR}/configs/imx6dl-wing-usb-console.dts" arch/arm/boot/dts/nxp/imx/imx6dl-wing-usb-console.dts
+if [[ "${WING_PROFILE:-legacy}" == t55-spibone ]]; then
+    cat "${ROOT_DIR}/configs/imx6dl-wing-t55-bringup.dtsi" >> arch/arm/boot/dts/nxp/imx/imx6dl-wing-usb-console.dts
+    cat "${ROOT_DIR}/configs/imx6dl-wing-t55-spibone.dtsi" >> arch/arm/boot/dts/nxp/imx/imx6dl-wing-usb-console.dts
+    echo "[build] In-tree SPIBone driver from OpenAudioFPGA"
+    install -D -m 0644 "${ROOT_DIR}/configs/spibone/Kconfig" drivers/misc/spibone/Kconfig
+    install -m 0644 "${ROOT_DIR}/configs/spibone/Kbuild" drivers/misc/spibone/
+    cp "${PAYLOAD_DIR}/spibone/"* drivers/misc/spibone/
+    if ! grep -Fxq 'source "drivers/misc/spibone/Kconfig"' drivers/misc/Kconfig; then
+        printf '\nsource "drivers/misc/spibone/Kconfig"\n' >> drivers/misc/Kconfig
+    fi
+    if ! grep -Fxq 'obj-$(CONFIG_SPIBONE) += spibone/' drivers/misc/Makefile; then
+        printf '\nobj-$(CONFIG_SPIBONE) += spibone/\n' >> drivers/misc/Makefile
+    fi
+fi
 
 if ! grep -q "imx6dl-wing-usb-console.dtb" arch/arm/boot/dts/nxp/imx/Makefile; then
     echo 'dtb-$(CONFIG_SOC_IMX6Q) += imx6dl-wing-usb-console.dtb' >> arch/arm/boot/dts/nxp/imx/Makefile
@@ -520,9 +608,22 @@ if [ $# -ge 1 ] && [ "$1" == "kernel_menuconfig" ]; then
 fi
     
 cp "${ROOT_DIR}/configs/config_linux" .config
+if [[ "${WING_PROFILE:-legacy}" == t55-spibone ]]; then
+    # U-Boot replaces chosen.bootargs. Extend its arguments only in this kernel.
+    scripts/config --disable CMDLINE_FROM_BOOTLOADER --enable CMDLINE_EXTEND \
+        --set-str CMDLINE 'spidev.bufsiz=65536' --enable CRYPTO_USER_API_HASH --enable SPIBONE
+fi
 
 make ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" olddefconfig
+if [[ "${WING_PROFILE:-legacy}" == t55-spibone ]] && ! grep -Fxq CONFIG_SPIBONE=y .config; then
+    echo '[error] SPIBone was not enabled in the kernel configuration' >&2
+    exit 1
+fi
 make ARCH="${ARCH}" CROSS_COMPILE="${CROSS_COMPILE}" -j"$(nproc)" zImage nxp/imx/imx6dl-wing-usb-console.dtb
+if [[ "${WING_PROFILE:-legacy}" == t55-spibone ]] && ! grep -qw spibone_probe System.map; then
+    echo '[error] SPIBone driver missing from linked ARM kernel' >&2
+    exit 1
+fi
 
 ############################################################
 #
@@ -541,13 +642,20 @@ cp arch/arm/boot/dts/nxp/imx/imx6dl-wing-usb-console.dtb "${OUT_DIR}/imx6dl-wing
 cp "${BUILD_DIR}/initramfs.cpio.gz" "${OUT_DIR}/wing-usb-console-initramfs.cpio.gz"
 
 echo "[build] wingfw package"
+version=linux-usb-console
+if [[ "${WING_PROFILE:-legacy}" != legacy ]]; then version="linux-${WING_PROFILE}"; fi
+cdate=()
+if [[ "${WING_PROFILE:-legacy}" == t55-spibone ]]; then
+    cdate=(--cdate "$(date -u -d "@${SOURCE_DATE_EPOCH}" +%Y-%m-%d_%H:%M:%S)")
+fi
 python3 "${ROOT_DIR}/tools/build_linux_wingfw.py" \
     --uboot-imx "${UBOOT_IMX}" \
     --kernel "${OUT_DIR}/wing-usb-console-zImage" \
     --dtb "${OUT_DIR}/imx6dl-wing-usb-console.dtb" \
     --initramfs "${OUT_DIR}/wing-usb-console-initramfs.cpio.gz" \
     --fit-output "${OUT_DIR}/wing-usb-console.itb" \
-    --version "linux-usb-console" \
+    --version "${version}" \
+    "${cdate[@]}" \
     -o "${OUTPUT_WINGFW}"
 
 echo "[done] ${OUTPUT_WINGFW}"

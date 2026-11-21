@@ -19,6 +19,12 @@ fi
 
 echo "Wing USB console Linux booted"
 
+if [ -f /etc/wing-t55-bringup ]; then
+    mkdir -p /run
+    mount -t tmpfs -o mode=0755,nosuid,nodev,noexec tmpfs /run || echo "T55: /run unavailable; manual bring-up disabled."
+    echo "T55 manual bring-up only: no automatic FPGA load, DSP boot, OMC or SSH."
+fi
+
 # Synchronize system clock from hardware RTC (SNVS LP)
 if [ -e /dev/rtc0 ] || [ -e /dev/rtc ]; then
     hwclock -s -u 2>/dev/null || hwclock -s 2>/dev/null || true
@@ -94,7 +100,7 @@ if [ -d /sys/class/net/lan1 ] || [ -d /sys/class/net/lan2 ]; then
     done
 fi
 
-if [ -x /usr/sbin/dropbear ]; then
+if [ ! -f /etc/wing-t55-bringup ] && [ -x /usr/sbin/dropbear ]; then
     echo "Starting Dropbear SSH on port 22 (supervisor managed)..."
     echo "WARNING: root SSH permits blank-password login in this experimental initramfs."
     chmod 600 /etc/dropbear/dropbear_ed25519_host_key 2>/dev/null || true

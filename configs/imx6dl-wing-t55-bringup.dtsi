@@ -1,0 +1,44 @@
+/* Only the manual T55 image uses the FPGA's two active-low GPIO selects. */
+&ecspi2 {
+	pinctrl-0 = <&pinctrl_ecspi2 &pinctrl_t55_cs>;
+	cs-gpios = <&gpio2 26 GPIO_ACTIVE_LOW>, <&gpio2 27 GPIO_ACTIVE_LOW>;
+	/delete-node/ fpga@0;
+
+	dsp@0 {
+		compatible = "rohm,dh2228fv"; /* Linux 6.6 spidev binding */
+		reg = <0>;
+		spi-max-frequency = <2000000>;
+		spi-cs-setup-delay-ns = <300>;
+		spi-cs-hold-delay-ns = <300>;
+		spi-cs-inactive-delay-ns = <300>;
+	};
+
+	fpga@1 {
+		compatible = "rohm,dh2228fv";
+		reg = <1>;
+		spi-max-frequency = <2000000>;
+		spi-cs-setup-delay-ns = <300>;
+		spi-cs-hold-delay-ns = <300>;
+		spi-cs-inactive-delay-ns = <300>;
+	};
+};
+
+&iomuxc {
+	pinctrl_t55_cs: t55csgrp {
+		fsl,pins = <
+			MX6QDL_PAD_EIM_RW__GPIO2_IO26  0x1b0b0 /* SS0 / J2 */
+			MX6QDL_PAD_EIM_LBA__GPIO2_IO27 0x1b0b0 /* SS1 / V6 */
+		>;
+	};
+};
+
+&gpio2 {
+	gpio-line-names = "", "", "", "", "", "", "", "",
+			  "", "", "", "", "", "", "", "", "", "T55_CRESET_N";
+};
+
+&gpio4 {
+	gpio-line-names = "", "", "", "", "", "", "", "",
+			  "", "", "", "", "", "", "", "",
+			  "", "", "", "", "", "", "", "", "", "", "T55_CDONE";
+};
