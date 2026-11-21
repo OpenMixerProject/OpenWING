@@ -60,6 +60,18 @@ i.MX 6 series 32-bit MPU, single ARM Cortex-A9 core, 1GHz, MAPBGA 624 (With VPU,
 - Product Page: https://www.nxp.com/part/MCIMX6S8DVM10AC
 - Datasheet: https://www.nxp.com/docs/en/data-sheet/IMX6SDLCEC.pdf
 
+## Stage the matched WING DSP loaders
+
+Pass the reviewed OpenAudioDSP `wing-wdsp-v1-stock-tdm16-21489` build directory
+to `python3 tools/stage_wing_dsp.py DSP_BUILD NEW_OUTPUT_DIRECTORY`. The input
+must include `SHA256SUMS`, `provenance.txt`, `dsp_board_profile.json`, and all
+four raw ADSP-21489 SPI loaders. The tool checks the pinned bytes for DSP1
+(input), DSP2 (bus), DSP3 (FX1), and DSP4 (FX2), and the stock-direction TDM16
+profile (`3b29934…`). Rebuilding with different bytes requires review of the
+new pins; regenerating `SHA256SUMS` does not make a different set match.
+
+The output is a staging directory only. It does not install or boot anything,
+and neither DSP firmware nor vendor loader binaries are distributed here.
 
 # Social, Web, Community
 
