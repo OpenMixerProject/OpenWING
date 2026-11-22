@@ -9,6 +9,11 @@ case "${WING_PROFILE}" in
         OUT_PATH=build/output
         WINGFW_NAME=wing-compact-usb-console-linux.wingfw
         ;;
+    t55-recovery)
+        BUILD_PATH=build/linux-t55-recovery
+        OUT_PATH=build/output-t55-recovery
+        WINGFW_NAME=wing-compact-t55-recovery.wingfw
+        ;;
     t55-spibone)
         BUILD_PATH=build/linux-t55-spibone
         OUT_PATH=build/output-t55-spibone
@@ -113,19 +118,26 @@ mkdir -p "${BUILD_DIR}" "${OUT_DIR}" "${DOCKER_CONFIG_DIR}"
 PAYLOAD_DIR="$(mktemp -d "${BUILD_DIR}/payload.XXXXXX")"
 trap 'rm -rf -- "${PAYLOAD_DIR}"' EXIT
 
-if [[ "${WING_PROFILE}" == t55-spibone ]]; then
+if [[ "${WING_PROFILE}" != legacy ]]; then
     : "${WING_T55_OMC_DIR:?set WING_T55_OMC_DIR to the reviewed T55 OMC artifact directory}"
-    : "${WING_T55_FPGA_DIR:?set WING_T55_FPGA_DIR to the built T55 SPIBone FPGA/CSR bundle}"
-    : "${WING_T55_DSP_DIR:?set WING_T55_DSP_DIR to the built ADSP-21489 WDSP-v1 bundle}"
-    : "${OPENAUDIOFPGA_DIR:?set OPENAUDIOFPGA_DIR to the WING OpenAudioFPGA source checkout}"
+    : "${WING_T55_FPGA_DIR:?set WING_T55_FPGA_DIR to the reviewed FPGA bundle}"
+    : "${WING_T55_DSP_DIR:?set WING_T55_DSP_DIR to the reviewed ADSP-21489 bundle}"
     if [[ "${1:-}" == *_menuconfig || -n "${INCLUDE_DOOM}" ]]; then
-        echo '[error] menuconfig and INCLUDE_DOOM are not supported by t55-spibone' >&2
+        echo '[error] menuconfig and INCLUDE_DOOM are not supported by the T55 profiles' >&2
         exit 1
+    fi
+    if [[ "${WING_PROFILE}" == t55-spibone ]]; then
+        : "${OPENAUDIOFPGA_DIR:?set OPENAUDIOFPGA_DIR to the WING OpenAudioFPGA source checkout}"
+        t55_options=(--spibone "${OPENAUDIOFPGA_DIR}")
+    else
+        t55_options=(--recovery)
     fi
     python3 "${ROOT_DIR}/tools/stage_wing_t55.py" \
         "${WING_T55_FPGA_DIR}" "${WING_T55_DSP_DIR}" "${WING_T55_OMC_DIR}" \
-        "${PAYLOAD_DIR}/wing-t55" --spibone "${OPENAUDIOFPGA_DIR}"
-    python3 "${ROOT_DIR}/tools/wing_spibone_header.py" "${PAYLOAD_DIR}/wing-t55" > "${PAYLOAD_DIR}/wing-t55-bundle.h"
+        "${PAYLOAD_DIR}/wing-t55" "${t55_options[@]}"
+    if [[ "${WING_PROFILE}" == t55-spibone ]]; then
+        python3 "${ROOT_DIR}/tools/wing_spibone_header.py" "${PAYLOAD_DIR}/wing-t55" > "${PAYLOAD_DIR}/wing-t55-bundle.h"
+    fi
 fi
 
 if [[ ! -f "${ROOT_DIR}/lib/private/tools/build_linux_wingfw.py" ]]; then
@@ -191,9 +203,9 @@ docker_tty=()
 if [[ -t 0 && -t 1 ]]; then docker_tty=(-t); fi
 build_volume=()
 CONTAINER_BUILD_DIR="/openwing/${BUILD_PATH}"
-if [[ "${WING_PROFILE}" == t55-spibone && -n "${WING_BUILD_VOLUME:-}" ]]; then
+if [[ "${WING_PROFILE}" != legacy && -n "${WING_BUILD_VOLUME:-}" ]]; then
     # The volume root may hold another profile's kernel tree. Never build there.
-    CONTAINER_BUILD_DIR=/wing-build/t55-spibone
+    CONTAINER_BUILD_DIR="/wing-build/${WING_PROFILE}"
     build_volume=(-v "${WING_BUILD_VOLUME}:/wing-build")
 elif [[ -n "${WING_BUILD_VOLUME:-}" ]]; then
     CONTAINER_BUILD_DIR=/wing-build

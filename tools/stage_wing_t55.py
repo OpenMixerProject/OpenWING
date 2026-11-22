@@ -9,7 +9,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from stage_wing_dsp import DSP_BOARD_PROFILE, DSP_BOARD_PROFILE_SHA256, digest, stage as stage_dsp
+from stage_wing_dsp import DSP_BOARD_PROFILE, DSP_BOARD_PROFILE_SHA256, DSP_IMAGES, digest, stage as stage_dsp
 
 FPGA_IMAGE = "wing-fpga.hex.bin"
 SHA256 = re.compile(r"[0-9a-f]{64}")
@@ -47,21 +47,26 @@ def unique_keys(pairs):
 
 
 def stage(fpga, dsp, omc, output, spibone):
-    stage_dsp(dsp, output)  # Requires a fresh directory and pins each DSP role.
+    recovery = spibone is None
+    if recovery:
+        output.mkdir()
+    else:
+        stage_dsp(dsp, output)  # Requires a fresh directory and pins each DSP role.
     try:
         for name in (FPGA_IMAGE, "manifest.json"):
             copy_input(fpga / name, output / name)
         manifest = json.loads((output / "manifest.json").read_text(), object_pairs_hook=unique_keys)
-        target = "wing-compact-t55f484-fork"
+        schema = 1 if recovery else 2
+        target = "wing-compact-t55f484" if recovery else "wing-compact-t55f484-fork"
         if not isinstance(manifest, dict) or (
             type(manifest.get("schema_version")) is not int
-            or manifest["schema_version"] != 2
+            or manifest["schema_version"] != schema
             or manifest.get("target") != target
-            or manifest.get("device") != "T55F484"
+            or (not recovery and manifest.get("device") != "T55F484")
             or type(manifest.get("abi_version")) is not int
-            or manifest["abi_version"] != 0x20000
+            or manifest["abi_version"] != schema << 16
         ):
-            raise ValueError(f"expected a {target} schema 2 / ABI 2 manifest")
+            raise ValueError(f"expected a {target} schema {schema} / ABI {schema} manifest")
         for field in ("build_id", "feature_flags"):
             if type(manifest.get(field)) is not int or not 0 <= manifest[field] <= 0xFFFFFFFF:
                 raise ValueError(f"manifest {field} must be a u32")
@@ -78,15 +83,25 @@ def stage(fpga, dsp, omc, output, spibone):
         for name in ("SHA256SUMS", "provenance.txt"):
             copy_input(omc / name, output / f"omc.{name}")
         verify_sums(output / "omc.SHA256SUMS", output, ("omc",))
-        # Older paired manifests advertise SS0 passthrough in capabilities but
-        # did not describe its Linux endpoint. Bind it into the packaged manifest.
-        if not manifest["feature_flags"] & 2 or manifest.get("dsp_runtime", DSP_RUNTIME) != DSP_RUNTIME:
-            raise ValueError("T55 FPGA manifest has no compatible WDSP v1 transport")
-        if "dsp_runtime" not in manifest:
-            manifest["dsp_runtime"] = DSP_RUNTIME
-            (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
-
-        stage_spibone(fpga, manifest, spibone, output)
+        if recovery:
+            for name in DSP_IMAGES:
+                copy_input(dsp / name, output / name)
+            for name in ("SHA256SUMS", "provenance.txt"):
+                copy_input(dsp / name, output / f"dsp.{name}")
+            verify_sums(output / "dsp.SHA256SUMS", output, DSP_IMAGES)
+            lines = (output / "dsp.provenance.txt").read_text().splitlines()
+            for field in ("target=ADSP-21489", "boot=spi-slave", "format=raw-binary"):
+                prefix = field.split("=", 1)[0] + "="
+                if [line for line in lines if line.startswith(prefix)] != [field]:
+                    raise ValueError(f"DSP provenance must declare exactly one {field}")
+        else:
+            # Bind the SS0 endpoint into older paired manifests.
+            if not manifest["feature_flags"] & 2 or manifest.get("dsp_runtime", DSP_RUNTIME) != DSP_RUNTIME:
+                raise ValueError("T55 FPGA manifest has no compatible WDSP v1 transport")
+            if "dsp_runtime" not in manifest:
+                manifest["dsp_runtime"] = DSP_RUNTIME
+                (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+            stage_spibone(fpga, manifest, spibone, output)
         entries = sorted(path for path in output.rglob("*") if path.is_file())
         (output / "SHA256SUMS").write_text("".join(f"{digest(path)}  {path.relative_to(output)}\n" for path in entries))
     except Exception:
@@ -143,7 +158,9 @@ def main():
     parser.add_argument("dsp", type=Path)
     parser.add_argument("omc", type=Path)
     parser.add_argument("output", type=Path)
-    parser.add_argument("--spibone", type=Path, required=True, help="WING OpenAudioFPGA checkout for the kernel driver")
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--spibone", type=Path, help="WING OpenAudioFPGA checkout for the kernel driver")
+    mode.add_argument("--recovery", action="store_true", help="stage inert schema-1 recovery payloads")
     args = parser.parse_args()
     try:
         stage(args.fpga, args.dsp, args.omc, args.output, args.spibone)

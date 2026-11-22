@@ -75,6 +75,11 @@ and neither DSP firmware nor vendor loader binaries are distributed here.
 
 ## Manual T55 DSP bring-up
 
+**Do not run or flash the superseded `t55-bringup` image.** Its old TDM16
+gateware can drive a clock into the SHARC's active DAI01 output. External
+muting does not prevent electrical contention. Keep old images for offline
+comparison only. The SPIBone profile below still requires bench qualification.
+
 Build with `WING_PROFILE=t55-spibone ./compile.sh`. Set `WING_T55_FPGA_DIR`
 to the matching schema-2 T55 FPGA image, manifest, three generated CSR files
 and board profile; `WING_T55_DSP_DIR` to the loader build above;
@@ -109,6 +114,24 @@ and [SPIBone/Wishbone implementation](https://github.com/malarisch/OpenAudioFPGA
 Driver source and notices are copied byte-for-byte. The UAPI adds the WING
 opt-in ioctl to Mala's baseline and retains `GPL-2.0-or-later WITH
 Linux-syscall-note`; the rest of the driver retains its original notices.
+
+## T55 console recovery
+
+`WING_PROFILE=t55-recovery ./compile.sh` builds a separate
+`build/output-t55-recovery/wing-compact-t55-recovery.wingfw`. It never replaces
+the legacy output (`build/output/wing-compact-usb-console-linux.wingfw`).
+Initialize the pinned packaging tools with `git submodule update --init lib/private`.
+On a case-insensitive host, set `WING_BUILD_VOLUME` to a Docker volume with a
+`t55-recovery` subdirectory writable by your UID/GID.
+
+Set `WING_T55_FPGA_DIR` to the raw `wing-fpga.hex.bin` and matching schema-1,
+ABI-1 `wing-compact-t55f484` manifest. Set `WING_T55_DSP_DIR` to the four raw
+`dsp1.ldr`–`dsp4.ldr` streams and `WING_T55_OMC_DIR` to the static ARM hard-float
+`omc`. The last two directories must provide `SHA256SUMS` and `provenance.txt`;
+DSP provenance must declare `target=ADSP-21489`, `boot=spi-slave`, and `format=raw-binary`.
+These artifacts are inert comparison data under `/usr/share/wing-t55`. The
+image starts local consoles, not SSH or OMC, and includes no FPGA/DSP loader.
+It does not guarantee that hardware inherited from an earlier boot is muted.
 
 # Social, Web, Community
 

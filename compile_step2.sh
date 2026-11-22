@@ -15,14 +15,14 @@ UBOOT_URL="https://ftp.denx.de/pub/u-boot/u-boot-${UBOOT_VER}.tar.bz2"
 
 case "${WING_PROFILE:-legacy}" in
     legacy) OMC_BIN="${PAYLOAD_DIR:?run compile.sh}/omc" ;;
-    t55-spibone) OMC_BIN="${PAYLOAD_DIR:?run compile.sh}/wing-t55/omc" ;;
+    t55-recovery|t55-spibone) OMC_BIN="${PAYLOAD_DIR:?run compile.sh}/wing-t55/omc" ;;
     *) echo "[error] unknown WING_PROFILE: ${WING_PROFILE}" >&2; exit 1 ;;
 esac
 if [[ ! -s "${OMC_BIN}" ]]; then
     echo "[error] missing staged ARM OMC: ${OMC_BIN}" >&2
     exit 1
 fi
-if [[ "${WING_PROFILE:-legacy}" == t55-spibone ]]; then
+if [[ "${WING_PROFILE:-legacy}" != legacy ]]; then
     (
         cd "${PAYLOAD_DIR}/wing-t55"
         sha256sum --strict -c SHA256SUMS
@@ -385,14 +385,14 @@ install -D -m 0755 htop "${ROOTFS_DIR}/usr/bin/htop"
 ########################################################################################################################################################
 
 echo "[install] omc (wing target)"
-if [[ "${WING_PROFILE:-legacy}" == t55-spibone ]]; then
+if [[ "${WING_PROFILE:-legacy}" != legacy ]]; then
     bundle="${ROOTFS_DIR}/usr/share/wing-t55"
     mkdir -p "${bundle}"
     cp -R "${PAYLOAD_DIR}/wing-t55/." "${bundle}/"
     find "${bundle}" -type f -exec chmod 0444 {} +
     chmod 0555 "${bundle}/omc"
     mkdir -p "${ROOTFS_DIR}/etc"
-    touch "${ROOTFS_DIR}/etc/wing-t55-bringup"
+    touch "${ROOTFS_DIR}/etc/wing-${WING_PROFILE/t55-spibone/t55-bringup}"
 else
     install -D -m 0755 "${OMC_BIN}" "${ROOTFS_DIR}/usr/bin/omc"
     "${CROSS_COMPILE}strip" "${ROOTFS_DIR}/usr/bin/omc" || true
@@ -483,6 +483,7 @@ cp -a "${ROOT_DIR}/initramfs_root/"* .
 mkdir -p dev proc root sys tmp
 cpio_owner=()
 if [[ "${WING_PROFILE:-legacy}" != legacy ]]; then
+    rm -f etc/dropbear/dropbear_ed25519_host_key
     (cd usr/share/wing-t55 && sha256sum --strict -c SHA256SUMS)
     cpio_owner=(--owner=0:0)
 fi
