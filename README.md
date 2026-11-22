@@ -133,6 +133,52 @@ These artifacts are inert comparison data under `/usr/share/wing-t55`. The
 image starts local consoles, not SSH or OMC, and includes no FPGA/DSP loader.
 It does not guarantee that hardware inherited from an earlier boot is muted.
 
+## Passive T55 diagnostics
+
+See [the diagnostic image and macOS USB recorder](tools/wing-t55-diag/README.md).
+The standalone image reports Linux enumeration without SPI child devices,
+interactive login or an FPGA probe. No RAM-only boot path is assumed or qualified.
+
+## T55 OpenWING UI image (offline)
+
+The UI packager takes the reviewed historical SPIBone package (build ID
+`0x2bcf0718`, exact `.wingfw` SHA-256 checked by the script). It reuses its
+U-Boot, DTB and FPGA/DSP payloads, but drops the obsolete transfer-only loader
+and the old SSH host key. It does not start OMC, load the FPGA or boot DSPs.
+This is not the qualified manual bring-up image described above.
+
+On Linux, run the following with the ARM hard-float GCC/binutils, U-Boot tools,
+device tree tools, Python 3 and the pinned `lib/private` submodule:
+
+```sh
+bash tools/build_t55_ui_kernel.sh BASE_OUTPUT/wing-usb-console-zImage \
+    linux-6.6.30.tar.xz SPIBONE_SOURCE_DIR KERNEL_OUTPUT
+python3 tools/stage_t55_gpu_runtime.py OPENWING_UI MESA_DESTDIR GPU_ROOT
+bash tools/build_t55_ui.sh BASE_OUTPUT KERNEL_OUTPUT OPENWING_UI OMC_DIR GPU_ROOT NEW_OUTPUT
+```
+
+Use the three files from `driver/spibone` at OpenAudioFPGA `00d9267260`. The
+kernel builder verifies them and enables evdev, uinput, HID multitouch and DRM
+Etnaviv. Build [OpenWING UI](https://github.com/OpenMixerProject/OpenWING-ui)
+with `cargo build --locked --release --no-default-features --features wing
+--target armv7-unknown-linux-gnueabihf`, the ARM linker and the ARM GBM headers.
+Use an armhf Mesa 25.0.7 build with Etnaviv, EGL/GLES2 and GBM (no X11/GLX,
+Vulkan or LLVM), and install armhf runtime dependencies on the staging host.
+`OMC_DIR` must supply a static ARM hard-float `omc`, `SHA256SUMS` and provenance
+binding `TARGET_WING`, SPIBone, the baseline UAPI and board profile, and the OMC digest.
+
+PID 1 starts the PNLC bridge after panel initialization closes UART4, then
+starts the Slint LinuxKMS/FemtoVG UI. The bridge exposes one primary contact
+through evdev, following the [Qt demo calibration](https://github.com/OpenMixerProject/OpenWING/commit/85250d27b4cf92b9737a8b5359194498a42ab219).
+No PNLC does not prevent UI startup. The serial and USB consoles remain available.
+The UI and bridge write to `/tmp/openwing-ui.log`, `/tmp/wing-touch-uinput.log`,
+and `/run/openwing-ui/{render,touch}`. The touch status distinguishes unavailable
+UART, no UART bytes, and bytes without a decoded touch event. The rendered-frame
+counter is not a KMS flip count. With a compatible OMC, `omc --wing-t55-ui-offline`
+can serve OSC without mixer hardware initialization; it is not started by PID 1.
+Offline packaging cannot verify rendering on the physical GC core, LVDS output,
+panel touch orientation or audio. No device or flash operation is part of the build.
+
 # Social, Web, Community
 
 - [OpenMixerProject on Github](https://github.com/OpenMixerProject)

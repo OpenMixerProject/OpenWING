@@ -19,10 +19,10 @@ fi
 
 echo "Wing USB console Linux booted"
 
-if [ -f /etc/wing-t55-bringup ]; then
+if [ -x /usr/bin/openwing-ui ] || [ -f /etc/wing-t55-bringup ]; then
     mkdir -p /run
     mount -t tmpfs -o mode=0755,nosuid,nodev,noexec tmpfs /run || echo "T55: /run unavailable; manual bring-up disabled."
-    echo "T55 manual bring-up only: no automatic FPGA load, DSP boot, OMC or SSH."
+    echo "T55: no automatic FPGA load, DSP boot, OMC or SSH."
 elif [ -f /etc/wing-t55-recovery ]; then
     echo "T55 recovery only: no FPGA load or probe, DSP boot, OMC start or SSH."
 fi
@@ -35,14 +35,40 @@ fi
 echo "Bringing up PNLC before starting the USB console..."
 /usr/bin/wing-panel-init
 
-# Start a getty on the framebuffer console (tty1) if it exists.
-if [ -c /dev/tty1 ]; then
+# The UI image owns tty1; USB and hardware serial gettys stay available.
+if [ -c /dev/tty1 ] && [ ! -x /usr/bin/openwing-ui ]; then
     (
         while true; do
             setsid getty -L -n -l /bin/sh 0 tty1 linux
             sleep 1
         done
     ) &
+fi
+
+# Panel init has closed UART4. A missing PNLC must not prevent UI startup.
+if [ -x /usr/bin/openwing-ui ]; then
+    if [ -x /usr/bin/wing-touch-uinput ]; then
+        (
+            umask 077
+            mkdir -p /run/openwing-ui || exit 1
+            exec /usr/bin/wing-touch-uinput -s /run/openwing-ui/touch
+        ) </dev/null >/tmp/wing-touch-uinput.log 2>&1 &
+    fi
+    (
+        if ! ifconfig lo 127.0.0.1 up; then
+            echo 'Failed to enable loopback; UI not started.'
+            exit 1
+        fi
+        umask 077
+        mkdir -p /run/openwing-ui || exit 1
+        export OPENWING_DATA_DIR=/tmp/openwing-data SLINT_SCALE_FACTOR=1
+        for i in 1 2 3 4 5 6 7 8 9 10; do
+            [ -c /dev/dri/renderD128 ] && [ -c /dev/fb0 ] && break
+            sleep 1
+        done
+        /usr/bin/openwing-ui --osc 127.0.0.1
+        echo "UI exited ($?); see serial diagnostics."
+    ) </dev/null >/tmp/openwing-ui.log 2>&1 &
 fi
 
 # Start a getty on the hardware serial port (ttymxc1) if it exists.
