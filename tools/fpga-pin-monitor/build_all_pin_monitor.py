@@ -16,8 +16,8 @@ Build Pipeline Steps:
 ---------------------
 1. Load GPIO Pin Inventory:
    Reads `data/T55F484-gpio-inventory.json` containing package balls, banks,
-   and Efinix hardware resources. Excludes dedicated SPI interface balls
-   (W1, V2, V1, V3) used by the i.MX6 host connection.
+   and Efinix hardware resources. Excludes host SPI balls (W1, V2, V1)
+   and keeps V3 excluded to preserve the existing probe indices.
 
 2. Generate Periphery Configuration & Constraints (SDC):
    Uses the Efinity Python DesignAPI (`efx_py`) to automatically create GPIO
@@ -52,8 +52,8 @@ TIMING_MODEL = "C4"
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent.parent
 
-# Dedicated host ECSPI2 pins connected to i.MX6 Solo (must NOT be used as probes)
-SPI_BALLS = {"W1", "V2", "V1", "V3"}
+# V3 is not host SS0. Keep it excluded so probe IDs still match test_all_pins.c.
+NON_PROBE_BALLS = {"W1", "V2", "V1", "V3"}
 
 
 def make_project_xml(device: str) -> str:
@@ -99,12 +99,11 @@ def make_project_xml(device: str) -> str:
 
 def load_probes():
     """
-    Loads all non-SPI GPIO pins from the T55F484 package pinout inventory.
+    Loads monitored GPIO pins from the T55F484 package pinout inventory.
     """
     inv_path = REPO_ROOT / "data" / "T55F484-gpio-inventory.json"
     inv = json.loads(inv_path.read_text())
-    # Filter out pins reserved for the ECSPI2 communication interface
-    probes = [p for p in inv if p["package_ball"] not in SPI_BALLS]
+    probes = [p for p in inv if p["package_ball"] not in NON_PROBE_BALLS]
     return probes
 
 
@@ -132,7 +131,6 @@ def build_target(device: str, probes: list):
         ("input",  "host_sck",  "W1"),  # ECSPI2 SCLK
         ("input",  "host_mosi", "V2"),  # ECSPI2 MOSI
         ("output", "host_miso", "V1"),  # ECSPI2 MISO
-        ("input",  "host_cs_n", "V3"),  # ECSPI2 CS0
     ]
     for idx, p in enumerate(probes):
         pins.append(("input", f"probe_in[{idx}]", p["package_ball"]))
@@ -238,7 +236,7 @@ def main():
 
     # Load probe pin inventory
     probes = load_probes()
-    print(f"[*] Loaded {len(probes)} total non-SPI GPIO pins from inventory.")
+    print(f"[*] Loaded {len(probes)} probe GPIO pins from inventory.")
 
     # Export mapping metadata JSON for tooling
     pin_table = []

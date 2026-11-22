@@ -280,7 +280,7 @@ int upload_bitstream(wing_hardware_context_t *hw_context, const char *filepath, 
     size_t total_bytes_sent = 0;
     const int progress_bar_width = 50;
 
-    // Steuerleitungne für DSP-CS auf 1 -> alle aus
+    // Set the output latches for the CPU-to-FPGA SS0–SS3 pads high before upload.
     hardware_gpio_set_pin(hw_context, 2, 26, true);
     hardware_gpio_set_pin(hw_context, 2, 27, true);
     hardware_gpio_set_pin(hw_context, 3, 24, true);

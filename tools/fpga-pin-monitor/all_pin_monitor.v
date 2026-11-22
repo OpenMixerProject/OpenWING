@@ -49,7 +49,6 @@ module all_pin_monitor #(
     input  wire host_sck,       // Package Ball W1 (GPIOL_01_CCK / ECSPI2_SCLK)
     input  wire host_mosi,      // Package Ball V2 (GPIOL_08_CDI0 / ECSPI2_MOSI)
     output wire host_miso,      // Package Ball V1 (GPIOL_09_CDI1 / ECSPI2_MISO)
-    input  wire host_cs_n,      // Package Ball V3 (GPIOL_00_SS_N / GPIO2_26)
 
     // ------------------------------------------------------------------------
     // All 252 Monitored Hardware Probe Pins (Across all I/O Banks)

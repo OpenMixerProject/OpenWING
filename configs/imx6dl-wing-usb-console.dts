@@ -257,7 +257,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_ecspi2>;
 
-	/* fake CS, da es vom iMX zum FPGA keinen CS gibt */
+	/* The i.MX6 SS pads reach the FPGA but are not muxed as ECSPI2 chip selects here. */
 	cs-gpios = <0>;
 
 	status = "okay";
@@ -267,7 +267,6 @@
 		reg = <0>;
 		spi-max-frequency = <200000000>;
 
-		/* Gerät ist "immer aktiv" */
         spi-cs-high; 
 	};
 };
