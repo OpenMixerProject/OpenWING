@@ -3,7 +3,11 @@
 This repository contains software to load and start the Linux-Kernel on the Behringer WING and some userland tools.
 The main logic of our custom firmware lives in its own repository at [OpenMixerControl](https://github.com/OpenMixerProject/OpenMixerControl)
 
-# Progress-O-Meter
+## Bugs and Ideas
+
+Please report Bugs or submit Ideas in our zentral [Ticketsystem](https://github.com/OpenMixerProject/Ticketsystem/issues)
+
+## Progress-O-Meter
 
 Description | State
 -----|-------
