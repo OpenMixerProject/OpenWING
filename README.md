@@ -5,7 +5,7 @@ The main logic of our custom firmware lives in its own repository at [OpenMixerC
 
 ## Bugs and Ideas
 
-Please report Bugs or submit Ideas in our zentral [Ticketsystem](https://github.com/OpenMixerProject/Ticketsystem/issues)
+Please report Bugs or submit Ideas in our central [Ticketsystem](https://github.com/OpenMixerProject/Ticketsystem/issues)
 
 ## Progress-O-Meter
 
