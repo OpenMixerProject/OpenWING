@@ -17,8 +17,8 @@ Scribble Strip LCDs | ✔️ June 2026
 Surface Input and Output (Buttons, Encoders, Faders, LCDs, LEDs, Touchscreen) | ✔️ June 2026
 OpenMixerControl ported to iMX6 | ✔️ June 2026
 Trion FPGA Firmware Upload | ✔️ September 2026
-Implement FPGA Firmware (TDM Audio Routing) | 
-DSP Firmware Upload | 👀 In Progress
+Implement FPGA Firmware (TDM Audio Routing) | 👀 In Progress
+DSP Firmware Upload | ✔️ November 2026
 Implement DSP1 Firmware (Input) | 👀 In Progress
 Implement DSP2 Firmware (Bus) | 👀 In Progress
 Implement DSP3 Firmware (FX1) | 👀 In Progress
