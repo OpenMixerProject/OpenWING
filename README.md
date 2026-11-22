@@ -19,10 +19,10 @@ OpenMixerControl ported to iMX6 | ✔️ June 2026
 Trion FPGA Firmware Upload | ✔️ September 2026
 Implement FPGA Firmware (TDM Audio Routing) | 
 DSP Firmware Upload | 👀 In Progress
-Implement DSP1 Firmware (Input) |
-Implement DSP2 Firmware (Bus) |
-Implement DSP3 Firmware (FX1) |
-Implement DSP4 Firmware (FX2) |
+Implement DSP1 Firmware (Input) | 👀 In Progress
+Implement DSP2 Firmware (Bus) | 👀 In Progress
+Implement DSP3 Firmware (FX1) | 👀 In Progress
+Implement DSP4 Firmware (FX2) | 👀 In Progress
 ADDA-Chips |
 StageConnect |
 AES/EBU | 
