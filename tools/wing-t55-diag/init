@@ -1,0 +1,34 @@
+#!/bin/sh
+export PATH=/bin LC_ALL=C
+umask 077
+
+early() {
+    printf 'WING_DIAG_V1 event=init %s\n' "$*"
+    printf 'WING_DIAG_V1 event=init %s\n' "$*" >> /run/wing-diag-early
+}
+
+early stage=entry state=ok
+for fs in proc sysfs devtmpfs; do
+    case "$fs" in
+        proc) dest=/proc ;;
+        sysfs) dest=/sys ;;
+        devtmpfs) dest=/dev ;;
+    esac
+    if mount -t "$fs" "$fs" "$dest" 2>/dev/null; then
+        early "stage=mount fs=$fs state=ok"
+    else
+        early "stage=mount fs=$fs state=error code=mount-failed"
+    fi
+done
+
+wing-t55-diag --passive > /run/wing-diag.latest
+cat /run/wing-diag.latest
+while :; do
+    if [ -c /dev/ttyGS0 ]; then
+        wing-t55-diag --passive > /run/wing-diag.latest
+        # No getty or stdin on CDC. Repeat for late attachment; don't stall PID 1
+        # indefinitely if the host is not consuming output.
+        timeout -k 1 3 sh -c 'exec cat /run/wing-diag.latest > /dev/ttyGS0' 2>/dev/null || :
+    fi
+    sleep 3
+done

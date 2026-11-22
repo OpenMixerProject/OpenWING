@@ -1,0 +1,102 @@
+#!/bin/sh
+# One read-only, line-oriented snapshot. The environment override is for fixtures.
+case "${1:-}" in
+    --passive) targets=absent ;;
+    '') targets=observe-only ;;
+    *) printf 'Usage: wing-t55-diag [--passive]\n' >&2; exit 2 ;;
+esac
+root=${WING_DIAG_ROOT:-}
+sys=$root/sys
+proc=$root/proc
+dt=$sys/firmware/devicetree/base
+export LC_ALL=C
+
+record() { printf 'WING_DIAG_V1 %s\n' "$*"; }
+
+identity() {
+    value=
+    { IFS= read -r value < "$1"; } 2>/dev/null || value=
+    case "$value" in
+        ''|*[!0-9a-f-]*) value=unknown ;;
+    esac
+    [ "${#value}" = "$2" ] || value=unknown
+    printf '%s' "$value"
+}
+
+property() {
+    if [ -r "$1" ]; then
+        tr -d '\000\n' < "$1" | tr -c 'a-zA-Z0-9_.,/@+-' '_'
+    else
+        printf absent
+    fi
+}
+
+bound_driver() {
+    if [ -L "$1/driver" ]; then
+        link=$(readlink "$1/driver")
+        printf '%s' "${link##*/}"
+    else
+        printf unbound
+    fi
+}
+
+device() {
+    if [ -d "$2" ]; then
+        state=present driver=$(bound_driver "$2")
+    else
+        state=absent driver=none
+    fi
+    record "event=device name=$1 state=$state driver=$driver expected=$3"
+    if [ "$3" != observe-only ] && [ "$state" != "$3" ]; then
+        record "event=error code=unexpected-device-state name=$1"
+    elif [ "$3" = present ] && [ "$driver" = unbound ]; then
+        record "event=error code=driver-unbound name=$1"
+    fi
+}
+
+uptime=unknown
+{ read -r uptime _ < "$proc/uptime"; } 2>/dev/null || uptime=unknown
+boot=$(identity "$proc/sys/kernel/random/boot_id" 36)
+build=$(identity "$root/etc/wing-diag-build" 64)
+record "event=begin boot=$boot build=$build uptime_s=$uptime linux=$(uname -r)"
+if [ -r "$root/run/wing-diag-early" ]; then
+    cat "$root/run/wing-diag-early"
+fi
+
+otg=$sys/bus/platform/devices/2184000.usb
+spi=$sys/bus/platform/devices/200c000.spi
+spi_path=$(property "$dt/aliases/spi1")
+record "event=dt spi1=$spi_path otg_mode=$(property "$dt/soc/bus@2100000/usb@2184000/dr_mode") ecspi2_status=$(property "$dt/$spi_path/status")"
+if [ ! -d "$dt" ]; then record 'event=error code=dt-unavailable'; fi
+udc_present=no
+for udc in "$sys"/class/udc/*; do
+    [ -d "$udc" ] || continue
+    udc_present=yes
+    record "event=udc name=${udc##*/} state=$(property "$udc/state") function=$(property "$udc/function")"
+done
+if [ "$udc_present" = no ]; then record 'event=error code=udc-missing'; fi
+for tty in ttymxc1 ttyGS0; do
+    node=absent
+    class=absent
+    [ ! -c "$root/dev/$tty" ] || node=present
+    [ ! -d "$sys/class/tty/$tty" ] || class=present
+    record "event=tty name=$tty class=$class node=$node"
+    if [ "$node" = absent ]; then record "event=error code=tty-node-missing name=$tty"; fi
+done
+device usbotg "$otg" present
+device ecspi2 "$spi" present
+device spi1.0 "$sys/bus/spi/devices/spi1.0" "$targets"
+device spi1.1 "$sys/bus/spi/devices/spi1.1" "$targets"
+node_status() {
+    state=absent
+    [ ! -c "$root/dev/$1" ] || state=present
+    record "event=node name=$1 state=$state expected=$targets"
+    if [ "$targets" = absent ] && [ "$state" = present ]; then
+        record "event=error code=unexpected-device-node name=$1"
+    fi
+}
+node_status spidev1.0
+node_status spidev1.1
+node_status spibone0
+record "event=fabric state=not-probed dsp_state=not-probed"
+record "event=end boot=$boot build=$build"

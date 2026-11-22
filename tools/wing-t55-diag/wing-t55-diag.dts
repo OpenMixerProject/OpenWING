@@ -1,0 +1,50 @@
+/dts-v1/;
+
+#include "imx6dl.dtsi"
+
+/ {
+	model = "Behringer WING Compact T55 (Passive Diagnostics)";
+	compatible = "behringer,wing-compact", "fsl,imx6dl";
+
+	cpus {
+		/delete-node/ cpu@1;
+	};
+
+	chosen {
+		stdout-path = "serial1:115200n8";
+	};
+
+	memory@10000000 {
+		device_type = "memory";
+		reg = <0x10000000 0x40000000>;
+	};
+};
+
+/* Same UART and OTG peripheral as imx6dl-wing-usb-console.dts. */
+&uart2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart2>;
+	status = "okay";
+};
+
+&iomuxc {
+	pinctrl_uart2: uart2grp {
+		fsl,pins = <
+			MX6QDL_PAD_EIM_D26__UART2_TX_DATA 0x10
+			MX6QDL_PAD_EIM_D27__UART2_RX_DATA 0xb000
+		>;
+	};
+};
+
+&usbotg {
+	dr_mode = "peripheral";
+	disable-over-current;
+	status = "okay";
+};
+
+/* Register the on-SoC controller for diagnostics only. No pads, CS or targets. */
+&ecspi2 {
+	/delete-property/ dmas;
+	/delete-property/ dma-names;
+	status = "okay";
+};
